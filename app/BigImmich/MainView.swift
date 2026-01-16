@@ -15,12 +15,12 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             if isShowingSlideshow, let curentAlbumID = albumID,
-                let currentAlbumName = albumName, let currentAssetID = assetID
+                let currentAlbumName = albumName
             {
                 SlideshowView(
                     initialAlbumID: curentAlbumID,
                     initialAlbumName: currentAlbumName,
-                    initialAssetID: currentAssetID,
+                    initialAssetID: assetID,
                     onExit: { exitAlbumID, exitAlbumName, exitAssetID in
                         selectedTab = .albumAssets
 

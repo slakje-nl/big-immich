@@ -9,6 +9,7 @@ struct SlideshowView: View {
     let initialAssetID: AssetID?
     let onExit: (AlbumID, AlbumName, AssetID?) -> Void
 
+    @State private var allAlbums: [Album] = []
     @State private var album: Album? = nil
     @State private var assetIndex: Int = 0
 
@@ -255,7 +256,7 @@ struct SlideshowView: View {
         .onAppear {
             Task {
                 imageCache = ImageCache(countLimit: 10, megaBytesLimit: nil)
-                await initSlideshow()
+                await initSlideshow(albumID: initialAlbumID)
             }
         }
         .onDisappear {
@@ -721,8 +722,8 @@ struct SlideshowView: View {
         }
     }
 
-    private func initSlideshow() async {
-        await loadAlbum()
+    private func initSlideshow(albumID: AlbumID) async {
+        await loadAlbum(albumID: albumID)
         guard let album else { return }
 
         var defaultAssetIndex: Int
@@ -739,14 +740,17 @@ struct SlideshowView: View {
         await loadCurrentAsset()
     }
 
-    private func loadAlbum() async {
+    private func loadAlbum(albumID: AlbumID) async {
         isLoading = true
         do {
-            let loadedAlbum: Album = try await ImmichAPI.shared.loadObject(
-                path: "/api/albums/\(initialAlbumID.string)",
+            if allAlbums.count == 0 {
+                allAlbums = try await ImmichClient.shared.findAlbums()
+            }
+
+            album = try await ImmichAPI.shared.loadObject(
+                path: "/api/albums/\(albumID.string)",
                 queryParams: [:],
             )
-            album = loadedAlbum
         } catch {
             showError(error.localizedDescription)
             logError(error)
