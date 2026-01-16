@@ -698,6 +698,8 @@ struct SlideshowView: View {
             return nil
         case .startAgain:
             return album.assets.count - 1
+        case .loadAnotherAlbum:
+            return nil  // "TODO"
         }
 
     }
@@ -714,6 +716,8 @@ struct SlideshowView: View {
             return nil
         case .startAgain:
             return 0
+        case .loadAnotherAlbum:
+            return nil  // "TODO"
         }
     }
 

@@ -19,6 +19,16 @@ enum SlideshowAction: String, CaseIterable, Identifiable {
 enum SlideshowOnceEndedAction: String, CaseIterable, Identifiable {
     case stopAndNotify
     case startAgain
+    case loadAnotherAlbum
+
+    var id: String { rawValue }
+}
+
+enum SlideshowOnceEndedAnotherAlbumSelection: String, CaseIterable, Identifiable
+{
+    case older
+    case newer
+    case random
 
     var id: String { rawValue }
 }
@@ -48,6 +58,9 @@ struct SettingsView: View {
         SlideshowAction = .goToPrevious
     @AppStorage("slideshowOnceEndedAction") private
         var slideshowOnceEndedAction: SlideshowOnceEndedAction = .stopAndNotify
+    @AppStorage("slideshowOnceEndedAnotherAlbum") private
+        var slideshowOnceEndedAnotherAlbumSelection:
+        SlideshowOnceEndedAnotherAlbumSelection = .random
     @AppStorage("slideshowShowProgressBar") private
         var slideshowShowProgressBar: SlideshowShowProgressBar = .always
 
@@ -280,8 +293,42 @@ struct SettingsView: View {
                                 Text("start again").tag(
                                     SlideshowOnceEndedAction.startAgain
                                 )
+                                Text("load another album").tag(
+                                    SlideshowOnceEndedAction.loadAnotherAlbum
+                                )
                             }
                             .pickerStyle(.menu)
+                        }
+
+                        if slideshowOnceEndedAction == .loadAnotherAlbum {
+                            HStack {
+                                Text("Another album")
+                                    .frame(
+                                        width: leftSideWidth,
+                                        alignment: .leading
+                                    )
+                                    .bold()
+
+                                Picker(
+                                    "Another album",
+                                    selection:
+                                        $slideshowOnceEndedAnotherAlbumSelection
+                                ) {
+                                    Text("older").tag(
+                                        SlideshowOnceEndedAnotherAlbumSelection
+                                            .older
+                                    )
+                                    Text("newer").tag(
+                                        SlideshowOnceEndedAnotherAlbumSelection
+                                            .newer
+                                    )
+                                    Text("random").tag(
+                                        SlideshowOnceEndedAnotherAlbumSelection
+                                            .random
+                                    )
+                                }
+                                .pickerStyle(.menu)
+                            }
                         }
 
                         HStack {
