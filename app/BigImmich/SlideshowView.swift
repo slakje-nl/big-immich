@@ -54,7 +54,7 @@ struct SlideshowView: View {
     @State private var progressBarTimer: Timer? = nil
 
     // preloading assets
-    @State private var imageCache: ImageCache<AssetID>? = nil
+    @State private var imageCache: MemoryCache<AssetID, Image>? = nil
 
     // showing first / last image notice
     @State private var isLastImage = false
@@ -255,7 +255,7 @@ struct SlideshowView: View {
         .focusable(true)
         .onAppear {
             Task {
-                imageCache = ImageCache(countLimit: 10, megaBytesLimit: nil)
+                imageCache = MemoryCache(countLimit: 10, megaBytesLimit: nil)
                 await initSlideshow(albumID: initialAlbumID)
             }
         }
@@ -553,7 +553,7 @@ struct SlideshowView: View {
                     retries: 2
                 )
                 if let uiImage = UIImage(data: data) {
-                    cache.set(nextAsset.id, image: Image(uiImage: uiImage))
+                    cache.set(nextAsset.id, value: Image(uiImage: uiImage))
                 }
             } catch {
                 showError(

@@ -1,6 +1,13 @@
 import ImmichAPI
 import SwiftUI
 
+final class StructWrapper<Value> {
+    let value: Value
+    init(_ value: Value) {
+        self.value = value
+    }
+}
+
 final class CustomStringKey<T: CustomString>: NSObject {
     let value: T
 
@@ -18,15 +25,8 @@ final class CustomStringKey<T: CustomString>: NSObject {
     }
 }
 
-final class ImageWrapper {
-    let image: Image
-    init(_ image: Image) {
-        self.image = image
-    }
-}
-
-final class ImageCache<T: CustomString> {
-    private let cache = NSCache<CustomStringKey<T>, ImageWrapper>()
+final class MemoryCache<Key: CustomString, Value> {
+    private let cache = NSCache<CustomStringKey<Key>, StructWrapper<Value>>()
 
     init(countLimit: Int? = nil, megaBytesLimit: Int? = nil) {
         if let countLimit {
@@ -37,12 +37,12 @@ final class ImageCache<T: CustomString> {
         }
     }
 
-    func get(_ key: T) -> Image? {
-        cache.object(forKey: CustomStringKey(key))?.image
+    func get(_ key: Key) -> Value? {
+        cache.object(forKey: CustomStringKey(key))?.value
     }
 
-    func set(_ key: T, image: Image) {
-        cache.setObject(ImageWrapper(image), forKey: CustomStringKey(key))
+    func set(_ key: Key, value: Value) {
+        cache.setObject(StructWrapper(value), forKey: CustomStringKey(key))
     }
 
     func clear() {
