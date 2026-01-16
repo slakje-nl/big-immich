@@ -5,6 +5,7 @@ import SwiftUI
 enum SlideshowDirection: String, CaseIterable, Identifiable {
     case oldestToNewest
     case newestToOldest
+    case randomized
 
     var id: String { rawValue }
 }
@@ -270,6 +271,9 @@ struct SettingsView: View {
                                 )
                                 Text("newest → oldest").tag(
                                     SlideshowDirection.newestToOldest
+                                )
+                                Text("randomized").tag(
+                                    SlideshowDirection.randomized
                                 )
                             }
                             .pickerStyle(.menu)

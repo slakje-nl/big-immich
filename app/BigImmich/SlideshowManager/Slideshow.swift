@@ -38,10 +38,13 @@ class Slideshow {
         let loadedAlbum = try await getAlbum(albumID: albumID)
         album = loadedAlbum
 
-        if slideshowDirection == .oldestToNewest {
+        switch slideshowDirection {
+        case .oldestToNewest:
             assets = loadedAlbum.assets.reversed()
-        } else {
+        case .newestToOldest:
             assets = loadedAlbum.assets
+        case .randomized:
+            assets = loadedAlbum.assets.shuffled()
         }
         assetIndex = assets.firstIndex { $0.id == initialAssetID } ?? 0
     }
@@ -61,7 +64,6 @@ class Slideshow {
         case .loadAnotherAlbum:
             return nil  // "TODO"
         }
-
     }
 
     private func getPreviousAssetIndex() -> Int? {
