@@ -4,11 +4,12 @@ import Sentry
 import SwiftUI
 
 struct SlideshowView: View {
-    let albumID: AlbumID
+    let initialAlbumID: AlbumID
+    let initialAlbumName: AlbumName
     let initialAssetID: AssetID?
-    let onExit: (AssetID) -> Void
+    let onExit: (AlbumID, AlbumName, AssetID?) -> Void
 
-    @State private var assets: [AlbumAsset] = []
+    @State private var album: Album? = nil
     @State private var assetIndex: Int = 0
 
     // showing details of an image (when paused)
@@ -264,7 +265,12 @@ struct SlideshowView: View {
         }
         .onExitCommand {
             imageCache?.clear()
-            onExit(assets[assetIndex].id)
+
+            if let album = album {
+                onExit(album.id, album.albumName, album.assets[assetIndex].id)
+            } else {
+                onExit(initialAlbumID, initialAlbumName, initialAssetID)
+            }
         }
         .onMoveCommand { direction in
             handleMoveCommand(direction)
@@ -408,8 +414,9 @@ struct SlideshowView: View {
         stopProgressBarTimer()
         stopCurrentPlayer()
 
-        guard assets.indices.contains(assetIndex) else { return }
-        let asset = assets[assetIndex]
+        guard let album else { return }
+        guard album.assets.indices.contains(assetIndex) else { return }
+        let asset = album.assets[assetIndex]
 
         // clear state
         currentImage = nil
@@ -418,11 +425,11 @@ struct SlideshowView: View {
 
         // load variables for the overlay when paused
         if slideshowDirection == .oldestToNewest {
-            userAssetIndex = assets.count - assetIndex
+            userAssetIndex = album.assets.count - assetIndex
         } else {
             userAssetIndex = assetIndex + 1
         }
-        userAssetsCount = assets.count
+        userAssetsCount = album.assets.count
         userDateTime = formatDate(asset: asset)
         userLocation = formatLocation(asset: asset)
 
@@ -532,7 +539,9 @@ struct SlideshowView: View {
     }
 
     private func preloadAsset(assetIndex: Int) async {
-        let nextAsset = assets[assetIndex]
+        guard let album else { return }
+
+        let nextAsset = album.assets[assetIndex]
 
         if let cache = imageCache, nextAsset.type.uppercased() == "IMAGE" {
             guard cache.get(assetIndex) == nil else { return }
@@ -678,6 +687,8 @@ struct SlideshowView: View {
     }
 
     private func getLaterAssetIndex() -> Int? {
+        guard let album else { return nil }
+
         if assetIndex > 0 {
             return assetIndex - 1
         }
@@ -686,13 +697,15 @@ struct SlideshowView: View {
         case .stopAndNotify:
             return nil
         case .startAgain:
-            return assets.count - 1
+            return album.assets.count - 1
         }
 
     }
 
     private func getEarlierAssetIndex() -> Int? {
-        if assetIndex < assets.count - 1 {
+        guard let album else { return nil }
+
+        if assetIndex < album.assets.count - 1 {
             return assetIndex + 1
         }
 
@@ -706,16 +719,18 @@ struct SlideshowView: View {
 
     private func initSlideshow() async {
         await loadAlbum()
+        guard let album else { return }
 
         var defaultAssetIndex: Int
         if slideshowDirection == .oldestToNewest {
-            defaultAssetIndex = assets.count - 1
+            defaultAssetIndex = album.assets.count - 1
         } else {
             defaultAssetIndex = 0
         }
 
         assetIndex =
-            assets.firstIndex { $0.id == initialAssetID } ?? defaultAssetIndex
+            album.assets.firstIndex { $0.id == initialAssetID }
+            ?? defaultAssetIndex
 
         await loadCurrentAsset()
     }
@@ -723,11 +738,11 @@ struct SlideshowView: View {
     private func loadAlbum() async {
         isLoading = true
         do {
-            let album: Album = try await ImmichAPI.shared.loadObject(
-                path: "/api/albums/\(albumID.string)",
+            let loadedAlbum: Album = try await ImmichAPI.shared.loadObject(
+                path: "/api/albums/\(initialAlbumID.string)",
                 queryParams: [:],
             )
-            assets = album.assets
+            album = loadedAlbum
         } catch {
             showError(error.localizedDescription)
             logError(error)
