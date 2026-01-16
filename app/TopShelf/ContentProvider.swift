@@ -25,7 +25,7 @@ class ContentProvider: TVTopShelfContentProvider {
         return content
     }
 
-    private func generateTopShelfItem(album: Album) async
+    private func generateTopShelfItem(album: AlbumSummary) async
         -> TVTopShelfSectionedItem
     {
         let item = TVTopShelfSectionedItem(identifier: album.id.string)
@@ -55,7 +55,7 @@ class ContentProvider: TVTopShelfContentProvider {
         return item
     }
 
-    private func getThumbnailURL(album: Album) async -> URL? {
+    private func getThumbnailURL(album: AlbumSummary) async -> URL? {
         do {
             return try await ImmichAPI.shared.getUrlWithQueryAuth(
                 path: "/api/assets/\(album.albumThumbnailAssetId)/thumbnail",

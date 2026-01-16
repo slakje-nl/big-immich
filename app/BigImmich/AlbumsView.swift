@@ -7,7 +7,7 @@ struct AlbumsView: View {
     let onSelectAlbum: (AlbumID, AlbumName) -> Void
 
     @FocusState private var focusedAlbumIndex: Int?
-    @State private var albums: [Album] = []
+    @State private var albums: [AlbumSummary] = []
     @State private var isLoading = false
     @State private var loadedAssets: Int = 0
     @State private var errors: [String] = []

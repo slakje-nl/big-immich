@@ -1,5 +1,23 @@
 import Foundation
 
+public struct AlbumSummary: Codable, Identifiable, Hashable {
+    public let id: AlbumID
+    public let albumName: AlbumName
+    public let albumThumbnailAssetId: AssetID
+    public let createdAt: String
+    public let updatedAt: String
+    public let startDate: String
+    public let lastModifiedAssetTimestamp: String
+
+    static public func == (lhs: AlbumSummary, rhs: AlbumSummary) -> Bool {
+        return lhs.id == rhs.id
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
 public struct Album: Codable, Identifiable, Hashable {
     public let id: AlbumID
     public let albumName: AlbumName

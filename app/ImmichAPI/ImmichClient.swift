@@ -10,10 +10,10 @@ public class ImmichClient {
 
     private init() {}
 
-    private func joinAlbums(_ albumLists: [Album]...) -> [Album] {
+    private func joinAlbums(_ albumLists: [AlbumSummary]...) -> [AlbumSummary] {
         let allAlbums = albumLists.flatMap { $0 }
 
-        var uniqueAlbums = [AlbumID: Album]()
+        var uniqueAlbums = [AlbumID: AlbumSummary]()
         for album in allAlbums {
             if uniqueAlbums[album.id] == nil {
                 uniqueAlbums[album.id] = album
@@ -23,15 +23,16 @@ public class ImmichClient {
         return uniqueAlbums.values.sorted { $0.startDate > $1.startDate }
     }
 
-    public func findAlbums() async throws -> [Album] {
-        let ownAlbums: [Album] = try await ImmichAPI.shared.loadObject(
+    public func findAlbums() async throws -> [AlbumSummary] {
+        let ownAlbums: [AlbumSummary] = try await ImmichAPI.shared.loadObject(
             path: "/api/albums",
             queryParams: [:],
         )
-        let sharedAlbums: [Album] = try await ImmichAPI.shared.loadObject(
-            path: "/api/albums",
-            queryParams: ["shared": "true"],
-        )
+        let sharedAlbums: [AlbumSummary] = try await ImmichAPI.shared
+            .loadObject(
+                path: "/api/albums",
+                queryParams: ["shared": "true"],
+            )
         return joinAlbums(ownAlbums, sharedAlbums)
     }
 }
