@@ -689,7 +689,7 @@ struct SlideshowView: View {
 
         do {
             try await slideshow.load(
-                albumID: albumID,
+                initialAlbumID: albumID,
                 initialAssetID: initialAssetID
             )
         } catch {

@@ -34,8 +34,8 @@ class Slideshow {
         self.slideshowOnceEndedAction = slideshowOnceEndedAction
     }
 
-    public func load(albumID: AlbumID, initialAssetID: AssetID?) async throws {
-        let loadedAlbum = try await getAlbum(albumID: albumID)
+    public func load(initialAlbumID: AlbumID, initialAssetID: AssetID?) async throws {
+        let loadedAlbum = try await getAlbum(albumID: initialAlbumID)
         album = loadedAlbum
 
         switch slideshowDirection {
