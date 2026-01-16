@@ -54,7 +54,7 @@ struct SlideshowView: View {
     @State private var progressBarTimer: Timer? = nil
 
     // preloading assets
-    @State private var imageCache: ImageCache? = nil
+    @State private var imageCache: ImageCache<AssetID>? = nil
 
     // showing first / last image notice
     @State private var isLastImage = false
@@ -436,8 +436,7 @@ struct SlideshowView: View {
 
         do {
             if asset.type.uppercased() == "IMAGE" {
-                if let cache = imageCache, let nextImage = cache.get(assetIndex)
-                {
+                if let cache = imageCache, let nextImage = cache.get(asset.id) {
                     currentImage = nextImage
                 } else {
                     let data = try await ImmichAPI.shared.loadMediaWithRetries(
@@ -545,7 +544,7 @@ struct SlideshowView: View {
         let nextAsset = album.assets[assetIndex]
 
         if let cache = imageCache, nextAsset.type.uppercased() == "IMAGE" {
-            guard cache.get(assetIndex) == nil else { return }
+            guard cache.get(nextAsset.id) == nil else { return }
 
             do {
                 let data = try await ImmichAPI.shared.loadMediaWithRetries(
@@ -554,7 +553,7 @@ struct SlideshowView: View {
                     retries: 2
                 )
                 if let uiImage = UIImage(data: data) {
-                    cache.set(assetIndex, image: Image(uiImage: uiImage))
+                    cache.set(nextAsset.id, image: Image(uiImage: uiImage))
                 }
             } catch {
                 showError(

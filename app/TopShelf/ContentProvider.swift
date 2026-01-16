@@ -28,8 +28,8 @@ class ContentProvider: TVTopShelfContentProvider {
     private func generateTopShelfItem(album: Album) async
         -> TVTopShelfSectionedItem
     {
-        let item = TVTopShelfSectionedItem(identifier: album.id)
-        item.title = album.albumName
+        let item = TVTopShelfSectionedItem(identifier: album.id.string)
+        item.title = album.albumName.string
         item.imageShape = .hdtv
 
         var components = URLComponents()
@@ -37,8 +37,8 @@ class ContentProvider: TVTopShelfContentProvider {
         components.host = "album"
         components.path = "/details"
         components.queryItems = [
-            URLQueryItem(name: "albumID", value: album.id),
-            URLQueryItem(name: "albumName", value: album.albumName),
+            URLQueryItem(name: "albumID", value: album.id.string),
+            URLQueryItem(name: "albumName", value: album.albumName.string),
         ]
         if let url = components.url {
             item.displayAction = TVTopShelfAction(url: url)

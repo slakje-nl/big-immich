@@ -1,28 +1,20 @@
+import ImmichAPI
 import SwiftUI
 
-final class ImageCache {
-    private let cache = NSCache<NSNumber, ImageWrapper>()
+final class CustomStringKey<T: CustomString>: NSObject {
+    let value: T
 
-    init(countLimit: Int?, megaBytesLimit: Int?) {
-        if let countLimit = countLimit {
-            cache.countLimit = countLimit
-        }
-
-        if let megaBytesLimit = megaBytesLimit {
-            cache.totalCostLimit = megaBytesLimit * 1024 * 1024
-        }
+    init(_ value: T) {
+        self.value = value
     }
 
-    func get(_ assetID: Int) -> Image? {
-        cache.object(forKey: NSNumber(value: assetID))?.image
+    override func isEqual(_ object: Any?) -> Bool {
+        guard let other = object as? CustomStringKey<T> else { return false }
+        return value == other.value
     }
 
-    func set(_ assetID: Int, image: Image) {
-        cache.setObject(ImageWrapper(image), forKey: NSNumber(value: assetID))
-    }
-
-    func clear() {
-        cache.removeAllObjects()
+    override var hash: Int {
+        value.hashValue
     }
 }
 
@@ -30,5 +22,30 @@ final class ImageWrapper {
     let image: Image
     init(_ image: Image) {
         self.image = image
+    }
+}
+
+final class ImageCache<T: CustomString> {
+    private let cache = NSCache<CustomStringKey<T>, ImageWrapper>()
+
+    init(countLimit: Int? = nil, megaBytesLimit: Int? = nil) {
+        if let countLimit {
+            cache.countLimit = countLimit
+        }
+        if let megaBytesLimit {
+            cache.totalCostLimit = megaBytesLimit * 1024 * 1024
+        }
+    }
+
+    func get(_ key: T) -> Image? {
+        cache.object(forKey: CustomStringKey(key))?.image
+    }
+
+    func set(_ key: T, image: Image) {
+        cache.setObject(ImageWrapper(image), forKey: CustomStringKey(key))
+    }
+
+    func clear() {
+        cache.removeAllObjects()
     }
 }
