@@ -1,9 +1,9 @@
 import Foundation
 
 public struct Album: Codable, Identifiable, Hashable {
-    public let id: String
-    public let albumName: String
-    public let albumThumbnailAssetId: String
+    public let id: AlbumID
+    public let albumName: AlbumName
+    public let albumThumbnailAssetId: AssetID
     public let createdAt: String
     public let updatedAt: String
     public let startDate: String
@@ -20,7 +20,7 @@ public struct Album: Codable, Identifiable, Hashable {
 }
 
 public struct AlbumAsset: Codable, Identifiable {
-    public let id: String
+    public let id: AssetID
     public let type: String
     public let originalPath: String
     public let duration: String

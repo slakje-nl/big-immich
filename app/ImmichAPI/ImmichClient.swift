@@ -13,7 +13,7 @@ public class ImmichClient {
     private func joinAlbums(_ albumLists: [Album]...) -> [Album] {
         let allAlbums = albumLists.flatMap { $0 }
 
-        var uniqueAlbums = [String: Album]()
+        var uniqueAlbums = [AlbumID: Album]()
         for album in allAlbums {
             if uniqueAlbums[album.id] == nil {
                 uniqueAlbums[album.id] = album

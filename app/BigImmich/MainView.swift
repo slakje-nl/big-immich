@@ -1,11 +1,12 @@
+import ImmichAPI
 import SwiftUI
 
 struct ContentView: View {
     @State private var selectedTab: Tab = .albums
 
-    @State private var albumID: String? = nil
-    @State private var albumName: String? = nil
-    @State private var assetID: String? = nil
+    @State private var albumID: AlbumID? = nil
+    @State private var albumName: AlbumName? = nil
+    @State private var assetID: AssetID? = nil
 
     @State private var isShowingSlideshow = false
     @State private var albumDetailsInitialyFocusedButton: ButtonFocus =
@@ -32,12 +33,12 @@ struct ContentView: View {
                         if selectedTab == .albumAssets,
                             let albumName = albumName
                         {
-                            Text(albumName).tag(Tab.albumAssets)
+                            Text(albumName.string).tag(Tab.albumAssets)
                         }
                         if selectedTab == .albumDetails,
                             let albumName = albumName
                         {
-                            Text(albumName).tag(Tab.albumDetails)
+                            Text(albumName.string).tag(Tab.albumDetails)
                         }
                         Text("Settings").tag(Tab.settings)
                     }
@@ -165,8 +166,8 @@ struct ContentView: View {
         )
         guard let selectedAlbumID, let selectedAlbumName else { return }
 
-        albumID = selectedAlbumID
-        albumName = selectedAlbumName
+        albumID = AlbumID(rawValue: selectedAlbumID)
+        albumName = AlbumName(rawValue: selectedAlbumName)
         assetID = nil
         albumDetailsInitialyFocusedButton = .slideshow
 

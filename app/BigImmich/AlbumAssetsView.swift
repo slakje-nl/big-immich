@@ -3,9 +3,9 @@ import Sentry
 import SwiftUI
 
 struct AlbumAssetsView: View {
-    let albumID: String
-    let initialAssetID: String?
-    let startSlideshow: (String) -> Void
+    let albumID: AlbumID
+    let initialAssetID: AssetID?
+    let startSlideshow: (AssetID) -> Void
     let onExit: () -> Void
 
     @FocusState private var focusedAssetIndex: Int?
@@ -88,7 +88,7 @@ struct AlbumAssetsView: View {
     private func loadAlbumDetail() async {
         do {
             self.album = try await ImmichAPI.shared.loadObject(
-                path: "/api/albums/\(albumID)",
+                path: "/api/albums/\(albumID.string)",
                 queryParams: [:],
             )
         } catch {

@@ -3,8 +3,8 @@ import Sentry
 import SwiftUI
 
 struct AlbumsView: View {
-    let initialAlbumID: String?
-    let onSelectAlbum: (String, String) -> Void
+    let initialAlbumID: AlbumID?
+    let onSelectAlbum: (AlbumID, AlbumName) -> Void
 
     @FocusState private var focusedAlbumIndex: Int?
     @State private var albums: [Album] = []
@@ -77,7 +77,7 @@ struct AlbumsView: View {
                                     }
                                     .id(index)
 
-                                    Text(album.albumName)
+                                    Text(album.albumName.string)
                                         .foregroundColor(.white)
                                         .font(.caption)
                                         .lineLimit(1)

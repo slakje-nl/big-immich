@@ -8,7 +8,7 @@ enum ButtonFocus: Hashable {
 }
 
 struct AlbumDetailsView: View {
-    let albumID: String
+    let albumID: AlbumID
     let initialyFocusedButton: ButtonFocus
     let startSlideshow: () -> Void
     let viewAssets: () -> Void
@@ -65,7 +65,7 @@ struct AlbumDetailsView: View {
                             // right side: album details, buttons
                             VStack(alignment: .leading, spacing: 12) {
                                 VStack(alignment: .leading, spacing: 20) {
-                                    Text(album.albumName)
+                                    Text(album.albumName.string)
                                         .font(.title2)
                                         .fontWeight(.bold)
 
@@ -202,7 +202,7 @@ struct AlbumDetailsView: View {
                 do {
                     let data = try await ImmichAPI.shared.loadMediaWithRetries(
                         path:
-                            "/api/assets/\(album.albumThumbnailAssetId)/thumbnail",
+                            "/api/assets/\(album.albumThumbnailAssetId.string)/thumbnail",
                         queryParams: ["size": "preview"],
                         retries: 3,
                     )
@@ -225,14 +225,14 @@ struct AlbumDetailsView: View {
         isLoading = true
         do {
             album = try await ImmichAPI.shared.loadObject(
-                path: "/api/albums/\(albumID)",
+                path: "/api/albums/\(albumID.string)",
                 queryParams: [:],
             )
 
             if let album {
                 let data = try await ImmichAPI.shared.loadMediaWithRetries(
                     path:
-                        "/api/assets/\(album.albumThumbnailAssetId)/thumbnail",
+                        "/api/assets/\(album.albumThumbnailAssetId.string)/thumbnail",
                     queryParams: ["size": "preview"],
                     retries: 3,
                 )

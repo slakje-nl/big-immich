@@ -4,9 +4,9 @@ import Sentry
 import SwiftUI
 
 struct SlideshowView: View {
-    let albumID: String
-    let initialAssetID: String?
-    let onExit: (String) -> Void
+    let albumID: AlbumID
+    let initialAssetID: AssetID?
+    let onExit: (AssetID) -> Void
 
     @State private var assets: [AlbumAsset] = []
     @State private var assetIndex: Int = 0
@@ -433,7 +433,7 @@ struct SlideshowView: View {
                     currentImage = nextImage
                 } else {
                     let data = try await ImmichAPI.shared.loadMediaWithRetries(
-                        path: "/api/assets/\(asset.id)/thumbnail",
+                        path: "/api/assets/\(asset.id.string)/thumbnail",
                         queryParams: ["size": "fullsize"],
                         retries: 3,
                     )
@@ -454,7 +454,8 @@ struct SlideshowView: View {
                 do {
                     playbackURL = try await ImmichAPI.shared
                         .getUrlWithQueryAuth(
-                            path: "/api/assets/\(asset.id)/video/playback",
+                            path:
+                                "/api/assets/\(asset.id.string)/video/playback",
                             queryParams: nil
                         )
                 } catch {
@@ -538,7 +539,7 @@ struct SlideshowView: View {
 
             do {
                 let data = try await ImmichAPI.shared.loadMediaWithRetries(
-                    path: "/api/assets/\(nextAsset.id)/thumbnail",
+                    path: "/api/assets/\(nextAsset.id.string)/thumbnail",
                     queryParams: ["size": "fullsize"],
                     retries: 2
                 )
@@ -723,7 +724,7 @@ struct SlideshowView: View {
         isLoading = true
         do {
             let album: Album = try await ImmichAPI.shared.loadObject(
-                path: "/api/albums/\(albumID)",
+                path: "/api/albums/\(albumID.string)",
                 queryParams: [:],
             )
             assets = album.assets
