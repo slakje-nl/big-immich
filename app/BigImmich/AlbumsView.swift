@@ -116,7 +116,9 @@ struct AlbumsView: View {
     private func loadAlbums() async {
         isLoading = true
         do {
-            self.albums = try await ImmichClient.shared.findAlbums()
+            self.albums = try await ImmichClient.shared.findAlbums(
+                order: .fromNewest
+            )
         } catch ImmichAPIError.missingConfig {
             notYetSetUp = true
         } catch {

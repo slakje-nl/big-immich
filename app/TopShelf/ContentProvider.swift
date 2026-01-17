@@ -11,7 +11,7 @@ import TVServices
 class ContentProvider: TVTopShelfContentProvider {
 
     override func loadTopShelfContent() async -> (any TVTopShelfContent)? {
-        guard let albums = try? await ImmichClient.shared.findAlbums() else {
+        guard let albums = try? await ImmichClient.shared.findAlbums(order: .fromNewest) else {
             return nil
         }
 

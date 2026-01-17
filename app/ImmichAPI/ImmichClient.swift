@@ -5,25 +5,37 @@
 //  Created by Maciej Płoński on 06/01/2026.
 //
 
+public enum AlbumsOrder: String, CaseIterable, Identifiable {
+    case fromOldest
+    case fromNewest
+
+    public var id: String { rawValue }
+}
+
 public class ImmichClient {
     public static let shared = ImmichClient()
 
     private init() {}
 
-    private func joinAlbums(_ albumLists: [AlbumSummary]...) -> [AlbumSummary] {
-        let allAlbums = albumLists.flatMap { $0 }
-
+    private func joinAlbums(order: AlbumsOrder, albumLists: [[AlbumSummary]]) -> [AlbumSummary] {
         var uniqueAlbums = [AlbumID: AlbumSummary]()
-        for album in allAlbums {
-            if uniqueAlbums[album.id] == nil {
-                uniqueAlbums[album.id] = album
+        for albumList in albumLists {
+            for album in albumList {
+                if uniqueAlbums[album.id] == nil {
+                    uniqueAlbums[album.id] = album
+                }
             }
         }
 
-        return uniqueAlbums.values.sorted { $0.startDate > $1.startDate }
+        switch order {
+        case .fromOldest:
+            return uniqueAlbums.values.sorted { $0.startDate < $1.startDate }
+        case .fromNewest:
+            return uniqueAlbums.values.sorted { $0.startDate > $1.startDate }
+        }
     }
-
-    public func findAlbums() async throws -> [AlbumSummary] {
+    
+    public func findAlbums(order: AlbumsOrder) async throws -> [AlbumSummary] {
         let ownAlbums: [AlbumSummary] = try await ImmichAPI.shared.loadObject(
             path: "/api/albums",
             queryParams: [:],
@@ -33,6 +45,6 @@ public class ImmichClient {
                 path: "/api/albums",
                 queryParams: ["shared": "true"],
             )
-        return joinAlbums(ownAlbums, sharedAlbums)
+        return joinAlbums(order: order, albumLists: [ownAlbums, sharedAlbums])
     }
 }

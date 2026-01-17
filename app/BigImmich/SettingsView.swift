@@ -297,7 +297,9 @@ struct SettingsView: View {
                                 Text("start again").tag(
                                     SlideshowOnceEndedAction.startAgain
                                 )
-                                Text("load another album").tag(
+                                Text(
+                                    "load another album (choose the next one below)"
+                                ).tag(
                                     SlideshowOnceEndedAction.loadAnotherAlbum
                                 )
                             }
@@ -306,7 +308,7 @@ struct SettingsView: View {
 
                         if slideshowOnceEndedAction == .loadAnotherAlbum {
                             HStack {
-                                Text("Another album")
+                                Text("Next album")
                                     .frame(
                                         width: leftSideWidth,
                                         alignment: .leading
