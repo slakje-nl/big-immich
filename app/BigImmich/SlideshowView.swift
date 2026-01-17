@@ -30,7 +30,6 @@ struct SlideshowView: View {
     @State private var errors: [String] = []
     @State private var clearErrors: DispatchWorkItem?
     @State private var informations: [String] = []
-    @State private var clearInformations: DispatchWorkItem?
 
     // loading settings
     @AppStorage("slideshowInterval") private var slideshowInterval: Int = 5
@@ -60,10 +59,6 @@ struct SlideshowView: View {
 
     // preloading assets
     @State private var imageCache: MemoryCache<AssetID, Image>? = nil
-
-    // showing first / last image notice
-    @State private var isLastImage = false
-    @State private var isFirstImage = false
 
     var body: some View {
         ZStack {
@@ -175,42 +170,6 @@ struct SlideshowView: View {
                         }
                     }
                     .padding(.bottom, 40)
-                }
-                .transition(.opacity)
-            }
-
-            if isLastImage {
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Text("the end!")
-                            .font(.largeTitle)
-                            .foregroundColor(.white.opacity(0.9))
-                            .padding(16)
-                            .background(
-                                Color.black.opacity(0.5).cornerRadius(12)
-                            )
-                        Spacer()
-                    }
-                }
-                .transition(.opacity)
-            }
-
-            if isFirstImage {
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Text("sorry, first image!")
-                            .font(.largeTitle)
-                            .foregroundColor(.white.opacity(0.9))
-                            .padding(16)
-                            .background(
-                                Color.black.opacity(0.5).cornerRadius(12)
-                            )
-                        Spacer()
-                    }
                 }
                 .transition(.opacity)
             }
@@ -327,16 +286,6 @@ struct SlideshowView: View {
         withAnimation {
             informations.append(message)
         }
-
-        clearInformations?.cancel()
-
-        let workItem = DispatchWorkItem {
-            withAnimation {
-                informations.removeAll()
-            }
-        }
-        clearInformations = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: workItem)
     }
 
     private func handleMoveCommand(_ direction: MoveCommandDirection) async {
@@ -462,6 +411,9 @@ struct SlideshowView: View {
 
         if previousAlbumID == nil {
             previousAlbumID = slideshowAsset.album.id
+        }
+        withAnimation {
+            informations.removeAll()
         }
 
         // clear state
@@ -681,9 +633,6 @@ struct SlideshowView: View {
     private func moveToNext() async {
         guard let slideshow else { return }
 
-        isLastImage = false
-        isFirstImage = false
-
         var next: SlideshowAsset? = nil
         do {
             next = try await slideshow.next()
@@ -706,18 +655,17 @@ struct SlideshowView: View {
             assetProgress = 0
 
             if slideshowDirection == .oldestToNewest {
-                isLastImage = true
+                showInformation("the end!")
             } else {
-                isFirstImage = true
+                showInformation(
+                    "can't go back, this is the first image / video"
+                )
             }
         }
     }
 
     private func moveToPrevious() async {
         guard let slideshow else { return }
-
-        isLastImage = false
-        isFirstImage = false
 
         var previous: SlideshowAsset? = nil
         do {
@@ -741,11 +689,12 @@ struct SlideshowView: View {
             assetProgress = 0
 
             if slideshowDirection == .oldestToNewest {
-                isFirstImage = true
+                showInformation(
+                    "can't go back, this is the first image / video"
+                )
             } else {
-                isLastImage = true
+                showInformation("the end!")
             }
-
         }
     }
 
