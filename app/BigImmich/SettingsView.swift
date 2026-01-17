@@ -1,3 +1,4 @@
+import Combine
 import ImmichAPI
 import KeychainHelper
 import SwiftUI
@@ -39,6 +40,23 @@ enum SlideshowShowProgressBar: String, CaseIterable, Identifiable {
     case never
 
     var id: String { rawValue }
+}
+
+final class SlideshowSettings: ObservableObject {
+    @AppStorage("slideshowInterval") public var slideshowInterval: Int = 5
+    @AppStorage("slideshowDirection") public var slideshowDirection:
+        SlideshowDirection = .oldestToNewest
+    @AppStorage("slideshowLeftAction") public var slideshowLeftAction:
+        SlideshowAction = .goToNext
+    @AppStorage("slideshowRightAction") public var slideshowRightAction:
+        SlideshowAction = .goToPrevious
+    @AppStorage("slideshowOnceEndedAction") public
+        var slideshowOnceEndedAction: SlideshowOnceEndedAction = .stopAndNotify
+    @AppStorage("slideshowOnceEndedAnotherAlbum") public
+        var slideshowOnceEndedAnotherAlbumSelection:
+        SlideshowOnceEndedAnotherAlbumSelection = .random
+    @AppStorage("slideshowShowProgressBar") public
+        var slideshowShowProgressBar: SlideshowShowProgressBar = .always
 }
 
 struct SettingsView: View {

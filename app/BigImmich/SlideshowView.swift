@@ -32,20 +32,7 @@ struct SlideshowView: View {
     @State private var informations: [String] = []
 
     // loading settings
-    @AppStorage("slideshowInterval") private var slideshowInterval: Int = 5
-    @AppStorage("slideshowDirection") private var slideshowDirection:
-        SlideshowDirection = .oldestToNewest
-    @AppStorage("slideshowLeftAction") private var slideshowLeftAction:
-        SlideshowAction = .goToNext
-    @AppStorage("slideshowRightAction") private var slideshowRightAction:
-        SlideshowAction = .goToPrevious
-    @AppStorage("slideshowOnceEndedAction") private
-        var slideshowOnceEndedAction: SlideshowOnceEndedAction = .stopAndNotify
-    @AppStorage("slideshowOnceEndedAnotherAlbum") private
-        var slideshowOnceEndedAnotherAlbumSelection:
-        SlideshowOnceEndedAnotherAlbumSelection = .random
-    @AppStorage("slideshowShowProgressBar") private
-        var slideshowShowProgressBar: SlideshowShowProgressBar = .always
+    @State private var settings: SlideshowSettings = SlideshowSettings()
 
     // slideshow + overlays
     @State private var slideshowTimer: Timer? = nil
@@ -175,7 +162,7 @@ struct SlideshowView: View {
             }
 
             // progress bar
-            if slideshowShowProgressBar == .always {
+            if settings.slideshowShowProgressBar == .always {
                 GeometryReader { geometry in
                     Rectangle()
                         .fill(Color.gray.opacity(0.6))
@@ -294,7 +281,7 @@ struct SlideshowView: View {
             stopSlideshowTimer()
             stopProgressBarTimer()
 
-            switch slideshowLeftAction {
+            switch settings.slideshowLeftAction {
             case .goToNext:
                 await moveToNext()
             case .goToPrevious:
@@ -304,7 +291,7 @@ struct SlideshowView: View {
             stopSlideshowTimer()
             stopProgressBarTimer()
 
-            switch slideshowRightAction {
+            switch settings.slideshowRightAction {
             case .goToNext:
                 await moveToNext()
             case .goToPrevious:
@@ -577,7 +564,7 @@ struct SlideshowView: View {
         assetProgress = 0.0
 
         let step = 0.05
-        let totalSteps = Double(slideshowInterval) / step
+        let totalSteps = Double(settings.slideshowInterval) / step
         progressBarTimer = Timer.scheduledTimer(
             withTimeInterval: step,
             repeats: true
@@ -589,7 +576,7 @@ struct SlideshowView: View {
         }
 
         slideshowTimer = Timer.scheduledTimer(
-            withTimeInterval: TimeInterval(slideshowInterval),
+            withTimeInterval: TimeInterval(settings.slideshowInterval),
             repeats: false
         ) { _ in
             Task {
@@ -654,7 +641,7 @@ struct SlideshowView: View {
             currentPlayer?.pause()
             assetProgress = 0
 
-            if slideshowDirection == .oldestToNewest {
+            if settings.slideshowDirection == .oldestToNewest {
                 showInformation("the end!")
             } else {
                 showInformation(
@@ -688,7 +675,7 @@ struct SlideshowView: View {
             currentPlayer?.pause()
             assetProgress = 0
 
-            if slideshowDirection == .oldestToNewest {
+            if settings.slideshowDirection == .oldestToNewest {
                 showInformation(
                     "can't go back, this is the first image / video"
                 )
@@ -699,19 +686,16 @@ struct SlideshowView: View {
     }
 
     private func initSlideshow(albumID: AlbumID) async {
-        slideshow = Slideshow(
-            slideshowDirection: slideshowDirection,
-            slideshowOnceEndedAction: slideshowOnceEndedAction,
-            slideshowOnceEndedAnotherAlbumSelection:
-                slideshowOnceEndedAnotherAlbumSelection,
-        )
-        guard let slideshow else { return }
-
         do {
-            try await slideshow.load(
-                initialAlbumID: albumID,
-                initialAssetID: initialAssetID
+            slideshow = try await Slideshow(
+                settings: settings,
+                playlistGetter: SlideshowPlaylistGetter(
+                    settings: settings,
+                ),
+                initialAlbumID: initialAlbumID,
+                initialAssetID: initialAssetID,
             )
+            guard let slideshow else { return }
 
             if let currentAsset = try await slideshow.current() {
                 await loadCurrentAsset(slideshowAsset: currentAsset)
