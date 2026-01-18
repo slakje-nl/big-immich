@@ -9,7 +9,7 @@ struct SlideshowView: View {
     let initialAssetID: AssetID?
     let onExit: (AlbumID, AlbumName, AssetID?) -> Void
 
-    @State private var slideshow: Slideshow? = nil
+    @State private var slideshow: SlideshowSequencer? = nil
     @State private var slideshowAsset: SlideshowAsset? = nil
     @State private var previousAlbumID: AlbumID? = nil
 
@@ -687,7 +687,7 @@ struct SlideshowView: View {
 
     private func initSlideshow(albumID: AlbumID) async {
         do {
-            slideshow = try await Slideshow(
+            slideshow = try await SlideshowSequencer(
                 playlistGetter: SlideshowPlaylistGetter(
                     settings: settings,
                     immichClient: ImmichClient.shared,

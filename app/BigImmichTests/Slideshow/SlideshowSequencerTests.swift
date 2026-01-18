@@ -12,7 +12,7 @@ import XCTest
 @testable import BigImmich
 
 @MainActor
-struct SlideshowSingleAlbumTests {
+struct SlideshowSequencerSingleAlbumTests {
     private func verifySlideshowAsset(
         asset: SlideshowAsset?,
         albumID: String,
@@ -43,7 +43,7 @@ struct SlideshowSingleAlbumTests {
             ]
         )
 
-        let slideshow = try await Slideshow(
+        let slideshow = try await SlideshowSequencer(
             playlistGetter: playlistGetter,
             initialAlbumID: AlbumID(rawValue: "album.1"),
             initialAssetID: nil,
@@ -97,7 +97,7 @@ struct SlideshowSingleAlbumTests {
             ]
         )
 
-        let slideshow = try await Slideshow(
+        let slideshow = try await SlideshowSequencer(
             playlistGetter: playlistGetter,
             initialAlbumID: AlbumID(rawValue: "album.1"),
             initialAssetID: AssetID(rawValue: "asset.2"),
@@ -147,7 +147,7 @@ struct SlideshowSingleAlbumTests {
             ]
         )
 
-        let slideshow = try await Slideshow(
+        let slideshow = try await SlideshowSequencer(
             playlistGetter: playlistGetter,
             initialAlbumID: AlbumID(rawValue: "album.1"),
             initialAssetID: AssetID(rawValue: "asset.3"),
@@ -174,7 +174,7 @@ struct SlideshowSingleAlbumTests {
 }
 
 @MainActor
-struct SlideshowMultiAlbumTests {
+struct SlideshowSequencerMultiAlbumTests {
     private func verifySlideshowAsset(
         asset: SlideshowAsset?,
         albumID: String,
@@ -212,7 +212,7 @@ struct SlideshowMultiAlbumTests {
             ]
         )
 
-        let slideshow = try await Slideshow(
+        let slideshow = try await SlideshowSequencer(
             playlistGetter: playlistGetter,
             initialAlbumID: AlbumID(rawValue: "album.1"),
             initialAssetID: nil,
@@ -285,7 +285,7 @@ struct SlideshowMultiAlbumTests {
             ]
         )
 
-        let slideshow = try await Slideshow(
+        let slideshow = try await SlideshowSequencer(
             playlistGetter: playlistGetter,
             initialAlbumID: AlbumID(rawValue: "album.2"),
             initialAssetID: AssetID(rawValue: "asset.4"),
@@ -332,7 +332,7 @@ struct SlideshowMultiAlbumTests {
             ]
         )
 
-        let slideshow = try await Slideshow(
+        let slideshow = try await SlideshowSequencer(
             playlistGetter: playlistGetter,
             initialAlbumID: AlbumID(rawValue: "album.1"),
             initialAssetID: AssetID(rawValue: "asset.3"),

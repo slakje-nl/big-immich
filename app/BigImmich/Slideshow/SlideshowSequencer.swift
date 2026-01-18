@@ -18,7 +18,7 @@ struct SlideshowAsset {
     let counter: SlideshowCounter
 }
 
-class Slideshow {
+class SlideshowSequencer {
     let playlistGetter: SlideshowPlaylistGetterProtocol
 
     var albumPlaylist: Playlist<AlbumSummary>
