@@ -11,7 +11,7 @@ import TVServices
 class ContentProvider: TVTopShelfContentProvider {
 
     override func loadTopShelfContent() async -> (any TVTopShelfContent)? {
-        guard let albums = try? await ImmichClient.shared.findAlbums() else {
+        guard let albums = try? await ImmichClient.shared.findAlbums(order: .fromNewest) else {
             return nil
         }
 
@@ -25,11 +25,11 @@ class ContentProvider: TVTopShelfContentProvider {
         return content
     }
 
-    private func generateTopShelfItem(album: Album) async
+    private func generateTopShelfItem(album: AlbumSummary) async
         -> TVTopShelfSectionedItem
     {
-        let item = TVTopShelfSectionedItem(identifier: album.id)
-        item.title = album.albumName
+        let item = TVTopShelfSectionedItem(identifier: album.id.string)
+        item.title = album.albumName.string
         item.imageShape = .hdtv
 
         var components = URLComponents()
@@ -37,8 +37,8 @@ class ContentProvider: TVTopShelfContentProvider {
         components.host = "album"
         components.path = "/details"
         components.queryItems = [
-            URLQueryItem(name: "albumID", value: album.id),
-            URLQueryItem(name: "albumName", value: album.albumName),
+            URLQueryItem(name: "albumID", value: album.id.string),
+            URLQueryItem(name: "albumName", value: album.albumName.string),
         ]
         if let url = components.url {
             item.displayAction = TVTopShelfAction(url: url)
@@ -55,7 +55,7 @@ class ContentProvider: TVTopShelfContentProvider {
         return item
     }
 
-    private func getThumbnailURL(album: Album) async -> URL? {
+    private func getThumbnailURL(album: AlbumSummary) async -> URL? {
         do {
             return try await ImmichAPI.shared.getUrlWithQueryAuth(
                 path: "/api/assets/\(album.albumThumbnailAssetId)/thumbnail",

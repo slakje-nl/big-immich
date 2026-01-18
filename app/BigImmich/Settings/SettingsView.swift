@@ -1,34 +1,7 @@
+import Combine
 import ImmichAPI
 import KeychainHelper
 import SwiftUI
-
-enum SlideshowDirection: String, CaseIterable, Identifiable {
-    case oldestToNewest
-    case newestToOldest
-
-    var id: String { rawValue }
-}
-
-enum SlideshowAction: String, CaseIterable, Identifiable {
-    case goToNext
-    case goToPrevious
-
-    var id: String { rawValue }
-}
-
-enum SlideshowOnceEndedAction: String, CaseIterable, Identifiable {
-    case stopAndNotify
-    case startAgain
-
-    var id: String { rawValue }
-}
-
-enum SlideshowShowProgressBar: String, CaseIterable, Identifiable {
-    case always
-    case never
-
-    var id: String { rawValue }
-}
 
 struct SettingsView: View {
     // immich settings, saved to the Keychain
@@ -48,6 +21,9 @@ struct SettingsView: View {
         SlideshowAction = .goToPrevious
     @AppStorage("slideshowOnceEndedAction") private
         var slideshowOnceEndedAction: SlideshowOnceEndedAction = .stopAndNotify
+    @AppStorage("slideshowOnceEndedAnotherAlbum") private
+        var slideshowOnceEndedAnotherAlbumSelection:
+        SlideshowOnceEndedAnotherAlbumSelection = .random
     @AppStorage("slideshowShowProgressBar") private
         var slideshowShowProgressBar: SlideshowShowProgressBar = .always
 
@@ -258,6 +234,9 @@ struct SettingsView: View {
                                 Text("newest → oldest").tag(
                                     SlideshowDirection.newestToOldest
                                 )
+                                Text("randomized").tag(
+                                    SlideshowDirection.randomized
+                                )
                             }
                             .pickerStyle(.menu)
                         }
@@ -280,8 +259,44 @@ struct SettingsView: View {
                                 Text("start again").tag(
                                     SlideshowOnceEndedAction.startAgain
                                 )
+                                Text(
+                                    "load another album (choose the next one below)"
+                                ).tag(
+                                    SlideshowOnceEndedAction.loadAnotherAlbum
+                                )
                             }
                             .pickerStyle(.menu)
+                        }
+
+                        if slideshowOnceEndedAction == .loadAnotherAlbum {
+                            HStack {
+                                Text("Next album")
+                                    .frame(
+                                        width: leftSideWidth,
+                                        alignment: .leading
+                                    )
+                                    .bold()
+
+                                Picker(
+                                    "Another album",
+                                    selection:
+                                        $slideshowOnceEndedAnotherAlbumSelection
+                                ) {
+                                    Text("older").tag(
+                                        SlideshowOnceEndedAnotherAlbumSelection
+                                            .older
+                                    )
+                                    Text("newer").tag(
+                                        SlideshowOnceEndedAnotherAlbumSelection
+                                            .newer
+                                    )
+                                    Text("random").tag(
+                                        SlideshowOnceEndedAnotherAlbumSelection
+                                            .random
+                                    )
+                                }
+                                .pickerStyle(.menu)
+                            }
                         }
 
                         HStack {

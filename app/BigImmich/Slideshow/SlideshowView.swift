@@ -4,12 +4,14 @@ import Sentry
 import SwiftUI
 
 struct SlideshowView: View {
-    let albumID: String
-    let initialAssetID: String?
-    let onExit: (String) -> Void
+    let initialAlbumID: AlbumID
+    let initialAlbumName: AlbumName
+    let initialAssetID: AssetID?
+    let onExit: (AlbumID, AlbumName, AssetID?) -> Void
 
-    @State private var assets: [AlbumAsset] = []
-    @State private var assetIndex: Int = 0
+    @State private var slideshow: SlideshowSequencer? = nil
+    @State private var slideshowAsset: SlideshowAsset? = nil
+    @State private var previousAlbumID: AlbumID? = nil
 
     // showing details of an image (when paused)
     @State private var userAssetIndex: Int = 0
@@ -27,19 +29,10 @@ struct SlideshowView: View {
     @State private var isLoading = false
     @State private var errors: [String] = []
     @State private var clearErrors: DispatchWorkItem?
+    @State private var informations: [String] = []
 
     // loading settings
-    @AppStorage("slideshowInterval") private var slideshowInterval: Int = 5
-    @AppStorage("slideshowDirection") private var slideshowDirection:
-        SlideshowDirection = .oldestToNewest
-    @AppStorage("slideshowLeftAction") private var slideshowLeftAction:
-        SlideshowAction = .goToNext
-    @AppStorage("slideshowRightAction") private var slideshowRightAction:
-        SlideshowAction = .goToPrevious
-    @AppStorage("slideshowOnceEndedAction") private
-        var slideshowOnceEndedAction: SlideshowOnceEndedAction = .stopAndNotify
-    @AppStorage("slideshowShowProgressBar") private
-        var slideshowShowProgressBar: SlideshowShowProgressBar = .always
+    @State private var settings: SlideshowSettings = SlideshowSettings()
 
     // slideshow + overlays
     @State private var slideshowTimer: Timer? = nil
@@ -52,11 +45,7 @@ struct SlideshowView: View {
     @State private var progressBarTimer: Timer? = nil
 
     // preloading assets
-    @State private var imageCache: ImageCache? = nil
-
-    // showing first / last image notice
-    @State private var isLastImage = false
-    @State private var isFirstImage = false
+    @State private var imageCache: MemoryCache<AssetID, Image>? = nil
 
     var body: some View {
         ZStack {
@@ -172,44 +161,8 @@ struct SlideshowView: View {
                 .transition(.opacity)
             }
 
-            if isLastImage {
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Text("the end!")
-                            .font(.largeTitle)
-                            .foregroundColor(.white.opacity(0.9))
-                            .padding(16)
-                            .background(
-                                Color.black.opacity(0.5).cornerRadius(12)
-                            )
-                        Spacer()
-                    }
-                }
-                .transition(.opacity)
-            }
-
-            if isFirstImage {
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Text("sorry, first image!")
-                            .font(.largeTitle)
-                            .foregroundColor(.white.opacity(0.9))
-                            .padding(16)
-                            .background(
-                                Color.black.opacity(0.5).cornerRadius(12)
-                            )
-                        Spacer()
-                    }
-                }
-                .transition(.opacity)
-            }
-
             // progress bar
-            if slideshowShowProgressBar == .always {
+            if settings.slideshowShowProgressBar == .always {
                 GeometryReader { geometry in
                     Rectangle()
                         .fill(Color.gray.opacity(0.6))
@@ -225,8 +178,8 @@ struct SlideshowView: View {
                 .ignoresSafeArea()
             }
 
-            // errors overlay
-            if !errors.isEmpty {
+            // errors and informations overlay
+            if !errors.isEmpty || !informations.isEmpty {
                 VStack {
                     Spacer()
                     HStack {
@@ -241,6 +194,17 @@ struct SlideshowView: View {
                                     .cornerRadius(10)
                                     .shadow(radius: 3)
                             }
+
+                            ForEach(informations.indices, id: \.self) { index in
+                                Text(informations[index])
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(Color.blue.opacity(0.8))
+                                    .cornerRadius(10)
+                                    .shadow(radius: 3)
+                            }
+
                         }
                         .padding(.trailing, 20)
                         .padding(.bottom, 20)
@@ -253,8 +217,8 @@ struct SlideshowView: View {
         .focusable(true)
         .onAppear {
             Task {
-                imageCache = ImageCache(countLimit: 10, megaBytesLimit: nil)
-                await initSlideshow()
+                imageCache = MemoryCache(countLimit: 10, megaBytesLimit: nil)
+                await initSlideshow(albumID: initialAlbumID)
             }
         }
         .onDisappear {
@@ -264,10 +228,25 @@ struct SlideshowView: View {
         }
         .onExitCommand {
             imageCache?.clear()
-            onExit(assets[assetIndex].id)
+
+            Task {
+                if let slideshow = slideshow,
+                    let slideshowAsset = try? await slideshow.current()
+                {
+                    onExit(
+                        slideshowAsset.album.id,
+                        slideshowAsset.album.albumName,
+                        slideshowAsset.asset.id
+                    )
+                } else {
+                    onExit(initialAlbumID, initialAlbumName, initialAssetID)
+                }
+            }
         }
         .onMoveCommand { direction in
-            handleMoveCommand(direction)
+            Task {
+                await handleMoveCommand(direction)
+            }
         }
         .onPlayPauseCommand {
             togglePause()
@@ -290,27 +269,33 @@ struct SlideshowView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 15, execute: workItem)
     }
 
-    private func handleMoveCommand(_ direction: MoveCommandDirection) {
+    func showInformation(_ message: String) {
+        withAnimation {
+            informations.append(message)
+        }
+    }
+
+    private func handleMoveCommand(_ direction: MoveCommandDirection) async {
         switch direction {
         case .left:
             stopSlideshowTimer()
             stopProgressBarTimer()
 
-            switch slideshowLeftAction {
+            switch settings.slideshowLeftAction {
             case .goToNext:
-                moveToLater()
+                await moveToNext()
             case .goToPrevious:
-                moveToEarlier()
+                await moveToPrevious()
             }
         case .right:
             stopSlideshowTimer()
             stopProgressBarTimer()
 
-            switch slideshowRightAction {
+            switch settings.slideshowRightAction {
             case .goToNext:
-                moveToLater()
+                await moveToNext()
             case .goToPrevious:
-                moveToEarlier()
+                await moveToPrevious()
             }
         case .up:
             if let player = currentPlayer {
@@ -402,38 +387,40 @@ struct SlideshowView: View {
         return city + ", " + state + ", " + country
     }
 
-    private func loadCurrentAsset() async {
+    private func loadCurrentAsset(slideshowAsset: SlideshowAsset) async {
         // stop actions
         stopSlideshowTimer()
         stopProgressBarTimer()
         stopCurrentPlayer()
 
-        guard assets.indices.contains(assetIndex) else { return }
-        let asset = assets[assetIndex]
+        let asset = slideshowAsset.asset
+        self.slideshowAsset = slideshowAsset
+
+        if previousAlbumID == nil {
+            previousAlbumID = slideshowAsset.album.id
+        }
+        withAnimation {
+            informations.removeAll()
+        }
 
         // clear state
         currentImage = nil
         currentPlayer = nil
         assetProgress = 0.0
 
-        // load variables for the overlay when paused
-        if slideshowDirection == .oldestToNewest {
-            userAssetIndex = assets.count - assetIndex
-        } else {
-            userAssetIndex = assetIndex + 1
-        }
-        userAssetsCount = assets.count
+        userAssetIndex = slideshowAsset.counter.current
+        userAssetsCount = slideshowAsset.counter.total
         userDateTime = formatDate(asset: asset)
         userLocation = formatLocation(asset: asset)
 
         do {
             if asset.type.uppercased() == "IMAGE" {
-                if let cache = imageCache, let nextImage = cache.get(assetIndex)
-                {
+                if let cache = imageCache, let nextImage = cache.get(asset.id) {
                     currentImage = nextImage
                 } else {
                     let data = try await ImmichAPI.shared.loadMediaWithRetries(
-                        path: "/api/assets/\(asset.id)/thumbnail",
+                        path:
+                            "/api/assets/\(slideshowAsset.asset.id.string)/thumbnail",
                         queryParams: ["size": "fullsize"],
                         retries: 3,
                     )
@@ -441,7 +428,7 @@ struct SlideshowView: View {
                         currentImage = Image(uiImage: uiImage)
                     } else {
                         showError("loading image failed: id=\(asset.id)")
-                        self.moveToNext()
+                        await self.moveToNext()
                         return
                     }
                 }
@@ -454,7 +441,8 @@ struct SlideshowView: View {
                 do {
                     playbackURL = try await ImmichAPI.shared
                         .getUrlWithQueryAuth(
-                            path: "/api/assets/\(asset.id)/video/playback",
+                            path:
+                                "/api/assets/\(asset.id.string)/video/playback",
                             queryParams: nil
                         )
                 } catch {
@@ -468,24 +456,30 @@ struct SlideshowView: View {
                 let player = AVPlayer(playerItem: playerItem)
                 currentPlayer = player
 
-                let oldAssetIndex = assetIndex
+                let oldAssetID = asset.id
                 DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-                    [oldAssetIndex] in
+                    [oldAssetID] in
                     // monitoring if video is started and playing in 5s
                     // there's no reason for 5s, it just sounds like a good amount of time
                     // FIXME: this is sometimes flaky, I'm not yet sure why
                     guard let player = self.currentPlayer else { return }
-                    guard self.assetIndex == oldAssetIndex else { return }
+                    guard let sAsset = self.slideshowAsset,
+                        sAsset.asset.id == oldAssetID
+                    else { return }
 
                     if player.status == .failed
                         || player.currentItem?.status == .failed
                     {
                         self.showError("video failed to load")
-                        self.moveToNext()
+                        Task {
+                            await self.moveToNext()
+                        }
                         return
                     } else if player.timeControlStatus != .playing {
                         self.showError("video did not start playing")
-                        self.moveToNext()
+                        Task {
+                            await self.moveToNext()
+                        }
                         return
                     }
                 }
@@ -502,7 +496,9 @@ struct SlideshowView: View {
                         object: currentPlayer.currentItem,
                         queue: .main
                     ) { _ in
-                        moveToNext()
+                        Task {
+                            await moveToNext()
+                        }
                     }
                 }
             }
@@ -510,45 +506,49 @@ struct SlideshowView: View {
             showError(error.localizedDescription)
             logError(error)
             isLoading = false
-            moveToNext()
+            await moveToNext()
             return
+        }
+
+        if previousAlbumID != slideshowAsset.album.id {
+            previousAlbumID = slideshowAsset.album.id
+            showInformation(
+                "switched to a new album: \(slideshowAsset.album.albumName.string)"
+            )
         }
 
         await preloadAssets()
     }
 
     private func preloadAssets() async {
-        if let laterAssetIndex = getLaterAssetIndex() {
+        guard let slideshow else { return }
+
+        if let laterAsset = try? await slideshow.previewNext() {
             await preloadAsset(
-                assetIndex: laterAssetIndex,
+                asset: laterAsset.asset,
             )
         }
-        if let earlierAssetIndex = getEarlierAssetIndex() {
+        if let earlierAsset = try? await slideshow.previewPrevious() {
             await preloadAsset(
-                assetIndex: earlierAssetIndex,
+                asset: earlierAsset.asset,
             )
         }
     }
 
-    private func preloadAsset(assetIndex: Int) async {
-        let nextAsset = assets[assetIndex]
-
-        if let cache = imageCache, nextAsset.type.uppercased() == "IMAGE" {
-            guard cache.get(assetIndex) == nil else { return }
+    private func preloadAsset(asset: AlbumAsset) async {
+        if let cache = imageCache, asset.type.uppercased() == "IMAGE" {
+            guard cache.get(asset.id) == nil else { return }
 
             do {
                 let data = try await ImmichAPI.shared.loadMediaWithRetries(
-                    path: "/api/assets/\(nextAsset.id)/thumbnail",
+                    path: "/api/assets/\(asset.id.string)/thumbnail",
                     queryParams: ["size": "fullsize"],
                     retries: 2
                 )
                 if let uiImage = UIImage(data: data) {
-                    cache.set(assetIndex, image: Image(uiImage: uiImage))
+                    cache.set(asset.id, value: Image(uiImage: uiImage))
                 }
             } catch {
-                showError(
-                    "preloading image failed: \(error.localizedDescription)"
-                )
                 logError(error)
                 return
             }
@@ -564,7 +564,7 @@ struct SlideshowView: View {
         assetProgress = 0.0
 
         let step = 0.05
-        let totalSteps = Double(slideshowInterval) / step
+        let totalSteps = Double(settings.slideshowInterval) / step
         progressBarTimer = Timer.scheduledTimer(
             withTimeInterval: step,
             repeats: true
@@ -576,10 +576,12 @@ struct SlideshowView: View {
         }
 
         slideshowTimer = Timer.scheduledTimer(
-            withTimeInterval: TimeInterval(slideshowInterval),
+            withTimeInterval: TimeInterval(settings.slideshowInterval),
             repeats: false
         ) { _ in
-            moveToNext()
+            Task {
+                await moveToNext()
+            }
         }
     }
 
@@ -615,24 +617,22 @@ struct SlideshowView: View {
         currentPlayer = nil
     }
 
-    private func moveToNext() {
-        if slideshowDirection == .oldestToNewest {
-            moveToLater()
-        } else {
-            moveToEarlier()
+    private func moveToNext() async {
+        guard let slideshow else { return }
+
+        var next: SlideshowAsset? = nil
+        do {
+            next = try await slideshow.next()
+        } catch {
+            showError("couldn't fetch the next asset: \(error)")
+            return
         }
-    }
 
-    private func moveToLater() {
-        isLastImage = false
-        isFirstImage = false
-
-        if let nextIndex = getLaterAssetIndex() {
+        if let next {
             stopCurrentPlayer()
 
-            assetIndex = nextIndex
             Task {
-                await loadCurrentAsset()
+                await loadCurrentAsset(slideshowAsset: next)
             }
         } else {
             // later asset doesn't exist
@@ -641,24 +641,32 @@ struct SlideshowView: View {
             currentPlayer?.pause()
             assetProgress = 0
 
-            if slideshowDirection == .oldestToNewest {
-                isLastImage = true
+            if settings.slideshowDirection == .oldestToNewest {
+                showInformation("the end!")
             } else {
-                isFirstImage = true
+                showInformation(
+                    "can't go back, this is the first image / video"
+                )
             }
         }
     }
 
-    private func moveToEarlier() {
-        isLastImage = false
-        isFirstImage = false
+    private func moveToPrevious() async {
+        guard let slideshow else { return }
 
-        if let previousIndex = getEarlierAssetIndex() {
+        var previous: SlideshowAsset? = nil
+        do {
+            previous = try await slideshow.previous()
+        } catch {
+            showError("couldn't fetch the previous asset: \(error)")
+            return
+        }
+
+        if let previous {
             stopCurrentPlayer()
 
-            assetIndex = previousIndex
             Task {
-                await loadCurrentAsset()
+                await loadCurrentAsset(slideshowAsset: previous)
             }
         } else {
             // earlier asset doesn't exist
@@ -667,70 +675,34 @@ struct SlideshowView: View {
             currentPlayer?.pause()
             assetProgress = 0
 
-            if slideshowDirection == .oldestToNewest {
-                isFirstImage = true
+            if settings.slideshowDirection == .oldestToNewest {
+                showInformation(
+                    "can't go back, this is the first image / video"
+                )
             } else {
-                isLastImage = true
+                showInformation("the end!")
             }
-
         }
     }
 
-    private func getLaterAssetIndex() -> Int? {
-        if assetIndex > 0 {
-            return assetIndex - 1
-        }
-
-        switch slideshowOnceEndedAction {
-        case .stopAndNotify:
-            return nil
-        case .startAgain:
-            return assets.count - 1
-        }
-
-    }
-
-    private func getEarlierAssetIndex() -> Int? {
-        if assetIndex < assets.count - 1 {
-            return assetIndex + 1
-        }
-
-        switch slideshowOnceEndedAction {
-        case .stopAndNotify:
-            return nil
-        case .startAgain:
-            return 0
-        }
-    }
-
-    private func initSlideshow() async {
-        await loadAlbum()
-
-        var defaultAssetIndex: Int
-        if slideshowDirection == .oldestToNewest {
-            defaultAssetIndex = assets.count - 1
-        } else {
-            defaultAssetIndex = 0
-        }
-
-        assetIndex =
-            assets.firstIndex { $0.id == initialAssetID } ?? defaultAssetIndex
-
-        await loadCurrentAsset()
-    }
-
-    private func loadAlbum() async {
-        isLoading = true
+    private func initSlideshow(albumID: AlbumID) async {
         do {
-            let album: Album = try await ImmichAPI.shared.loadObject(
-                path: "/api/albums/\(albumID)",
-                queryParams: [:],
+            slideshow = try await SlideshowSequencer(
+                playlistGetter: SlideshowPlaylistGetter(
+                    settings: settings,
+                    immichClient: ImmichClient.shared,
+                ),
+                initialAlbumID: initialAlbumID,
+                initialAssetID: initialAssetID,
             )
-            assets = album.assets
+            guard let slideshow else { return }
+
+            if let currentAsset = try await slideshow.current() {
+                await loadCurrentAsset(slideshowAsset: currentAsset)
+            }
         } catch {
             showError(error.localizedDescription)
             logError(error)
         }
-        isLoading = false
     }
 }

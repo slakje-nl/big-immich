@@ -1,11 +1,12 @@
+import ImmichAPI
 import SwiftUI
 
 struct ContentView: View {
     @State private var selectedTab: Tab = .albums
 
-    @State private var albumID: String? = nil
-    @State private var albumName: String? = nil
-    @State private var assetID: String? = nil
+    @State private var albumID: AlbumID? = nil
+    @State private var albumName: AlbumName? = nil
+    @State private var assetID: AssetID? = nil
 
     @State private var isShowingSlideshow = false
     @State private var albumDetailsInitialyFocusedButton: ButtonFocus =
@@ -13,14 +14,19 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            if isShowingSlideshow, let albumID = albumID {
+            if isShowingSlideshow, let curentAlbumID = albumID,
+                let currentAlbumName = albumName
+            {
                 SlideshowView(
-                    albumID: albumID,
+                    initialAlbumID: curentAlbumID,
+                    initialAlbumName: currentAlbumName,
                     initialAssetID: assetID,
-                    onExit: { exitAssetID in
+                    onExit: { exitAlbumID, exitAlbumName, exitAssetID in
                         selectedTab = .albumAssets
 
                         isShowingSlideshow = false
+                        albumID = exitAlbumID
+                        albumName = exitAlbumName
                         assetID = exitAssetID
                     },
                 )
@@ -32,12 +38,12 @@ struct ContentView: View {
                         if selectedTab == .albumAssets,
                             let albumName = albumName
                         {
-                            Text(albumName).tag(Tab.albumAssets)
+                            Text(albumName.string).tag(Tab.albumAssets)
                         }
                         if selectedTab == .albumDetails,
                             let albumName = albumName
                         {
-                            Text(albumName).tag(Tab.albumDetails)
+                            Text(albumName.string).tag(Tab.albumDetails)
                         }
                         Text("Settings").tag(Tab.settings)
                     }
@@ -165,8 +171,8 @@ struct ContentView: View {
         )
         guard let selectedAlbumID, let selectedAlbumName else { return }
 
-        albumID = selectedAlbumID
-        albumName = selectedAlbumName
+        albumID = AlbumID(rawValue: selectedAlbumID)
+        albumName = AlbumName(rawValue: selectedAlbumName)
         assetID = nil
         albumDetailsInitialyFocusedButton = .slideshow
 

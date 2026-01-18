@@ -3,11 +3,11 @@ import Sentry
 import SwiftUI
 
 struct AlbumsView: View {
-    let initialAlbumID: String?
-    let onSelectAlbum: (String, String) -> Void
+    let initialAlbumID: AlbumID?
+    let onSelectAlbum: (AlbumID, AlbumName) -> Void
 
     @FocusState private var focusedAlbumIndex: Int?
-    @State private var albums: [Album] = []
+    @State private var albums: [AlbumSummary] = []
     @State private var isLoading = false
     @State private var loadedAssets: Int = 0
     @State private var errors: [String] = []
@@ -77,7 +77,7 @@ struct AlbumsView: View {
                                     }
                                     .id(index)
 
-                                    Text(album.albumName)
+                                    Text(album.albumName.string)
                                         .foregroundColor(.white)
                                         .font(.caption)
                                         .lineLimit(1)
@@ -116,7 +116,9 @@ struct AlbumsView: View {
     private func loadAlbums() async {
         isLoading = true
         do {
-            self.albums = try await ImmichClient.shared.findAlbums()
+            self.albums = try await ImmichClient.shared.findAlbums(
+                order: .fromNewest
+            )
         } catch ImmichAPIError.missingConfig {
             notYetSetUp = true
         } catch {

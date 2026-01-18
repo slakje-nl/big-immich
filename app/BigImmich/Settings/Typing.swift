@@ -1,0 +1,79 @@
+//
+//  Settings.swift
+//  BigImmich
+//
+//  Created by Maciej Płoński on 18/01/2026.
+//
+
+import Combine
+import ImmichAPI
+import KeychainHelper
+import SwiftUI
+
+enum SlideshowDirection: String, CaseIterable, Identifiable {
+    case oldestToNewest
+    case newestToOldest
+    case randomized
+
+    var id: String { rawValue }
+}
+
+enum SlideshowAction: String, CaseIterable, Identifiable {
+    case goToNext
+    case goToPrevious
+
+    var id: String { rawValue }
+}
+
+enum SlideshowOnceEndedAction: String, CaseIterable, Identifiable {
+    case stopAndNotify
+    case startAgain
+    case loadAnotherAlbum
+
+    var id: String { rawValue }
+}
+
+enum SlideshowOnceEndedAnotherAlbumSelection: String, CaseIterable, Identifiable
+{
+    case older
+    case newer
+    case random
+
+    var id: String { rawValue }
+}
+
+enum SlideshowShowProgressBar: String, CaseIterable, Identifiable {
+    case always
+    case never
+
+    var id: String { rawValue }
+}
+
+protocol SlideshowSettingsProtocol {
+    var slideshowInterval: Int { get set }
+    var slideshowDirection: SlideshowDirection { get set }
+    var slideshowLeftAction: SlideshowAction { get set }
+    var slideshowRightAction: SlideshowAction { get set }
+    var slideshowOnceEndedAction: SlideshowOnceEndedAction { get set }
+    var slideshowOnceEndedAnotherAlbumSelection:
+        SlideshowOnceEndedAnotherAlbumSelection
+    { get set }
+    var slideshowShowProgressBar: SlideshowShowProgressBar { get set }
+}
+
+final class SlideshowSettings: ObservableObject, SlideshowSettingsProtocol {
+    @AppStorage("slideshowInterval") public var slideshowInterval: Int = 5
+    @AppStorage("slideshowDirection") public var slideshowDirection:
+        SlideshowDirection = .oldestToNewest
+    @AppStorage("slideshowLeftAction") public var slideshowLeftAction:
+        SlideshowAction = .goToNext
+    @AppStorage("slideshowRightAction") public var slideshowRightAction:
+        SlideshowAction = .goToPrevious
+    @AppStorage("slideshowOnceEndedAction") public
+        var slideshowOnceEndedAction: SlideshowOnceEndedAction = .stopAndNotify
+    @AppStorage("slideshowOnceEndedAnotherAlbum") public
+        var slideshowOnceEndedAnotherAlbumSelection:
+        SlideshowOnceEndedAnotherAlbumSelection = .random
+    @AppStorage("slideshowShowProgressBar") public
+        var slideshowShowProgressBar: SlideshowShowProgressBar = .always
+}
