@@ -641,12 +641,12 @@ struct SlideshowView: View {
             currentPlayer?.pause()
             assetProgress = 0
 
-            if settings.slideshowDirection == .oldestToNewest {
-                showInformation("the end!")
-            } else {
+            if settings.slideshowDirection == .newestToOldest {
                 showInformation(
                     "can't go back, this is the first image / video"
                 )
+            } else {
+                showInformation("the end!")
             }
         }
     }
@@ -675,12 +675,12 @@ struct SlideshowView: View {
             currentPlayer?.pause()
             assetProgress = 0
 
-            if settings.slideshowDirection == .oldestToNewest {
+            if settings.slideshowDirection == .newestToOldest {
+                showInformation("the end!")
+            } else {
                 showInformation(
                     "can't go back, this is the first image / video"
                 )
-            } else {
-                showInformation("the end!")
             }
         }
     }
