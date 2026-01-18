@@ -42,7 +42,19 @@ enum SlideshowShowProgressBar: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-final class SlideshowSettings: ObservableObject {
+protocol SlideshowSettingsProtocol {
+    var slideshowInterval: Int { get set }
+    var slideshowDirection: SlideshowDirection { get set }
+    var slideshowLeftAction: SlideshowAction { get set }
+    var slideshowRightAction: SlideshowAction { get set }
+    var slideshowOnceEndedAction: SlideshowOnceEndedAction { get set }
+    var slideshowOnceEndedAnotherAlbumSelection:
+        SlideshowOnceEndedAnotherAlbumSelection
+    { get set }
+    var slideshowShowProgressBar: SlideshowShowProgressBar { get set }
+}
+
+final class SlideshowSettings: ObservableObject, SlideshowSettingsProtocol {
     @AppStorage("slideshowInterval") public var slideshowInterval: Int = 5
     @AppStorage("slideshowDirection") public var slideshowDirection:
         SlideshowDirection = .oldestToNewest

@@ -688,9 +688,9 @@ struct SlideshowView: View {
     private func initSlideshow(albumID: AlbumID) async {
         do {
             slideshow = try await Slideshow(
-                settings: settings,
                 playlistGetter: SlideshowPlaylistGetter(
                     settings: settings,
+                    immichClient: ImmichClient.shared,
                 ),
                 initialAlbumID: initialAlbumID,
                 initialAssetID: initialAssetID,

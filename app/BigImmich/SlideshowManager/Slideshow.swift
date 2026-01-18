@@ -19,7 +19,6 @@ struct SlideshowAsset {
 }
 
 class Slideshow {
-    let settings: SlideshowSettings
     let playlistGetter: SlideshowPlaylistGetterProtocol
 
     var albumPlaylist: Playlist<AlbumSummary>
@@ -29,12 +28,10 @@ class Slideshow {
     var assetIndex: Int = 0
 
     public init(
-        settings: SlideshowSettings,
         playlistGetter: SlideshowPlaylistGetterProtocol,
         initialAlbumID: AlbumID,
         initialAssetID: AssetID?
     ) async throws {
-        self.settings = settings
         self.playlistGetter = playlistGetter
 
         self.assetsPlaylist = MemoryCache(countLimit: 10)
