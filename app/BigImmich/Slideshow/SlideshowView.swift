@@ -270,6 +270,30 @@ struct SlideshowView: View {
     }
 
     func showInformation(_ message: String) {
+        let easterEggs = [
+            message,
+            "=^..^=",
+            "‘-‘_@_",
+            "----{,_,\">",
+            "><((((\">",
+            "~~(^._.^)~~",
+            ",/\\,/\\,/\\,/\\,/\\,/\\,o",
+            "<(‘–‘)>",
+            "///\\\\oo/\\\\\\",
+        ]
+        for (i, egg) in easterEggs.enumerated() {
+            let count = informations.count { $0 == egg }
+
+            if count >= 5 {
+                withAnimation {
+                    informations.removeAll { $0 == egg }
+                    if easterEggs.indices.contains(i + 1) {
+                        informations.append(easterEggs[i + 1])
+                    }
+                }
+            }
+        }
+
         withAnimation {
             informations.append(message)
         }
