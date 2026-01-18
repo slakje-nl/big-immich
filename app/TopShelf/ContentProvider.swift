@@ -11,7 +11,11 @@ import TVServices
 class ContentProvider: TVTopShelfContentProvider {
 
     override func loadTopShelfContent() async -> (any TVTopShelfContent)? {
-        guard let albums = try? await ImmichClient.shared.findAlbums(order: .fromNewest) else {
+        guard
+            let albums = try? await ImmichClient.shared.findAlbums(
+                order: .fromNewest
+            )
+        else {
             return nil
         }
 
@@ -58,7 +62,8 @@ class ContentProvider: TVTopShelfContentProvider {
     private func getThumbnailURL(album: AlbumSummary) async -> URL? {
         do {
             return try await ImmichAPI.shared.getUrlWithQueryAuth(
-                path: "/api/assets/\(album.albumThumbnailAssetId)/thumbnail",
+                path:
+                    "/api/assets/\(album.albumThumbnailAssetId.string)/thumbnail",
                 queryParams: ["size": "preview"]
             )
         } catch {
