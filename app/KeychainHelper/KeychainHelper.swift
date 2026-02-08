@@ -125,7 +125,7 @@ public class KeychainHelper {
         }
 
         // temporary migration to a keychain with access group
-        if let oldValue = self.load(forKey: key, withAccessGroup: false) {
+        if withAccessGroup, let oldValue = self.load(forKey: key, withAccessGroup: false) {
             if save(oldValue, forKey: key) {
                 return oldValue
             }
