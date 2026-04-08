@@ -43,12 +43,12 @@ public class ImmichClient: ImmichClientProtocol {
     }
 
     public func findAlbums(order: AlbumsOrder) async throws -> [AlbumSummary] {
-        let ownAlbums: [AlbumSummary] = try await ImmichAPI.shared.loadObject(
+        let ownAlbums: [AlbumSummary] = try await ImmichAPI.shared.loadArray(
             path: "/api/albums",
             queryParams: [:],
         )
         let sharedAlbums: [AlbumSummary] = try await ImmichAPI.shared
-            .loadObject(
+            .loadArray(
                 path: "/api/albums",
                 queryParams: ["shared": "true"],
             )

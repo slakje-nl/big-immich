@@ -188,7 +188,7 @@ struct SettingsView: View {
 
                         Text("Report it on our GitHub to improve this app!")
                         Text(
-                            "Visit: https://github.com/sokoli-media/big-immich"
+                            "Visit: https://github.com/slakje-nl/big-immich"
                         )
 
                         Divider().frame(
@@ -539,10 +539,7 @@ struct SettingsView: View {
 
     private func testConnection() async {
         do {
-            let _: [Album] = try await ImmichAPI.shared.loadObject(
-                path: "/api/albums",
-                queryParams: ["shared": "true"],
-            )
+            let _ = try await ImmichClient.shared.findAlbums(order: .fromOldest)
 
             connectionTested = true
             connectionWorking = true
