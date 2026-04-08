@@ -188,7 +188,7 @@ struct SettingsView: View {
 
                         Text("Report it on our GitHub to improve this app!")
                         Text(
-                            "Visit: https://github.com/sokoli-media/big-immich"
+                            "Visit: https://github.com/slakje-nl/big-immich"
                         )
 
                         Divider().frame(
