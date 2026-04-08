@@ -108,13 +108,13 @@ class ImmichAPIClient {
         return request
     }
 
-    public func loadObject<T: Decodable>(
+    private func request(
         httpMethod: String,
         path: String,
         queryParams: [String: String]?,
         headers: [String: String]?,
         jsonPayload: [String: String]?
-    ) async throws -> T {
+    ) async throws -> Data {
         let request = try await prepareRequest(
             httpMethod: httpMethod,
             path: path,
@@ -136,29 +136,75 @@ class ImmichAPIClient {
             )
         }
 
+        return data
+    }
+
+    private func getErrorMessage(error: DecodingError) -> String {
+        switch error {
+        case .typeMismatch(let type, let context):
+            return
+                "Type mismatch for type \(type), codingPath: \(context.codingPath), debugDescription: \(context.debugDescription)"
+        case .valueNotFound(let type, let context):
+            return
+                "Value not found for type \(type), codingPath: \(context.codingPath), debugDescription: \(context.debugDescription)"
+        case .keyNotFound(let key, let context):
+            return
+                "Key '\(key.stringValue)' not found, codingPath: \(context.codingPath), debugDescription: \(context.debugDescription)"
+        case .dataCorrupted(let context):
+            return
+                "Data corrupted, codingPath: \(context.codingPath), debugDescription: \(context.debugDescription)"
+        @unknown default:
+            return "Unknown decoding error: \(error)"
+        }
+    }
+
+    public func loadObject<T: Decodable>(
+        httpMethod: String,
+        path: String,
+        queryParams: [String: String]?,
+        headers: [String: String]?,
+        jsonPayload: [String: String]?
+    ) async throws -> T {
+        let data = try await request(
+            httpMethod: httpMethod,
+            path: path,
+            queryParams: queryParams,
+            headers: headers,
+            jsonPayload: jsonPayload
+        )
+
         do {
             return try JSONDecoder().decode(T.self, from: data)
         } catch let decodingError as DecodingError {
-            var errorMessage: String
+            throw ImmichAPIError.badJsonResponse(
+                description: getErrorMessage(error: decodingError)
+            )
+        }
+    }
 
-            switch decodingError {
-            case .typeMismatch(let type, let context):
-                errorMessage =
-                    "Type mismatch for type \(type), codingPath: \(context.codingPath), debugDescription: \(context.debugDescription)"
-            case .valueNotFound(let type, let context):
-                errorMessage =
-                    "Value not found for type \(type), codingPath: \(context.codingPath), debugDescription: \(context.debugDescription)"
-            case .keyNotFound(let key, let context):
-                errorMessage =
-                    "Key '\(key.stringValue)' not found, codingPath: \(context.codingPath), debugDescription: \(context.debugDescription)"
-            case .dataCorrupted(let context):
-                errorMessage =
-                    "Data corrupted, codingPath: \(context.codingPath), debugDescription: \(context.debugDescription)"
-            @unknown default:
-                errorMessage = "Unknown decoding error: \(decodingError)"
-            }
+    public func loadArray<T: Decodable>(
+        httpMethod: String,
+        path: String,
+        queryParams: [String: String]?,
+        headers: [String: String]? = nil,
+        jsonPayload: [String: String]? = nil
+    ) async throws -> [T] {
+        let data = try await request(
+            httpMethod: httpMethod,
+            path: path,
+            queryParams: queryParams,
+            headers: headers,
+            jsonPayload: jsonPayload
+        )
 
-            throw ImmichAPIError.badJsonResponse(description: errorMessage)
+        do {
+            // Decode using LossyArray (ignores elements on failure)
+            return try JSONDecoder().decode(LossyArray<T>.self, from: data)
+                .elements
+        } catch let decodingError as DecodingError {
+            throw ImmichAPIError.badJsonResponse(
+                description: getErrorMessage(error: decodingError)
+            )
         }
     }
 
@@ -360,6 +406,39 @@ public actor ImmichAPI {
 
             return try await ImmichAPIClient(baseURL: config.baseURL)
                 .loadObject(
+                    httpMethod: "GET",
+                    path: path,
+                    queryParams: queryParams,
+                    headers: await findAuthHeaders(),
+                    jsonPayload: nil,
+                )
+        } catch {
+            throw error
+        }
+    }
+
+    public func loadArray<T: Decodable>(
+        path: String,
+        queryParams: [String: String]?
+    ) async throws -> [T] {
+        guard let config = getConfig() else {
+            throw ImmichAPIError.missingConfig
+        }
+
+        do {
+            return try await ImmichAPIClient(baseURL: config.baseURL)
+                .loadArray(
+                    httpMethod: "GET",
+                    path: path,
+                    queryParams: queryParams,
+                    headers: await findAuthHeaders(),
+                    jsonPayload: nil,
+                )
+        } catch ImmichAPIError.unauthorized {
+            await ImmichAPIAuthenticator.shared.logout()
+
+            return try await ImmichAPIClient(baseURL: config.baseURL)
+                .loadArray(
                     httpMethod: "GET",
                     path: path,
                     queryParams: queryParams,

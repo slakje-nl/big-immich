@@ -539,10 +539,7 @@ struct SettingsView: View {
 
     private func testConnection() async {
         do {
-            let _: [Album] = try await ImmichAPI.shared.loadObject(
-                path: "/api/albums",
-                queryParams: ["shared": "true"],
-            )
+            let _ = try await ImmichClient.shared.findAlbums(order: .fromOldest)
 
             connectionTested = true
             connectionWorking = true
