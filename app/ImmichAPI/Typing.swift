@@ -12,10 +12,6 @@ public protocol CustomString: RawRepresentable, Codable, Hashable, Equatable
 }
 
 public extension CustomString {
-    init(rawValue: String) {
-        self.init(rawValue: rawValue)
-    }
-
     var string: String {
         rawValue
     }

@@ -160,7 +160,7 @@ struct AlbumDetailsView: View {
             }
         }
 
-        return "no idea :wtf:"
+        return "no items"
     }
 
     private func getSlideshowDurationText() -> String {
@@ -175,31 +175,6 @@ struct AlbumDetailsView: View {
         }
 
         return "\(duration) minutes"
-    }
-
-    private func loadThumbnail() {
-        if let album {
-            Task {
-                do {
-                    let data = try await ImmichAPI.shared.loadMediaWithRetries(
-                        path:
-                        "/api/assets/\(album.albumThumbnailAssetId.string)/thumbnail",
-                        queryParams: ["size": "preview"],
-                        retries: 3
-                    )
-                    if let uiImage = UIImage(data: data) {
-                        thumbnailImage = Image(uiImage: uiImage)
-                    } else {
-                        errors.append(
-                            "thumbnail couldn't get loaded into UIImage"
-                        )
-                    }
-                } catch {
-                    errors.append("\(error.localizedDescription)")
-                    logError(error)
-                }
-            }
-        }
     }
 
     private func loadAlbumDetail() async {

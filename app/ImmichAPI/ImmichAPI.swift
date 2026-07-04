@@ -37,7 +37,7 @@ public struct ImmichAPIConfig {
     /// api-key based auth
     let APIKey: String
 
-    // email/passwoed based auth
+    // email/password based auth
     let email: String
     let password: String
 }
