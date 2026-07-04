@@ -9,7 +9,9 @@ public enum AlbumsOrder: String, CaseIterable, Identifiable {
     case fromOldest
     case fromNewest
 
-    public var id: String { rawValue }
+    public var id: String {
+        rawValue
+    }
 }
 
 public protocol ImmichClientProtocol {
@@ -45,20 +47,20 @@ public class ImmichClient: ImmichClientProtocol {
     public func findAlbums(order: AlbumsOrder) async throws -> [AlbumSummary] {
         let ownAlbums: [AlbumSummary] = try await ImmichAPI.shared.loadArray(
             path: "/api/albums",
-            queryParams: [:],
+            queryParams: [:]
         )
         let sharedAlbums: [AlbumSummary] = try await ImmichAPI.shared
             .loadArray(
                 path: "/api/albums",
-                queryParams: ["shared": "true"],
+                queryParams: ["shared": "true"]
             )
         return joinAlbums(order: order, albumLists: [ownAlbums, sharedAlbums])
     }
 
     public func getAlbum(albumID: AlbumID) async throws -> Album {
-        return try await ImmichAPI.shared.loadObject(
+        try await ImmichAPI.shared.loadObject(
             path: "/api/albums/\(albumID.string)",
-            queryParams: [:],
+            queryParams: [:]
         )
     }
 }

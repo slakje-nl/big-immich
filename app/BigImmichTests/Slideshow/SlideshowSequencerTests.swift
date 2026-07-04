@@ -1,15 +1,14 @@
 //
-//  SlideshowTests.swift
+//  SlideshowSequencerTests.swift
 //  BigImmich
 //
 //  Created by Maciej Płoński on 18/01/2026.
 //
 
+@testable import BigImmich
 import ImmichAPI
 import Testing
 import XCTest
-
-@testable import BigImmich
 
 @MainActor
 struct SlideshowSequencerSingleAlbumTests {
@@ -29,16 +28,16 @@ struct SlideshowSequencerSingleAlbumTests {
                 elements: [
                     AlbumSummary.dummy(id: "album.1")
                 ],
-                looped: false,
+                looped: false
             ),
             assetsPlaylists: [
                 AlbumID(rawValue: "album.1"): Playlist(
                     elements: [
                         AlbumAsset.dummy(id: "asset.1"),
                         AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3"),
+                        AlbumAsset.dummy(id: "asset.3")
                     ],
-                    looped: false,
+                    looped: false
                 )
             ]
         )
@@ -46,34 +45,34 @@ struct SlideshowSequencerSingleAlbumTests {
         let slideshow = try await SlideshowSequencer(
             playlistGetter: playlistGetter,
             initialAlbumID: AlbumID(rawValue: "album.1"),
-            initialAssetID: nil,
+            initialAssetID: nil
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.current(),
+            asset: slideshow.current(),
             albumID: "album.1",
-            assetID: "asset.1",
+            assetID: "asset.1"
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.next(),
+            asset: slideshow.next(),
             albumID: "album.1",
-            assetID: "asset.2",
+            assetID: "asset.2"
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.next(),
+            asset: slideshow.next(),
             albumID: "album.1",
-            assetID: "asset.3",
+            assetID: "asset.3"
         )
 
         let assetOnceFinished = try await slideshow.next()
         XCTAssertNil(assetOnceFinished)
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.current(),
+            asset: slideshow.current(),
             albumID: "album.1",
-            assetID: "asset.3",
+            assetID: "asset.3"
         )
     }
 
@@ -83,16 +82,16 @@ struct SlideshowSequencerSingleAlbumTests {
                 elements: [
                     AlbumSummary.dummy(id: "album.1")
                 ],
-                looped: false,
+                looped: false
             ),
             assetsPlaylists: [
                 AlbumID(rawValue: "album.1"): Playlist(
                     elements: [
                         AlbumAsset.dummy(id: "asset.1"),
                         AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3"),
+                        AlbumAsset.dummy(id: "asset.3")
                     ],
-                    looped: false,
+                    looped: false
                 )
             ]
         )
@@ -100,28 +99,28 @@ struct SlideshowSequencerSingleAlbumTests {
         let slideshow = try await SlideshowSequencer(
             playlistGetter: playlistGetter,
             initialAlbumID: AlbumID(rawValue: "album.1"),
-            initialAssetID: AssetID(rawValue: "asset.2"),
+            initialAssetID: AssetID(rawValue: "asset.2")
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.current(),
+            asset: slideshow.current(),
             albumID: "album.1",
-            assetID: "asset.2",
+            assetID: "asset.2"
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.previous(),
+            asset: slideshow.previous(),
             albumID: "album.1",
-            assetID: "asset.1",
+            assetID: "asset.1"
         )
 
         let assetBeforeTheFirstOne = try await slideshow.previous()
         XCTAssertNil(assetBeforeTheFirstOne)
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.current(),
+            asset: slideshow.current(),
             albumID: "album.1",
-            assetID: "asset.1",
+            assetID: "asset.1"
         )
     }
 
@@ -131,18 +130,18 @@ struct SlideshowSequencerSingleAlbumTests {
                 elements: [
                     AlbumSummary.dummy(id: "album.0"),
                     AlbumSummary.dummy(id: "album.1"),
-                    AlbumSummary.dummy(id: "album.2"),
+                    AlbumSummary.dummy(id: "album.2")
                 ],
-                looped: false,
+                looped: false
             ),
             assetsPlaylists: [
                 AlbumID(rawValue: "album.1"): Playlist(
                     elements: [
                         AlbumAsset.dummy(id: "asset.1"),
                         AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3"),
+                        AlbumAsset.dummy(id: "asset.3")
                     ],
-                    looped: true,
+                    looped: true
                 )
             ]
         )
@@ -150,25 +149,25 @@ struct SlideshowSequencerSingleAlbumTests {
         let slideshow = try await SlideshowSequencer(
             playlistGetter: playlistGetter,
             initialAlbumID: AlbumID(rawValue: "album.1"),
-            initialAssetID: AssetID(rawValue: "asset.3"),
+            initialAssetID: AssetID(rawValue: "asset.3")
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.current(),
+            asset: slideshow.current(),
             albumID: "album.1",
-            assetID: "asset.3",
+            assetID: "asset.3"
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.next(),
+            asset: slideshow.next(),
             albumID: "album.1",
-            assetID: "asset.1",
+            assetID: "asset.1"
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.previous(),
+            asset: slideshow.previous(),
             albumID: "album.1",
-            assetID: "asset.3",
+            assetID: "asset.3"
         )
     }
 }
@@ -190,68 +189,68 @@ struct SlideshowSequencerMultiAlbumTests {
             albumPlaylist: Playlist(
                 elements: [
                     AlbumSummary.dummy(id: "album.1"),
-                    AlbumSummary.dummy(id: "album.2"),
+                    AlbumSummary.dummy(id: "album.2")
                 ],
-                looped: false,
+                looped: false
             ),
             assetsPlaylists: [
                 AlbumID(rawValue: "album.1"): Playlist(
                     elements: [
                         AlbumAsset.dummy(id: "asset.1"),
-                        AlbumAsset.dummy(id: "asset.2"),
+                        AlbumAsset.dummy(id: "asset.2")
                     ],
-                    looped: false,
+                    looped: false
                 ),
                 AlbumID(rawValue: "album.2"): Playlist(
                     elements: [
                         AlbumAsset.dummy(id: "asset.3"),
-                        AlbumAsset.dummy(id: "asset.4"),
+                        AlbumAsset.dummy(id: "asset.4")
                     ],
-                    looped: false,
-                ),
+                    looped: false
+                )
             ]
         )
 
         let slideshow = try await SlideshowSequencer(
             playlistGetter: playlistGetter,
             initialAlbumID: AlbumID(rawValue: "album.1"),
-            initialAssetID: nil,
+            initialAssetID: nil
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.current(),
+            asset: slideshow.current(),
             albumID: "album.1",
-            assetID: "asset.1",
+            assetID: "asset.1"
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.next(),
+            asset: slideshow.next(),
             albumID: "album.1",
-            assetID: "asset.2",
+            assetID: "asset.2"
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.next(),
+            asset: slideshow.next(),
             albumID: "album.2",
-            assetID: "asset.3",
+            assetID: "asset.3"
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.previous(),
+            asset: slideshow.previous(),
             albumID: "album.1",
-            assetID: "asset.2",
+            assetID: "asset.2"
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.next(),
+            asset: slideshow.next(),
             albumID: "album.2",
-            assetID: "asset.3",
+            assetID: "asset.3"
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.next(),
+            asset: slideshow.next(),
             albumID: "album.2",
-            assetID: "asset.4",
+            assetID: "asset.4"
         )
 
         let assetOnceFinished = try await slideshow.next()
@@ -263,50 +262,50 @@ struct SlideshowSequencerMultiAlbumTests {
             albumPlaylist: Playlist(
                 elements: [
                     AlbumSummary.dummy(id: "album.1"),
-                    AlbumSummary.dummy(id: "album.2"),
+                    AlbumSummary.dummy(id: "album.2")
                 ],
-                looped: true,
+                looped: true
             ),
             assetsPlaylists: [
                 AlbumID(rawValue: "album.1"): Playlist(
                     elements: [
                         AlbumAsset.dummy(id: "asset.1"),
-                        AlbumAsset.dummy(id: "asset.2"),
+                        AlbumAsset.dummy(id: "asset.2")
                     ],
-                    looped: false,
+                    looped: false
                 ),
                 AlbumID(rawValue: "album.2"): Playlist(
                     elements: [
                         AlbumAsset.dummy(id: "asset.3"),
-                        AlbumAsset.dummy(id: "asset.4"),
+                        AlbumAsset.dummy(id: "asset.4")
                     ],
-                    looped: false,
-                ),
+                    looped: false
+                )
             ]
         )
 
         let slideshow = try await SlideshowSequencer(
             playlistGetter: playlistGetter,
             initialAlbumID: AlbumID(rawValue: "album.2"),
-            initialAssetID: AssetID(rawValue: "asset.4"),
+            initialAssetID: AssetID(rawValue: "asset.4")
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.current(),
+            asset: slideshow.current(),
             albumID: "album.2",
-            assetID: "asset.4",
+            assetID: "asset.4"
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.next(),
+            asset: slideshow.next(),
             albumID: "album.1",
-            assetID: "asset.1",
+            assetID: "asset.1"
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.previous(),
+            asset: slideshow.previous(),
             albumID: "album.2",
-            assetID: "asset.4",
+            assetID: "asset.4"
         )
     }
 
@@ -316,18 +315,18 @@ struct SlideshowSequencerMultiAlbumTests {
                 elements: [
                     AlbumSummary.dummy(id: "album.0"),
                     AlbumSummary.dummy(id: "album.1"),
-                    AlbumSummary.dummy(id: "album.2"),
+                    AlbumSummary.dummy(id: "album.2")
                 ],
-                looped: true,
+                looped: true
             ),
             assetsPlaylists: [
                 AlbumID(rawValue: "album.1"): Playlist(
                     elements: [
                         AlbumAsset.dummy(id: "asset.1"),
                         AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3"),
+                        AlbumAsset.dummy(id: "asset.3")
                     ],
-                    looped: true,
+                    looped: true
                 )
             ]
         )
@@ -335,25 +334,25 @@ struct SlideshowSequencerMultiAlbumTests {
         let slideshow = try await SlideshowSequencer(
             playlistGetter: playlistGetter,
             initialAlbumID: AlbumID(rawValue: "album.1"),
-            initialAssetID: AssetID(rawValue: "asset.3"),
+            initialAssetID: AssetID(rawValue: "asset.3")
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.current(),
+            asset: slideshow.current(),
             albumID: "album.1",
-            assetID: "asset.3",
+            assetID: "asset.3"
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.next(),
+            asset: slideshow.next(),
             albumID: "album.1",
-            assetID: "asset.1",
+            assetID: "asset.1"
         )
 
         try await verifySlideshowAsset(
-            asset: try await slideshow.previous(),
+            asset: slideshow.previous(),
             albumID: "album.1",
-            assetID: "asset.3",
+            assetID: "asset.3"
         )
     }
 }

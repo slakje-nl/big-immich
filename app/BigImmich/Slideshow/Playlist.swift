@@ -1,5 +1,5 @@
 //
-//  Slideshow.swift
+//  Playlist.swift
 //  BigImmich
 //
 //  Created by Maciej Płoński on 16/01/2026.
@@ -25,7 +25,7 @@ class SlideshowPlaylistGetter: SlideshowPlaylistGetterProtocol {
     let settings: SlideshowSettingsProtocol
     let immichClient: ImmichClientProtocol
 
-    public init(
+    init(
         settings: SlideshowSettingsProtocol,
         immichClient: ImmichClientProtocol
     ) {
@@ -33,7 +33,7 @@ class SlideshowPlaylistGetter: SlideshowPlaylistGetterProtocol {
         self.immichClient = immichClient
     }
 
-    public func getAlbumsPlaylist(initialAlbumID: AlbumID) async throws
+    func getAlbumsPlaylist(initialAlbumID: AlbumID) async throws
         -> Playlist<AlbumSummary>
     {
         guard settings.slideshowOnceEndedAction == .loadAnotherAlbum else {
@@ -57,29 +57,27 @@ class SlideshowPlaylistGetter: SlideshowPlaylistGetterProtocol {
         }
     }
 
-    public func getAssetsPlaylist(albumID: AlbumID) async throws -> Playlist<
+    func getAssetsPlaylist(albumID: AlbumID) async throws -> Playlist<
         AlbumAsset
     > {
         let loadedAlbum = try await immichClient.getAlbum(albumID: albumID)
 
-        var looped: Bool
-        switch settings.slideshowOnceEndedAction {
+        var looped = switch settings.slideshowOnceEndedAction {
         case .stopAndNotify:
-            looped = false
+            false
         case .startAgain:
-            looped = true
+            true
         case .loadAnotherAlbum:
-            looped = false
+            false
         }
 
-        var assets: [AlbumAsset]
-        switch settings.slideshowDirection {
+        var assets: [AlbumAsset] = switch settings.slideshowDirection {
         case .oldestToNewest:
-            assets = loadedAlbum.assets.reversed()
+            loadedAlbum.assets.reversed()
         case .newestToOldest:
-            assets = loadedAlbum.assets
+            loadedAlbum.assets
         case .randomized:
-            assets = loadedAlbum.assets.shuffled()
+            loadedAlbum.assets.shuffled()
         }
 
         return Playlist(elements: assets, looped: looped)

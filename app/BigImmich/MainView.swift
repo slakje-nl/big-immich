@@ -4,9 +4,9 @@ import SwiftUI
 struct ContentView: View {
     @State private var selectedTab: Tab = .albums
 
-    @State private var albumID: AlbumID? = nil
-    @State private var albumName: AlbumName? = nil
-    @State private var assetID: AssetID? = nil
+    @State private var albumID: AlbumID?
+    @State private var albumName: AlbumName?
+    @State private var assetID: AssetID?
 
     @State private var isShowingSlideshow = false
     @State private var albumDetailsInitialyFocusedButton: ButtonFocus =
@@ -15,7 +15,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             if isShowingSlideshow, let curentAlbumID = albumID,
-                let currentAlbumName = albumName
+               let currentAlbumName = albumName
             {
                 SlideshowView(
                     initialAlbumID: curentAlbumID,
@@ -28,7 +28,7 @@ struct ContentView: View {
                         albumID = exitAlbumID
                         albumName = exitAlbumName
                         assetID = exitAssetID
-                    },
+                    }
                 )
                 .zIndex(50)
             } else {
@@ -36,12 +36,12 @@ struct ContentView: View {
                     Picker("Menu", selection: $selectedTab) {
                         Text("Albums").tag(Tab.albums)
                         if selectedTab == .albumAssets,
-                            let albumName = albumName
+                           let albumName
                         {
                             Text(albumName.string).tag(Tab.albumAssets)
                         }
                         if selectedTab == .albumDetails,
-                            let albumName = albumName
+                           let albumName
                         {
                             Text(albumName.string).tag(Tab.albumDetails)
                         }
@@ -84,14 +84,14 @@ struct ContentView: View {
                                 albumDetailsInitialyFocusedButton = .slideshow
 
                                 selectedTab = .albumDetails
-                            },
+                            }
                         )
                     case .albumDetails:
                         if let currentAlbumID = albumID {
                             AlbumDetailsView(
                                 albumID: currentAlbumID,
                                 initialyFocusedButton:
-                                    albumDetailsInitialyFocusedButton,
+                                albumDetailsInitialyFocusedButton,
                                 startSlideshow: {
                                     assetID = nil
 
@@ -104,7 +104,7 @@ struct ContentView: View {
                                 },
                                 onExit: {
                                     selectedTab = .albums
-                                },
+                                }
                             )
                         }
                     case .albumAssets:
@@ -121,7 +121,7 @@ struct ContentView: View {
                                     selectedTab = .albumDetails
                                     albumDetailsInitialyFocusedButton =
                                         .viewAssets
-                                },
+                                }
                             )
                         }
                     case .settings:
@@ -146,7 +146,7 @@ struct ContentView: View {
     private func getQueryParamValue(queryItems: [URLQueryItem], key: String)
         -> String?
     {
-        return queryItems.first(where: {
+        queryItems.first(where: {
             $0.name == key
         })?.value
     }

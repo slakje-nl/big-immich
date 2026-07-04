@@ -12,29 +12,31 @@ public enum ImmichAPIAuthMethod: String, CaseIterable, Identifiable {
     case apiKey
     case emailAndPassword
 
-    public var id: String { rawValue }
+    public var id: String {
+        rawValue
+    }
 }
 
 public class KeychainHelper {
-    static public func saveImmichAPIAuthMethod(method: ImmichAPIAuthMethod)
+    public static func saveImmichAPIAuthMethod(method: ImmichAPIAuthMethod)
         -> Bool
     {
-        return save(method.rawValue, forKey: "immichAPIAuthMethod")
+        save(method.rawValue, forKey: "immichAPIAuthMethod")
     }
 
-    static public func loadImmichAPIAuthMethod() -> ImmichAPIAuthMethod? {
+    public static func loadImmichAPIAuthMethod() -> ImmichAPIAuthMethod? {
         if let method = load(forKey: "immichAPIAuthMethod") {
-            return ImmichAPIAuthMethod(rawValue: method)
+            ImmichAPIAuthMethod(rawValue: method)
         } else {
-            return nil
+            nil
         }
     }
 
-    static public func saveImmichURL(url: String) -> Bool {
-        return save(url, forKey: "immichURL")
+    public static func saveImmichURL(url: String) -> Bool {
+        save(url, forKey: "immichURL")
     }
 
-    static public func loadImmichURL() -> String? {
+    public static func loadImmichURL() -> String? {
         let value = load(forKey: "immichURL")
 
         if value == "" {
@@ -43,11 +45,11 @@ public class KeychainHelper {
         return value
     }
 
-    static public func saveImmichAuthEmail(email: String) -> Bool {
-        return save(email, forKey: "immichAuthEmail")
+    public static func saveImmichAuthEmail(email: String) -> Bool {
+        save(email, forKey: "immichAuthEmail")
     }
 
-    static public func loadImmichAuthEmail() -> String? {
+    public static func loadImmichAuthEmail() -> String? {
         let value = load(forKey: "immichAuthEmail")
 
         if value == "" {
@@ -56,11 +58,11 @@ public class KeychainHelper {
         return value
     }
 
-    static public func saveImmichAuthPassword(password: String) -> Bool {
-        return save(password, forKey: "immichAuthPassword")
+    public static func saveImmichAuthPassword(password: String) -> Bool {
+        save(password, forKey: "immichAuthPassword")
     }
 
-    static public func loadImmichAuthPassword() -> String? {
+    public static func loadImmichAuthPassword() -> String? {
         let value = load(forKey: "immichAuthPassword")
 
         if value == "" {
@@ -69,11 +71,11 @@ public class KeychainHelper {
         return value
     }
 
-    static public func saveImmichAPIKey(key: String) -> Bool {
-        return save(key, forKey: "immichAuthAPIKey")
+    public static func saveImmichAPIKey(key: String) -> Bool {
+        save(key, forKey: "immichAuthAPIKey")
     }
 
-    static public func loadImmichAPIKey() -> String? {
+    public static func loadImmichAPIKey() -> String? {
         let value = load(forKey: "immichAuthAPIKey")
 
         if value == "" {
@@ -93,7 +95,7 @@ public class KeychainHelper {
             kSecAttrAccount as String: key,
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlocked,
-            kSecAttrAccessGroup as String: "3U4PH469WK.nl.slakje.BigImmich",
+            kSecAttrAccessGroup as String: "3U4PH469WK.nl.slakje.BigImmich"
         ]
 
         let status = SecItemAdd(query as CFDictionary, nil)
@@ -107,7 +109,7 @@ public class KeychainHelper {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key,
             kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
+            kSecMatchLimit as String: kSecMatchLimitOne
         ]
         if withAccessGroup {
             query[kSecAttrAccessGroup as String] =
@@ -118,14 +120,14 @@ public class KeychainHelper {
         let status = SecItemCopyMatching(query as CFDictionary, &result)
 
         if status == errSecSuccess,
-            let data = result as? Data,
-            let value = String(data: data, encoding: .utf8)
+           let data = result as? Data,
+           let value = String(data: data, encoding: .utf8)
         {
             return value
         }
 
         // temporary migration to a keychain with access group
-        if withAccessGroup, let oldValue = self.load(forKey: key, withAccessGroup: false) {
+        if withAccessGroup, let oldValue = load(forKey: key, withAccessGroup: false) {
             if save(oldValue, forKey: key) {
                 return oldValue
             }
@@ -137,7 +139,7 @@ public class KeychainHelper {
     static func delete(forKey key: String) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key,
+            kSecAttrAccount as String: key
         ]
         SecItemDelete(query as CFDictionary)
     }

@@ -15,8 +15,8 @@ struct AlbumDetailsView: View {
     let onExit: () -> Void
 
     @FocusState private var focusedButton: ButtonFocus?
-    @State private var album: Album? = nil
-    @State private var thumbnailImage: Image? = nil
+    @State private var album: Album?
+    @State private var thumbnailImage: Image?
     @State private var isLoading = true
     @State private var errors: [String] = []
 
@@ -133,10 +133,9 @@ struct AlbumDetailsView: View {
 
     func getItemsCount() -> String {
         if let album {
-            let images = album.assets.filter { $0.type.uppercased() == "IMAGE" }
-                .count
-            let videos = album.assets.filter { $0.type.uppercased() == "VIDEO" }
-                .count
+            let images = album.assets.count(where: { $0.type.uppercased() == "IMAGE" })
+
+            let videos = album.assets.count(where: { $0.type.uppercased() == "VIDEO" })
 
             var imagesLabel = ""
             if images > 1 {
@@ -152,7 +151,7 @@ struct AlbumDetailsView: View {
                 videosLabel = "\(videos) video"
             }
 
-            if !imagesLabel.isEmpty && !videosLabel.isEmpty {
+            if !imagesLabel.isEmpty, !videosLabel.isEmpty {
                 return "\(imagesLabel) and \(videosLabel)"
             } else if !imagesLabel.isEmpty {
                 return imagesLabel
@@ -171,11 +170,11 @@ struct AlbumDetailsView: View {
             if item.type.uppercased() == "IMAGE" {
                 totalSeconds += Double(slideshowInterval)
             } else if item.type.uppercased() == "VIDEO" {
-                let components = item.duration.split(separator: ":")  // ["hh", "mm", "ss.SSS"]
+                let components = item.duration.split(separator: ":") // ["hh", "mm", "ss.SSS"]
                 if components.count == 3,
-                    let hours = Double(components[0]),
-                    let minutes = Double(components[1]),
-                    let seconds = Double(components[2])
+                   let hours = Double(components[0]),
+                   let minutes = Double(components[1]),
+                   let seconds = Double(components[2])
                 {
                     totalSeconds += hours * 3600 + minutes * 60 + seconds
                 }
@@ -202,9 +201,9 @@ struct AlbumDetailsView: View {
                 do {
                     let data = try await ImmichAPI.shared.loadMediaWithRetries(
                         path:
-                            "/api/assets/\(album.albumThumbnailAssetId.string)/thumbnail",
+                        "/api/assets/\(album.albumThumbnailAssetId.string)/thumbnail",
                         queryParams: ["size": "preview"],
-                        retries: 3,
+                        retries: 3
                     )
                     if let uiImage = UIImage(data: data) {
                         thumbnailImage = Image(uiImage: uiImage)
@@ -226,15 +225,15 @@ struct AlbumDetailsView: View {
         do {
             album = try await ImmichAPI.shared.loadObject(
                 path: "/api/albums/\(albumID.string)",
-                queryParams: [:],
+                queryParams: [:]
             )
 
             if let album {
                 let data = try await ImmichAPI.shared.loadMediaWithRetries(
                     path:
-                        "/api/assets/\(album.albumThumbnailAssetId.string)/thumbnail",
+                    "/api/assets/\(album.albumThumbnailAssetId.string)/thumbnail",
                     queryParams: ["size": "preview"],
-                    retries: 3,
+                    retries: 3
                 )
                 if let uiImage = UIImage(data: data) {
                     thumbnailImage = Image(uiImage: uiImage)

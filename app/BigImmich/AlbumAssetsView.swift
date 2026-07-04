@@ -9,7 +9,7 @@ struct AlbumAssetsView: View {
     let onExit: () -> Void
 
     @FocusState private var focusedAssetIndex: Int?
-    @State private var album: Album? = nil
+    @State private var album: Album?
     @State private var errors: [String] = []
 
     private let columns = Array(
@@ -26,7 +26,7 @@ struct AlbumAssetsView: View {
                 }
             }
 
-            if let album = album {
+            if let album {
                 ScrollViewReader { scrollProxy in
                     ScrollView {
                         LazyVGrid(columns: columns, spacing: 16) {
@@ -87,9 +87,9 @@ struct AlbumAssetsView: View {
 
     private func loadAlbumDetail() async {
         do {
-            self.album = try await ImmichAPI.shared.loadObject(
+            album = try await ImmichAPI.shared.loadObject(
                 path: "/api/albums/\(albumID.string)",
-                queryParams: [:],
+                queryParams: [:]
             )
         } catch {
             errors.append(error.localizedDescription)

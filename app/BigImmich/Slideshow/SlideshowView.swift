@@ -9,9 +9,9 @@ struct SlideshowView: View {
     let initialAssetID: AssetID?
     let onExit: (AlbumID, AlbumName, AssetID?) -> Void
 
-    @State private var slideshow: SlideshowSequencer? = nil
-    @State private var slideshowAsset: SlideshowAsset? = nil
-    @State private var previousAlbumID: AlbumID? = nil
+    @State private var slideshow: SlideshowSequencer?
+    @State private var slideshowAsset: SlideshowAsset?
+    @State private var previousAlbumID: AlbumID?
 
     // showing details of an image (when paused)
     @State private var userAssetIndex: Int = 0
@@ -20,9 +20,9 @@ struct SlideshowView: View {
     @State private var userLocation: String = ""
 
     // current image / player in the slideshow
-    @State private var currentImage: Image? = nil
-    @State private var currentPlayer: AVPlayer? = nil
-    @State private var playerObserver: NSObjectProtocol? = nil
+    @State private var currentImage: Image?
+    @State private var currentPlayer: AVPlayer?
+    @State private var playerObserver: NSObjectProtocol?
     @State private var playerIsVisible: Bool = false
 
     // loading assets and error reporting
@@ -31,21 +31,21 @@ struct SlideshowView: View {
     @State private var clearErrors: DispatchWorkItem?
     @State private var informations: [String] = []
 
-    // loading settings
-    @State private var settings: SlideshowSettings = SlideshowSettings()
+    /// loading settings
+    @State private var settings: SlideshowSettings = .init()
 
     // slideshow + overlays
-    @State private var slideshowTimer: Timer? = nil
+    @State private var slideshowTimer: Timer?
     @State private var slideshowIsRunning = true
     @State private var showAssetDetails = false
-    @State private var assetDetailsTimer: Timer? = nil
+    @State private var assetDetailsTimer: Timer?
 
     // progress bar
     @State private var assetProgress: Double = 0.0
-    @State private var progressBarTimer: Timer? = nil
+    @State private var progressBarTimer: Timer?
 
-    // preloading assets
-    @State private var imageCache: MemoryCache<AssetID, Image>? = nil
+    /// preloading assets
+    @State private var imageCache: MemoryCache<AssetID, Image>?
 
     var body: some View {
         ZStack {
@@ -86,13 +86,13 @@ struct SlideshowView: View {
                             .padding(20)
                             .background(
                                 Circle()
-                                    .fill(Color.black.opacity(0.4))  // semi-transparent background
+                                    .fill(Color.black.opacity(0.4)) // semi-transparent background
                                     .shadow(
                                         color: Color.black.opacity(0.6),
                                         radius: 6,
                                         x: 0,
                                         y: 0
-                                    )  // round shadow
+                                    ) // round shadow
                             )
                             .padding(.leading, 40)
 
@@ -204,7 +204,6 @@ struct SlideshowView: View {
                                     .cornerRadius(10)
                                     .shadow(radius: 3)
                             }
-
                         }
                         .padding(.trailing, 20)
                         .padding(.bottom, 20)
@@ -230,8 +229,8 @@ struct SlideshowView: View {
             imageCache?.clear()
 
             Task {
-                if let slideshow = slideshow,
-                    let slideshowAsset = try? await slideshow.current()
+                if let slideshow,
+                   let slideshowAsset = try? await slideshow.current()
                 {
                     onExit(
                         slideshowAsset.album.id,
@@ -279,7 +278,7 @@ struct SlideshowView: View {
             "~~(^._.^)~~",
             ",/\\,/\\,/\\,/\\,/\\,/\\,o",
             "<(‘–‘)>",
-            "///\\\\oo/\\\\\\",
+            "///\\\\oo/\\\\\\"
         ]
         for (i, egg) in easterEggs.enumerated() {
             let count = informations.count { $0 == egg }
@@ -389,7 +388,7 @@ struct SlideshowView: View {
 
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [
-            .withInternetDateTime, .withFractionalSeconds,
+            .withInternetDateTime, .withFractionalSeconds
         ]
 
         guard let date = formatter.date(from: original) else {
@@ -444,15 +443,15 @@ struct SlideshowView: View {
                 } else {
                     let data = try await ImmichAPI.shared.loadMediaWithRetries(
                         path:
-                            "/api/assets/\(slideshowAsset.asset.id.string)/thumbnail",
+                        "/api/assets/\(slideshowAsset.asset.id.string)/thumbnail",
                         queryParams: ["size": "fullsize"],
-                        retries: 3,
+                        retries: 3
                     )
                     if let uiImage = UIImage(data: data) {
                         currentImage = Image(uiImage: uiImage)
                     } else {
                         showError("loading image failed: id=\(asset.id)")
-                        await self.moveToNext()
+                        await moveToNext()
                         return
                     }
                 }
@@ -466,7 +465,7 @@ struct SlideshowView: View {
                     playbackURL = try await ImmichAPI.shared
                         .getUrlWithQueryAuth(
                             path:
-                                "/api/assets/\(asset.id.string)/video/playback",
+                            "/api/assets/\(asset.id.string)/video/playback",
                             queryParams: nil
                         )
                 } catch {
@@ -486,23 +485,23 @@ struct SlideshowView: View {
                     // monitoring if video is started and playing in 5s
                     // there's no reason for 5s, it just sounds like a good amount of time
                     // FIXME: this is sometimes flaky, I'm not yet sure why
-                    guard let player = self.currentPlayer else { return }
+                    guard let player = currentPlayer else { return }
                     guard let sAsset = self.slideshowAsset,
-                        sAsset.asset.id == oldAssetID
+                          sAsset.asset.id == oldAssetID
                     else { return }
 
                     if player.status == .failed
                         || player.currentItem?.status == .failed
                     {
-                        self.showError("video failed to load")
+                        showError("video failed to load")
                         Task {
-                            await self.moveToNext()
+                            await moveToNext()
                         }
                         return
                     } else if player.timeControlStatus != .playing {
-                        self.showError("video did not start playing")
+                        showError("video did not start playing")
                         Task {
-                            await self.moveToNext()
+                            await moveToNext()
                         }
                         return
                     }
@@ -549,12 +548,12 @@ struct SlideshowView: View {
 
         if let laterAsset = try? await slideshow.previewNext() {
             await preloadAsset(
-                asset: laterAsset.asset,
+                asset: laterAsset.asset
             )
         }
         if let earlierAsset = try? await slideshow.previewPrevious() {
             await preloadAsset(
-                asset: earlierAsset.asset,
+                asset: earlierAsset.asset
             )
         }
     }
@@ -629,8 +628,7 @@ struct SlideshowView: View {
         )
         player.addPeriodicTimeObserver(forInterval: interval, queue: .main) {
             time in
-            if let duration = player.currentItem?.duration.seconds, duration > 0
-            {
+            if let duration = player.currentItem?.duration.seconds, duration > 0 {
                 assetProgress = min(time.seconds / duration, 1.0)
             }
         }
@@ -644,7 +642,7 @@ struct SlideshowView: View {
     private func moveToNext() async {
         guard let slideshow else { return }
 
-        var next: SlideshowAsset? = nil
+        var next: SlideshowAsset?
         do {
             next = try await slideshow.next()
         } catch {
@@ -678,7 +676,7 @@ struct SlideshowView: View {
     private func moveToPrevious() async {
         guard let slideshow else { return }
 
-        var previous: SlideshowAsset? = nil
+        var previous: SlideshowAsset?
         do {
             previous = try await slideshow.previous()
         } catch {
@@ -709,15 +707,15 @@ struct SlideshowView: View {
         }
     }
 
-    private func initSlideshow(albumID: AlbumID) async {
+    private func initSlideshow(albumID _: AlbumID) async {
         do {
             slideshow = try await SlideshowSequencer(
                 playlistGetter: SlideshowPlaylistGetter(
                     settings: settings,
-                    immichClient: ImmichClient.shared,
+                    immichClient: ImmichClient.shared
                 ),
                 initialAlbumID: initialAlbumID,
-                initialAssetID: initialAssetID,
+                initialAssetID: initialAssetID
             )
             guard let slideshow else { return }
 

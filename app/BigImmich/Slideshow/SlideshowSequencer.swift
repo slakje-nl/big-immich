@@ -1,5 +1,5 @@
 //
-//  Slideshow.swift
+//  SlideshowSequencer.swift
 //  BigImmich
 //
 //  Created by Maciej Płoński on 16/01/2026.
@@ -27,7 +27,7 @@ class SlideshowSequencer {
     var assetsPlaylist: MemoryCache<AlbumID, Playlist<AlbumAsset>>
     var assetIndex: Int = 0
 
-    public init(
+    init(
         playlistGetter: SlideshowPlaylistGetterProtocol,
         initialAlbumID: AlbumID,
         initialAssetID: AssetID?
@@ -135,11 +135,11 @@ class SlideshowSequencer {
             counter: SlideshowCounter(
                 current: assetIndex + 1,
                 total: assetsPlaylist.elements.count
-            ),
+            )
         )
     }
 
-    public func previous() async throws -> SlideshowAsset? {
+    func previous() async throws -> SlideshowAsset? {
         if let (nextAlbumIndex, nextAssetIndex) =
             try await getPreviousAssetIndex()
         {
@@ -153,7 +153,7 @@ class SlideshowSequencer {
         return nil
     }
 
-    public func previewPrevious() async throws -> SlideshowAsset? {
+    func previewPrevious() async throws -> SlideshowAsset? {
         if let (nextAlbumIndex, nextAssetIndex) =
             try await getPreviousAssetIndex()
         {
@@ -165,9 +165,8 @@ class SlideshowSequencer {
         return nil
     }
 
-    public func next() async throws -> SlideshowAsset? {
-        if let (nextAlbumIndex, nextAssetIndex) = try await getNextAssetIndex()
-        {
+    func next() async throws -> SlideshowAsset? {
+        if let (nextAlbumIndex, nextAssetIndex) = try await getNextAssetIndex() {
             albumIndex = nextAlbumIndex
             assetIndex = nextAssetIndex
             return try await getSlideshowAsset(
@@ -178,9 +177,8 @@ class SlideshowSequencer {
         return nil
     }
 
-    public func previewNext() async throws -> SlideshowAsset? {
-        if let (nextAlbumIndex, nextAssetIndex) = try await getNextAssetIndex()
-        {
+    func previewNext() async throws -> SlideshowAsset? {
+        if let (nextAlbumIndex, nextAssetIndex) = try await getNextAssetIndex() {
             return try await getSlideshowAsset(
                 albumIndex: nextAlbumIndex,
                 assetIndex: nextAssetIndex
@@ -189,8 +187,8 @@ class SlideshowSequencer {
         return nil
     }
 
-    public func current() async throws -> SlideshowAsset? {
-        return try await getSlideshowAsset(
+    func current() async throws -> SlideshowAsset? {
+        try await getSlideshowAsset(
             albumIndex: albumIndex,
             assetIndex: assetIndex
         )

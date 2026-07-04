@@ -12,7 +12,7 @@ func logError(
     event.extra = [
         "file": file,
         "function": function,
-        "line": line,
+        "line": line
     ]
 
     SentrySDK.capture(event: event)
@@ -30,8 +30,8 @@ struct BigImmichApp: App {
             )
             let usedSentryDSN =
                 customSentryDSN != ""
-                ? customSentryDSN
-                : "https://3361208ffd59305f7e5c9d0228940679@o118777.ingest.us.sentry.io/4510570198269952"
+                    ? customSentryDSN
+                    : "https://3361208ffd59305f7e5c9d0228940679@o118777.ingest.us.sentry.io/4510570198269952"
 
             SentrySDK.start { options in
                 options.dsn = usedSentryDSN

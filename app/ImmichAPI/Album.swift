@@ -27,8 +27,8 @@ public struct AlbumSummary: Codable, Identifiable, Hashable {
         self.lastModifiedAssetTimestamp = lastModifiedAssetTimestamp
     }
 
-    static public func == (lhs: AlbumSummary, rhs: AlbumSummary) -> Bool {
-        return lhs.id == rhs.id
+    public static func == (lhs: AlbumSummary, rhs: AlbumSummary) -> Bool {
+        lhs.id == rhs.id
     }
 
     public func hash(into hasher: inout Hasher) {
@@ -54,7 +54,7 @@ public struct Album: Codable, Identifiable, Hashable {
         updatedAt: String,
         startDate: String,
         lastModifiedAssetTimestamp: String,
-        assets: [AlbumAsset],
+        assets: [AlbumAsset]
     ) {
         self.id = id
         self.albumName = albumName
@@ -66,8 +66,8 @@ public struct Album: Codable, Identifiable, Hashable {
         self.assets = assets
     }
 
-    static public func == (lhs: Album, rhs: Album) -> Bool {
-        return lhs.id == rhs.id
+    public static func == (lhs: Album, rhs: Album) -> Bool {
+        lhs.id == rhs.id
     }
 
     public func hash(into hasher: inout Hasher) {

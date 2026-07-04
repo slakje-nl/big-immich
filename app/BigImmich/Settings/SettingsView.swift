@@ -19,19 +19,16 @@ struct SettingsView: View {
         SlideshowAction = .goToNext
     @AppStorage("slideshowRightAction") private var slideshowRightAction:
         SlideshowAction = .goToPrevious
-    @AppStorage("slideshowOnceEndedAction") private
-        var slideshowOnceEndedAction: SlideshowOnceEndedAction = .stopAndNotify
-    @AppStorage("slideshowOnceEndedAnotherAlbum") private
-        var slideshowOnceEndedAnotherAlbumSelection:
+    @AppStorage("slideshowOnceEndedAction") private var slideshowOnceEndedAction: SlideshowOnceEndedAction = .stopAndNotify
+    @AppStorage("slideshowOnceEndedAnotherAlbum") private var slideshowOnceEndedAnotherAlbumSelection:
         SlideshowOnceEndedAnotherAlbumSelection = .random
-    @AppStorage("slideshowShowProgressBar") private
-        var slideshowShowProgressBar: SlideshowShowProgressBar = .always
+    @AppStorage("slideshowShowProgressBar") private var slideshowShowProgressBar: SlideshowShowProgressBar = .always
 
     // error reporting
     @AppStorage("sentryEnabled") private var sentryEnabled: Bool = false
     @AppStorage("sentryDSN") private var sentryDSN: String = ""
 
-    @State private var fakedPickerOption: Int = 0  // helper for pickers with a single option
+    @State private var fakedPickerOption: Int = 0 // helper for pickers with a single option
 
     @State private var errorWhileSaving: Bool = false
 
@@ -62,8 +59,7 @@ struct SettingsView: View {
                                 )
                                 .bold()
 
-                            Picker("Auth method", selection: $immichAuthMethod)
-                            {
+                            Picker("Auth method", selection: $immichAuthMethod) {
                                 Text("api key (recommended)").tag(
                                     ImmichAPIAuthMethod.apiKey
                                 )
@@ -211,7 +207,7 @@ struct SettingsView: View {
                                 .bold()
 
                             Picker("Interval", selection: $slideshowInterval) {
-                                ForEach(5...60, id: \.self) { i in
+                                ForEach(5 ... 60, id: \.self) { i in
                                     Text("\(i)s").tag(i)
                                 }
                             }
@@ -226,8 +222,7 @@ struct SettingsView: View {
                                 )
                                 .bold()
 
-                            Picker("Direction", selection: $slideshowDirection)
-                            {
+                            Picker("Direction", selection: $slideshowDirection) {
                                 Text("oldest → newest").tag(
                                     SlideshowDirection.oldestToNewest
                                 )
@@ -280,7 +275,7 @@ struct SettingsView: View {
                                 Picker(
                                     "Another album",
                                     selection:
-                                        $slideshowOnceEndedAnotherAlbumSelection
+                                    $slideshowOnceEndedAnotherAlbumSelection
                                 ) {
                                     Text("older").tag(
                                         SlideshowOnceEndedAnotherAlbumSelection
@@ -470,7 +465,7 @@ struct SettingsView: View {
                     }
                     .padding(40)
                     .onAppear(perform: loadSettings)
-                    Spacer()  // push everything to center horizontally
+                    Spacer() // push everything to center horizontally
                 }
             }
         }
@@ -529,7 +524,7 @@ struct SettingsView: View {
         guard let url = URL(string: urlString) else { return false }
 
         guard let scheme = url.scheme?.lowercased(),
-            scheme == "http" || scheme == "https"
+              scheme == "http" || scheme == "https"
         else {
             return false
         }
@@ -537,9 +532,9 @@ struct SettingsView: View {
         return url.host != nil
     }
 
-    private func testConnection() async {
+    func testConnection() async {
         do {
-            let _ = try await ImmichClient.shared.findAlbums(order: .fromOldest)
+            _ = try await ImmichClient.shared.findAlbums(order: .fromOldest)
 
             connectionTested = true
             connectionWorking = true

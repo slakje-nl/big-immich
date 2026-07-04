@@ -13,19 +13,19 @@ public enum ImmichAPIError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .missingConfig:
-            return "missing configuration"
+            "missing configuration"
         case .badUrl:
-            return "broken url (possibly wrong configuration)"
+            "broken url (possibly wrong configuration)"
         case .badResponse:
-            return "bad response"
-        case .badJsonResponse(let description):
-            return "unexpected json response: \(description)"
-        case .httpErrorCode(let statusCode):
-            return "http error code \(statusCode)"
+            "bad response"
+        case let .badJsonResponse(description):
+            "unexpected json response: \(description)"
+        case let .httpErrorCode(statusCode):
+            "http error code \(statusCode)"
         case .unknownError:
-            return "Unknown error"
+            "Unknown error"
         case .unauthorized:
-            return "unauthorized"
+            "unauthorized"
         }
     }
 }
@@ -34,7 +34,7 @@ public struct ImmichAPIConfig {
     let baseURL: String
     let authMethod: ImmichAPIAuthMethod
 
-    // api-key based auth
+    /// api-key based auth
     let APIKey: String
 
     // email/passwoed based auth
@@ -42,11 +42,11 @@ public struct ImmichAPIConfig {
     let password: String
 }
 
-// Create a session that never stores or sends cookies
+/// Create a session that never stores or sends cookies
 let statelessSession: URLSession = {
     let config = URLSessionConfiguration.ephemeral
-    config.httpCookieAcceptPolicy = .never  // do not accept cookies
-    config.httpShouldSetCookies = false  // do not send cookies
+    config.httpCookieAcceptPolicy = .never // do not accept cookies
+    config.httpShouldSetCookies = false // do not send cookies
     config.requestCachePolicy = .reloadIgnoringLocalCacheData
     return URLSession(configuration: config)
 }()
@@ -54,11 +54,11 @@ let statelessSession: URLSession = {
 class ImmichAPIClient {
     private var baseURL: String
 
-    public init(baseURL: String) {
+    init(baseURL: String) {
         self.baseURL = baseURL
     }
 
-    public func getUrl(path: String, queryParams: [String: String]?) -> URL? {
+    func getUrl(path: String, queryParams: [String: String]?) -> URL? {
         guard let loadedBaseURL = URL(string: baseURL) else { return nil }
 
         let fullURL = loadedBaseURL.appendingPathComponent(path)
@@ -141,16 +141,16 @@ class ImmichAPIClient {
 
     private func getErrorMessage(error: DecodingError) -> String {
         switch error {
-        case .typeMismatch(let type, let context):
+        case let .typeMismatch(type, context):
             return
                 "Type mismatch for type \(type), codingPath: \(context.codingPath), debugDescription: \(context.debugDescription)"
-        case .valueNotFound(let type, let context):
+        case let .valueNotFound(type, context):
             return
                 "Value not found for type \(type), codingPath: \(context.codingPath), debugDescription: \(context.debugDescription)"
-        case .keyNotFound(let key, let context):
+        case let .keyNotFound(key, context):
             return
                 "Key '\(key.stringValue)' not found, codingPath: \(context.codingPath), debugDescription: \(context.debugDescription)"
-        case .dataCorrupted(let context):
+        case let .dataCorrupted(context):
             return
                 "Data corrupted, codingPath: \(context.codingPath), debugDescription: \(context.debugDescription)"
         @unknown default:
@@ -158,7 +158,7 @@ class ImmichAPIClient {
         }
     }
 
-    public func loadObject<T: Decodable>(
+    func loadObject<T: Decodable>(
         httpMethod: String,
         path: String,
         queryParams: [String: String]?,
@@ -182,7 +182,7 @@ class ImmichAPIClient {
         }
     }
 
-    public func loadArray<T: Decodable>(
+    func loadArray<T: Decodable>(
         httpMethod: String,
         path: String,
         queryParams: [String: String]?,
@@ -208,7 +208,7 @@ class ImmichAPIClient {
         }
     }
 
-    public func loadMedia(
+    func loadMedia(
         httpMethod: String,
         path: String,
         queryParams: [String: String]?,
@@ -254,13 +254,13 @@ public actor ImmichAPIAuthenticator {
     }
 
     public func logout() async {
-        self.token = nil
+        token = nil
     }
 
     public func login(config: ImmichAPIConfig) async throws -> String {
         guard config.authMethod == .emailAndPassword else {
             throw ImmichAPIError.unknownError
-        }  // this method supports email/pass auth only
+        } // this method supports email/pass auth only
 
         if let token {
             return token
@@ -300,7 +300,7 @@ public actor ImmichAPIAuthenticator {
             path: "/api/auth/login",
             queryParams: nil,
             headers: nil,
-            jsonPayload: ["email": config.email, "password": config.password],
+            jsonPayload: ["email": config.email, "password": config.password]
         )
         return response.accessToken
     }
@@ -315,7 +315,7 @@ public actor ImmichAPI {
         guard let baseURL = KeychainHelper.loadImmichURL() else { return nil }
         let authMethod =
             KeychainHelper.loadImmichAPIAuthMethod()
-            ?? ImmichAPIAuthMethod.apiKey
+                ?? ImmichAPIAuthMethod.apiKey
 
         switch authMethod {
         case .apiKey:
@@ -328,7 +328,7 @@ public actor ImmichAPI {
                 authMethod: .apiKey,
                 APIKey: apiKey,
                 email: "",
-                password: "",
+                password: ""
             )
 
         case .emailAndPassword:
@@ -344,7 +344,7 @@ public actor ImmichAPI {
                 authMethod: .emailAndPassword,
                 APIKey: "",
                 email: email,
-                password: password,
+                password: password
             )
         }
     }
@@ -358,9 +358,9 @@ public actor ImmichAPI {
                 "x-api-key": config.APIKey
             ]
         case .emailAndPassword:
-            return [
+            return try await [
                 "x-immich-session-token":
-                    try await ImmichAPIAuthenticator.shared.login(
+                    ImmichAPIAuthenticator.shared.login(
                         config: config
                     )
             ]
@@ -376,8 +376,8 @@ public actor ImmichAPI {
                 "apiKey": config.APIKey
             ]
         case .emailAndPassword:
-            return [
-                "sessionKey": try await ImmichAPIAuthenticator.shared.login(
+            return try await [
+                "sessionKey": ImmichAPIAuthenticator.shared.login(
                     config: config
                 )
             ]
@@ -398,8 +398,8 @@ public actor ImmichAPI {
                     httpMethod: "GET",
                     path: path,
                     queryParams: queryParams,
-                    headers: await findAuthHeaders(),
-                    jsonPayload: nil,
+                    headers: findAuthHeaders(),
+                    jsonPayload: nil
                 )
         } catch ImmichAPIError.unauthorized {
             await ImmichAPIAuthenticator.shared.logout()
@@ -409,8 +409,8 @@ public actor ImmichAPI {
                     httpMethod: "GET",
                     path: path,
                     queryParams: queryParams,
-                    headers: await findAuthHeaders(),
-                    jsonPayload: nil,
+                    headers: findAuthHeaders(),
+                    jsonPayload: nil
                 )
         } catch {
             throw error
@@ -431,8 +431,8 @@ public actor ImmichAPI {
                     httpMethod: "GET",
                     path: path,
                     queryParams: queryParams,
-                    headers: await findAuthHeaders(),
-                    jsonPayload: nil,
+                    headers: findAuthHeaders(),
+                    jsonPayload: nil
                 )
         } catch ImmichAPIError.unauthorized {
             await ImmichAPIAuthenticator.shared.logout()
@@ -442,8 +442,8 @@ public actor ImmichAPI {
                     httpMethod: "GET",
                     path: path,
                     queryParams: queryParams,
-                    headers: await findAuthHeaders(),
-                    jsonPayload: nil,
+                    headers: findAuthHeaders(),
+                    jsonPayload: nil
                 )
         } catch {
             throw error
@@ -459,7 +459,7 @@ public actor ImmichAPI {
     {
         var lastError: Error?
 
-        for attempt in 1...retries {
+        for attempt in 1 ... retries {
             do {
                 return try await loadMedia(path: path, queryParams: queryParams)
             } catch {
@@ -469,7 +469,7 @@ public actor ImmichAPI {
                     throw error
                 }
 
-                try await Task.sleep(nanoseconds: 500_000_000)  // 0.5s
+                try await Task.sleep(nanoseconds: 500_000_000) // 0.5s
             }
         }
 
@@ -489,8 +489,8 @@ public actor ImmichAPI {
                 httpMethod: "GET",
                 path: path,
                 queryParams: queryParams,
-                headers: await findAuthHeaders(),
-                jsonPayload: nil,
+                headers: findAuthHeaders(),
+                jsonPayload: nil
             )
         } catch ImmichAPIError.unauthorized {
             await ImmichAPIAuthenticator.shared.logout()
@@ -499,8 +499,8 @@ public actor ImmichAPI {
                 httpMethod: "GET",
                 path: path,
                 queryParams: queryParams,
-                headers: await findAuthHeaders(),
-                jsonPayload: nil,
+                headers: findAuthHeaders(),
+                jsonPayload: nil
             )
         } catch {
             throw error
@@ -519,7 +519,7 @@ public actor ImmichAPI {
 
         var urlQueryParams = try await findAuthQueryParams()
         if let queryParams {
-            urlQueryParams = urlQueryParams.merging(queryParams) { (_, new) in
+            urlQueryParams = urlQueryParams.merging(queryParams) { _, new in
                 new
             }
         }
@@ -528,7 +528,7 @@ public actor ImmichAPI {
             baseURL: config.baseURL
         ).getUrl(
             path: path,
-            queryParams: urlQueryParams,
+            queryParams: urlQueryParams
         )
         guard let playbackUrl else { throw ImmichAPIError.badUrl }
 

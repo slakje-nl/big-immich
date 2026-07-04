@@ -1,0 +1,46 @@
+included:
+  - app
+
+excluded:
+  - app/BigImmich.xcodeproj
+  - "**/DerivedData"
+  - "**/.build"
+
+disabled_rules:
+  - todo
+  - trailing_comma
+  - line_length
+  - closure_parameter_position
+  - opening_brace
+  - redundant_optional_initialization
+
+type_body_length:
+  warning: 400
+  error: 1500
+function_body_length:
+  warning: 80
+  error: 500
+file_length:
+  warning: 500
+  error: 1500
+cyclomatic_complexity:
+  warning: 12
+  error: 30
+
+opt_in_rules:
+  - empty_count
+  - first_where
+  - contains_over_filter_count
+  - contains_over_first_not_nil
+  - redundant_nil_coalescing
+  - toggle_bool
+
+identifier_name:
+  min_length: 2              # allow ids like `id`, `t`
+  excluded: [id, i, x, y, t]
+
+type_name:
+  allowed_symbols: ["_"]
+
+nesting:
+  type_level: 2

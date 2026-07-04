@@ -1,5 +1,5 @@
 //
-//  Settings.swift
+//  Typing.swift
 //  BigImmich
 //
 //  Created by Maciej Płoński on 18/01/2026.
@@ -15,14 +15,18 @@ enum SlideshowDirection: String, CaseIterable, Identifiable {
     case newestToOldest
     case randomized
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 }
 
 enum SlideshowAction: String, CaseIterable, Identifiable {
     case goToNext
     case goToPrevious
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 }
 
 enum SlideshowOnceEndedAction: String, CaseIterable, Identifiable {
@@ -30,23 +34,28 @@ enum SlideshowOnceEndedAction: String, CaseIterable, Identifiable {
     case startAgain
     case loadAnotherAlbum
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 }
 
-enum SlideshowOnceEndedAnotherAlbumSelection: String, CaseIterable, Identifiable
-{
+enum SlideshowOnceEndedAnotherAlbumSelection: String, CaseIterable, Identifiable {
     case older
     case newer
     case random
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 }
 
 enum SlideshowShowProgressBar: String, CaseIterable, Identifiable {
     case always
     case never
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 }
 
 protocol SlideshowSettingsProtocol {
@@ -56,24 +65,20 @@ protocol SlideshowSettingsProtocol {
     var slideshowRightAction: SlideshowAction { get set }
     var slideshowOnceEndedAction: SlideshowOnceEndedAction { get set }
     var slideshowOnceEndedAnotherAlbumSelection:
-        SlideshowOnceEndedAnotherAlbumSelection
-    { get set }
+        SlideshowOnceEndedAnotherAlbumSelection { get set }
     var slideshowShowProgressBar: SlideshowShowProgressBar { get set }
 }
 
 final class SlideshowSettings: ObservableObject, SlideshowSettingsProtocol {
-    @AppStorage("slideshowInterval") public var slideshowInterval: Int = 5
-    @AppStorage("slideshowDirection") public var slideshowDirection:
+    @AppStorage("slideshowInterval") var slideshowInterval: Int = 5
+    @AppStorage("slideshowDirection") var slideshowDirection:
         SlideshowDirection = .oldestToNewest
-    @AppStorage("slideshowLeftAction") public var slideshowLeftAction:
+    @AppStorage("slideshowLeftAction") var slideshowLeftAction:
         SlideshowAction = .goToNext
-    @AppStorage("slideshowRightAction") public var slideshowRightAction:
+    @AppStorage("slideshowRightAction") var slideshowRightAction:
         SlideshowAction = .goToPrevious
-    @AppStorage("slideshowOnceEndedAction") public
-        var slideshowOnceEndedAction: SlideshowOnceEndedAction = .stopAndNotify
-    @AppStorage("slideshowOnceEndedAnotherAlbum") public
-        var slideshowOnceEndedAnotherAlbumSelection:
+    @AppStorage("slideshowOnceEndedAction") var slideshowOnceEndedAction: SlideshowOnceEndedAction = .stopAndNotify
+    @AppStorage("slideshowOnceEndedAnotherAlbum") var slideshowOnceEndedAnotherAlbumSelection:
         SlideshowOnceEndedAnotherAlbumSelection = .random
-    @AppStorage("slideshowShowProgressBar") public
-        var slideshowShowProgressBar: SlideshowShowProgressBar = .always
+    @AppStorage("slideshowShowProgressBar") var slideshowShowProgressBar: SlideshowShowProgressBar = .always
 }

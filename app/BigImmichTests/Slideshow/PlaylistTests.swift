@@ -1,15 +1,14 @@
 //
-//  SlideshowTests.swift
+//  PlaylistTests.swift
 //  BigImmich
 //
 //  Created by Maciej Płoński on 18/01/2026.
 //
 
+@testable import BigImmich
 import ImmichAPI
 import Testing
 import XCTest
-
-@testable import BigImmich
 
 @MainActor
 struct PlaylistGetterAlbumsTests {
@@ -17,14 +16,14 @@ struct PlaylistGetterAlbumsTests {
         let settings = FakeSettings(
             slideshowOnceEndedAction: .stopAndNotify,
             slideshowOnceEndedAnotherAlbumSelection: .random,
-            slideshowDirection: .oldestToNewest,
+            slideshowDirection: .oldestToNewest
         )
 
         let fakeClient = FakeImmichClient(
             albumSummaries: [
                 AlbumSummary.dummy(id: "album.1"),
                 AlbumSummary.dummy(id: "album.2"),
-                AlbumSummary.dummy(id: "album.3"),
+                AlbumSummary.dummy(id: "album.3")
             ],
             albums: [
                 AlbumID(rawValue: "album.2"): Album.dummy(
@@ -32,7 +31,7 @@ struct PlaylistGetterAlbumsTests {
                     assets: [
                         AlbumAsset.dummy(id: "asset.1"),
                         AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3"),
+                        AlbumAsset.dummy(id: "asset.3")
                     ]
                 )
             ]
@@ -40,7 +39,7 @@ struct PlaylistGetterAlbumsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient,
+            immichClient: fakeClient
         )
 
         let albums = try await playlistGetter.getAlbumsPlaylist(
@@ -56,14 +55,14 @@ struct PlaylistGetterAlbumsTests {
         let settings = FakeSettings(
             slideshowOnceEndedAction: .startAgain,
             slideshowOnceEndedAnotherAlbumSelection: .random,
-            slideshowDirection: .oldestToNewest,
+            slideshowDirection: .oldestToNewest
         )
 
         let fakeClient = FakeImmichClient(
             albumSummaries: [
                 AlbumSummary.dummy(id: "album.1"),
                 AlbumSummary.dummy(id: "album.2"),
-                AlbumSummary.dummy(id: "album.3"),
+                AlbumSummary.dummy(id: "album.3")
             ],
             albums: [
                 AlbumID(rawValue: "album.2"): Album.dummy(
@@ -71,7 +70,7 @@ struct PlaylistGetterAlbumsTests {
                     assets: [
                         AlbumAsset.dummy(id: "asset.1"),
                         AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3"),
+                        AlbumAsset.dummy(id: "asset.3")
                     ]
                 )
             ]
@@ -79,7 +78,7 @@ struct PlaylistGetterAlbumsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient,
+            immichClient: fakeClient
         )
 
         let albums = try await playlistGetter.getAlbumsPlaylist(
@@ -95,35 +94,35 @@ struct PlaylistGetterAlbumsTests {
         let settings = FakeSettings(
             slideshowOnceEndedAction: .loadAnotherAlbum,
             slideshowOnceEndedAnotherAlbumSelection: .older,
-            slideshowDirection: .oldestToNewest,
+            slideshowDirection: .oldestToNewest
         )
 
         let fakeClient = FakeImmichClient(
             albumSummaries: [
                 AlbumSummary.dummy(id: "album.1"),
-                AlbumSummary.dummy(id: "album.2"),
+                AlbumSummary.dummy(id: "album.2")
             ],
             albums: [
                 AlbumID(rawValue: "album.1"): Album.dummy(
                     id: "album.1",
                     assets: [
                         AlbumAsset.dummy(id: "asset.1"),
-                        AlbumAsset.dummy(id: "asset.2"),
+                        AlbumAsset.dummy(id: "asset.2")
                     ]
                 ),
                 AlbumID(rawValue: "album.2"): Album.dummy(
                     id: "album.2",
                     assets: [
                         AlbumAsset.dummy(id: "asset.3"),
-                        AlbumAsset.dummy(id: "asset.4"),
+                        AlbumAsset.dummy(id: "asset.4")
                     ]
-                ),
+                )
             ]
         )
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient,
+            immichClient: fakeClient
         )
 
         let albums = try await playlistGetter.getAlbumsPlaylist(
@@ -141,35 +140,35 @@ struct PlaylistGetterAlbumsTests {
         let settings = FakeSettings(
             slideshowOnceEndedAction: .loadAnotherAlbum,
             slideshowOnceEndedAnotherAlbumSelection: .newer,
-            slideshowDirection: .oldestToNewest,
+            slideshowDirection: .oldestToNewest
         )
 
         let fakeClient = FakeImmichClient(
             albumSummaries: [
                 AlbumSummary.dummy(id: "album.1"),
-                AlbumSummary.dummy(id: "album.2"),
+                AlbumSummary.dummy(id: "album.2")
             ],
             albums: [
                 AlbumID(rawValue: "album.1"): Album.dummy(
                     id: "album.1",
                     assets: [
                         AlbumAsset.dummy(id: "asset.1"),
-                        AlbumAsset.dummy(id: "asset.2"),
+                        AlbumAsset.dummy(id: "asset.2")
                     ]
                 ),
                 AlbumID(rawValue: "album.2"): Album.dummy(
                     id: "album.2",
                     assets: [
                         AlbumAsset.dummy(id: "asset.3"),
-                        AlbumAsset.dummy(id: "asset.4"),
+                        AlbumAsset.dummy(id: "asset.4")
                     ]
-                ),
+                )
             ]
         )
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient,
+            immichClient: fakeClient
         )
 
         let albums = try await playlistGetter.getAlbumsPlaylist(
@@ -190,14 +189,14 @@ struct PlaylistGetterAssetsTests {
         let settings = FakeSettings(
             slideshowOnceEndedAction: .stopAndNotify,
             slideshowOnceEndedAnotherAlbumSelection: .random,
-            slideshowDirection: .oldestToNewest,
+            slideshowDirection: .oldestToNewest
         )
 
         let fakeClient = FakeImmichClient(
             albumSummaries: [
                 AlbumSummary.dummy(id: "album.1"),
                 AlbumSummary.dummy(id: "album.2"),
-                AlbumSummary.dummy(id: "album.3"),
+                AlbumSummary.dummy(id: "album.3")
             ],
             albums: [
                 AlbumID(rawValue: "album.2"): Album.dummy(
@@ -205,7 +204,7 @@ struct PlaylistGetterAssetsTests {
                     assets: [
                         AlbumAsset.dummy(id: "asset.1"),
                         AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3"),
+                        AlbumAsset.dummy(id: "asset.3")
                     ]
                 )
             ]
@@ -213,7 +212,7 @@ struct PlaylistGetterAssetsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient,
+            immichClient: fakeClient
         )
 
         let assets = try await playlistGetter.getAssetsPlaylist(
@@ -231,14 +230,14 @@ struct PlaylistGetterAssetsTests {
         let settings = FakeSettings(
             slideshowOnceEndedAction: .stopAndNotify,
             slideshowOnceEndedAnotherAlbumSelection: .random,
-            slideshowDirection: .newestToOldest,
+            slideshowDirection: .newestToOldest
         )
 
         let fakeClient = FakeImmichClient(
             albumSummaries: [
                 AlbumSummary.dummy(id: "album.1"),
                 AlbumSummary.dummy(id: "album.2"),
-                AlbumSummary.dummy(id: "album.3"),
+                AlbumSummary.dummy(id: "album.3")
             ],
             albums: [
                 AlbumID(rawValue: "album.2"): Album.dummy(
@@ -246,7 +245,7 @@ struct PlaylistGetterAssetsTests {
                     assets: [
                         AlbumAsset.dummy(id: "asset.1"),
                         AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3"),
+                        AlbumAsset.dummy(id: "asset.3")
                     ]
                 )
             ]
@@ -254,7 +253,7 @@ struct PlaylistGetterAssetsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient,
+            immichClient: fakeClient
         )
 
         let assets = try await playlistGetter.getAssetsPlaylist(
@@ -272,14 +271,14 @@ struct PlaylistGetterAssetsTests {
         let settings = FakeSettings(
             slideshowOnceEndedAction: .loadAnotherAlbum,
             slideshowOnceEndedAnotherAlbumSelection: .random,
-            slideshowDirection: .newestToOldest,
+            slideshowDirection: .newestToOldest
         )
 
         let fakeClient = FakeImmichClient(
             albumSummaries: [
                 AlbumSummary.dummy(id: "album.1"),
                 AlbumSummary.dummy(id: "album.2"),
-                AlbumSummary.dummy(id: "album.3"),
+                AlbumSummary.dummy(id: "album.3")
             ],
             albums: [
                 AlbumID(rawValue: "album.2"): Album.dummy(
@@ -287,7 +286,7 @@ struct PlaylistGetterAssetsTests {
                     assets: [
                         AlbumAsset.dummy(id: "asset.1"),
                         AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3"),
+                        AlbumAsset.dummy(id: "asset.3")
                     ]
                 )
             ]
@@ -295,7 +294,7 @@ struct PlaylistGetterAssetsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient,
+            immichClient: fakeClient
         )
 
         let assets = try await playlistGetter.getAssetsPlaylist(
@@ -309,14 +308,14 @@ struct PlaylistGetterAssetsTests {
         let settings = FakeSettings(
             slideshowOnceEndedAction: .startAgain,
             slideshowOnceEndedAnotherAlbumSelection: .random,
-            slideshowDirection: .newestToOldest,
+            slideshowDirection: .newestToOldest
         )
 
         let fakeClient = FakeImmichClient(
             albumSummaries: [
                 AlbumSummary.dummy(id: "album.1"),
                 AlbumSummary.dummy(id: "album.2"),
-                AlbumSummary.dummy(id: "album.3"),
+                AlbumSummary.dummy(id: "album.3")
             ],
             albums: [
                 AlbumID(rawValue: "album.2"): Album.dummy(
@@ -324,7 +323,7 @@ struct PlaylistGetterAssetsTests {
                     assets: [
                         AlbumAsset.dummy(id: "asset.1"),
                         AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3"),
+                        AlbumAsset.dummy(id: "asset.3")
                     ]
                 )
             ]
@@ -332,7 +331,7 @@ struct PlaylistGetterAssetsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient,
+            immichClient: fakeClient
         )
 
         let assets = try await playlistGetter.getAssetsPlaylist(

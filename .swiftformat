@@ -1,0 +1,7 @@
+--swiftversion 6.0
+--indent 4
+--self remove
+--importgrouping alpha
+--commas inline
+--trailingclosures
+--exclude **/*.generated.swift

@@ -89,9 +89,9 @@ struct AlbumsView: View {
                         .padding(.vertical, 30)
                         .onAppear {
                             guard let initialAlbumID,
-                                let index = albums.firstIndex(where: {
-                                    $0.id == initialAlbumID
-                                })
+                                  let index = albums.firstIndex(where: {
+                                      $0.id == initialAlbumID
+                                  })
                             else {
                                 focusedAlbumIndex = 0
                                 return
@@ -116,7 +116,7 @@ struct AlbumsView: View {
     private func loadAlbums() async {
         isLoading = true
         do {
-            self.albums = try await ImmichClient.shared.findAlbums(
+            albums = try await ImmichClient.shared.findAlbums(
                 order: .fromNewest
             )
         } catch ImmichAPIError.missingConfig {

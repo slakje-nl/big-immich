@@ -9,12 +9,12 @@ struct ThumbnailView: View {
     let onLoaded: () -> Void
     let onError: (Error) -> Void
 
-    @State private var image: Image? = nil
+    @State private var image: Image?
     @State private var isLoading = true
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            if let image = image {
+            if let image {
                 image
                     .resizable()
                     .scaledToFill()
@@ -60,7 +60,7 @@ struct ThumbnailView: View {
             let data: Data = try await ImmichAPI.shared.loadMediaWithRetries(
                 path: "/api/assets/\(assetID.string)/thumbnail",
                 queryParams: [:],
-                retries: 3,
+                retries: 3
             )
             if let uiImage = UIImage(data: data) {
                 image = Image(uiImage: uiImage)
