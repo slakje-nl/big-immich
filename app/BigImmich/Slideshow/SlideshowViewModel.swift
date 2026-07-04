@@ -243,52 +243,44 @@ final class SlideshowViewModel {
         userLocation = formattedLocation(asset)
         loadAssetMetadata(for: asset.id)
 
-        do {
-            if asset.assetType == .image {
-                do {
-                    currentImage = try await imageLoader.load(
-                        assetID: asset.id,
-                        size: .fullsize,
-                        retries: 3
-                    )
-                } catch {
-                    showError("loading image failed: id=\(asset.id)")
-                    logError(error)
-                    await moveToNext()
-                    return
-                }
-
-                if slideshowIsRunning {
-                    startImageTimers()
-                }
-            } else if asset.assetType == .video {
-                var playbackURL: URL
-                do {
-                    playbackURL = try await immichClient.videoPlaybackURL(
-                        assetID: asset.id
-                    )
-                } catch {
-                    showError(
-                        "loading video failed: failed to construct playback URL"
-                    )
-                    return
-                }
-
-                videoController.start(
-                    url: playbackURL,
-                    autoplay: slideshowIsRunning,
-                    onEnded: { [weak self] in
-                        Task { await self?.moveToNext() }
-                    }
+        if asset.assetType == .image {
+            do {
+                currentImage = try await imageLoader.load(
+                    assetID: asset.id,
+                    size: .fullsize,
+                    retries: 3
                 )
-                currentPlayer = videoController.player
+            } catch {
+                showError("loading image failed: id=\(asset.id)")
+                logError(error)
+                await moveToNext()
+                return
             }
-        } catch {
-            showError(error.localizedDescription)
-            logError(error)
-            isLoading = false
-            await moveToNext()
-            return
+
+            if slideshowIsRunning {
+                startImageTimers()
+            }
+        } else if asset.assetType == .video {
+            let playbackURL: URL
+            do {
+                playbackURL = try await immichClient.videoPlaybackURL(
+                    assetID: asset.id
+                )
+            } catch {
+                showError(
+                    "loading video failed: failed to construct playback URL"
+                )
+                return
+            }
+
+            videoController.start(
+                url: playbackURL,
+                autoplay: slideshowIsRunning,
+                onEnded: { [weak self] in
+                    Task { await self?.moveToNext() }
+                }
+            )
+            currentPlayer = videoController.player
         }
 
         if previousAlbumID != slideshowAsset.album.id {

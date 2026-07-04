@@ -77,6 +77,7 @@ actor SlideshowSequencer {
 
     private func firstNonEmptyAlbumIndex() async throws -> Int? {
         for index in albumPlaylist.elements.indices {
+            // swiftlint:disable:next for_where - a `where` clause can't hold the `try await` count call.
             if try await assetCount(atAlbum: index) > 0 { return index }
         }
         return nil
