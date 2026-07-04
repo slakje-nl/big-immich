@@ -385,36 +385,34 @@ public actor ImmichAPI {
         }
     }
 
-    public func loadObject<T: Decodable>(
-        path: String,
-        queryParams: [String: String]?
+    private func withAuthRetry<T>(
+        _ operation: (ImmichAPIClient) async throws -> T
     ) async throws -> T {
         guard let config = getConfig() else {
             throw ImmichAPIError.missingConfig
         }
+        let client = ImmichAPIClient(baseURL: config.baseURL)
 
         do {
-            return try await ImmichAPIClient(baseURL: config.baseURL)
-                .loadObject(
-                    httpMethod: "GET",
-                    path: path,
-                    queryParams: queryParams,
-                    headers: findAuthHeaders(),
-                    jsonPayload: nil
-                )
+            return try await operation(client)
         } catch ImmichAPIError.unauthorized {
             await ImmichAPIAuthenticator.shared.logout()
+            return try await operation(client)
+        }
+    }
 
-            return try await ImmichAPIClient(baseURL: config.baseURL)
-                .loadObject(
-                    httpMethod: "GET",
-                    path: path,
-                    queryParams: queryParams,
-                    headers: findAuthHeaders(),
-                    jsonPayload: nil
-                )
-        } catch {
-            throw error
+    public func loadObject<T: Decodable>(
+        path: String,
+        queryParams: [String: String]?
+    ) async throws -> T {
+        try await withAuthRetry { client in
+            try await client.loadObject(
+                httpMethod: "GET",
+                path: path,
+                queryParams: queryParams,
+                headers: findAuthHeaders(),
+                jsonPayload: nil
+            )
         }
     }
 
@@ -422,32 +420,14 @@ public actor ImmichAPI {
         path: String,
         queryParams: [String: String]?
     ) async throws -> [T] {
-        guard let config = getConfig() else {
-            throw ImmichAPIError.missingConfig
-        }
-
-        do {
-            return try await ImmichAPIClient(baseURL: config.baseURL)
-                .loadArray(
-                    httpMethod: "GET",
-                    path: path,
-                    queryParams: queryParams,
-                    headers: findAuthHeaders(),
-                    jsonPayload: nil
-                )
-        } catch ImmichAPIError.unauthorized {
-            await ImmichAPIAuthenticator.shared.logout()
-
-            return try await ImmichAPIClient(baseURL: config.baseURL)
-                .loadArray(
-                    httpMethod: "GET",
-                    path: path,
-                    queryParams: queryParams,
-                    headers: findAuthHeaders(),
-                    jsonPayload: nil
-                )
-        } catch {
-            throw error
+        try await withAuthRetry { client in
+            try await client.loadArray(
+                httpMethod: "GET",
+                path: path,
+                queryParams: queryParams,
+                headers: findAuthHeaders(),
+                jsonPayload: nil
+            )
         }
     }
 
@@ -481,30 +461,14 @@ public actor ImmichAPI {
     public func loadMedia(path: String, queryParams: [String: String]?)
         async throws -> Data
     {
-        guard let config = getConfig() else {
-            throw ImmichAPIError.missingConfig
-        }
-
-        do {
-            return try await ImmichAPIClient(baseURL: config.baseURL).loadMedia(
+        try await withAuthRetry { client in
+            try await client.loadMedia(
                 httpMethod: "GET",
                 path: path,
                 queryParams: queryParams,
                 headers: findAuthHeaders(),
                 jsonPayload: nil
             )
-        } catch ImmichAPIError.unauthorized {
-            await ImmichAPIAuthenticator.shared.logout()
-
-            return try await ImmichAPIClient(baseURL: config.baseURL).loadMedia(
-                httpMethod: "GET",
-                path: path,
-                queryParams: queryParams,
-                headers: findAuthHeaders(),
-                jsonPayload: nil
-            )
-        } catch {
-            throw error
         }
     }
 
