@@ -38,8 +38,10 @@ struct SettingsView: View {
     @State private var connectionWorking: Bool = true
 
     @ObservedObject private var appLog = AppLog.shared
+    @State private var outdatedServer = false
 
     private let leftSideWidth: CGFloat = 200
+    private let minimumImmichVersion = ServerVersion(major: 3, minor: 0, patch: 2)
 
     var body: some View {
         GeometryReader { geo in
@@ -171,6 +173,12 @@ struct SettingsView: View {
                             if connectionWorking {
                                 Text("Connection to Immich works!")
                                     .foregroundColor(.green)
+                                if outdatedServer {
+                                    Text(
+                                        "This app is designed for Immich \(minimumImmichVersion.displayString) or newer. Updating Immich is recommended."
+                                    )
+                                    .foregroundColor(.yellow)
+                                }
                             } else {
                                 Text("Couldn't connect to Immich :(")
                                     .foregroundColor(.red)
@@ -545,6 +553,7 @@ struct SettingsView: View {
         configurationError = nil
         connectionTested = false
         connectionWorking = false
+        outdatedServer = false
 
         if !isValidHTTPURL(immichURL) {
             configurationError =
@@ -564,6 +573,12 @@ struct SettingsView: View {
             connectionWorking = true
 
             configurationError = nil
+
+            if let version = try? await ImmichClient.shared.getServerVersion() {
+                outdatedServer = version < minimumImmichVersion
+            } else {
+                outdatedServer = false
+            }
         } catch ImmichAPIError.missingConfig {
             connectionTested = false
 

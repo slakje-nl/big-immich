@@ -18,6 +18,7 @@ public protocol ImmichClientProtocol {
     func findAlbums(order: AlbumsOrder) async throws -> [AlbumSummary]
     func getAlbum(albumID: AlbumID) async throws -> Album
     func getAlbumAssets(albumID: AlbumID) async throws -> [AlbumAsset]
+    func getServerVersion() async throws -> ServerVersion
 }
 
 func joinAlbums(order: AlbumsOrder, albumLists: [[AlbumSummary]]) -> [AlbumSummary] {
@@ -59,6 +60,13 @@ public class ImmichClient: ImmichClientProtocol {
     public func getAlbum(albumID: AlbumID) async throws -> Album {
         try await ImmichAPI.shared.loadObject(
             path: "/api/albums/\(albumID.string)",
+            queryParams: [:]
+        )
+    }
+
+    public func getServerVersion() async throws -> ServerVersion {
+        try await ImmichAPI.shared.loadObject(
+            path: "/api/server/version",
             queryParams: [:]
         )
     }

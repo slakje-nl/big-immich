@@ -106,4 +106,8 @@ class FakeImmichClient: ImmichClientProtocol {
     func getAlbumAssets(albumID: AlbumID) async throws -> [AlbumAsset] {
         albumAssets[albumID] ?? []
     }
+
+    func getServerVersion() async throws -> ServerVersion {
+        ServerVersion(major: 3, minor: 0, patch: 2)
+    }
 }
