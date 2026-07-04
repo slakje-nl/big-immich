@@ -119,4 +119,11 @@ public struct ExifInfo: Codable {
     public let city: String?
     public let state: String?
     public let country: String?
+
+    public init(dateTimeOriginal: String?, city: String?, state: String?, country: String?) {
+        self.dateTimeOriginal = dateTimeOriginal
+        self.city = city
+        self.state = state
+        self.country = country
+    }
 }

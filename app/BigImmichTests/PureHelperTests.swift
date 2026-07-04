@@ -65,3 +65,31 @@ struct URLValidationTests {
         #expect(!isValidHTTPURL("ftp://immich.local"))
     }
 }
+
+struct AssetMetadataFormattingTests {
+    private func asset(exif: ExifInfo?) -> AlbumAsset {
+        AlbumAsset(id: AssetID(rawValue: "a"), type: "IMAGE", originalPath: "", duration: "0:00:00", exifInfo: exif)
+    }
+
+    @Test func formatsCaptureDateWhenPresent() {
+        let exif = ExifInfo(dateTimeOriginal: "2025-11-06T10:15:00.000+00:00", city: nil, state: nil, country: nil)
+        #expect(!formattedCaptureDate(asset(exif: exif)).isEmpty)
+    }
+
+    @Test func returnsEmptyDateWhenMissingOrUnparseable() {
+        #expect(formattedCaptureDate(asset(exif: nil)).isEmpty)
+        let unparseable = ExifInfo(dateTimeOriginal: "not-a-date", city: nil, state: nil, country: nil)
+        #expect(formattedCaptureDate(asset(exif: unparseable)).isEmpty)
+    }
+
+    @Test func formatsFullLocation() {
+        let exif = ExifInfo(dateTimeOriginal: nil, city: "Amsterdam", state: "NH", country: "NL")
+        #expect(formattedLocation(asset(exif: exif)) == "Amsterdam, NH, NL")
+    }
+
+    @Test func returnsEmptyLocationWhenIncomplete() {
+        #expect(formattedLocation(asset(exif: nil)).isEmpty)
+        let partial = ExifInfo(dateTimeOriginal: nil, city: "Amsterdam", state: nil, country: "NL")
+        #expect(formattedLocation(asset(exif: partial)).isEmpty)
+    }
+}

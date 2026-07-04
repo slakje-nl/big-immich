@@ -388,34 +388,6 @@ struct SlideshowView: View {
         }
     }
 
-    private func formatDate(asset: AlbumAsset) -> String {
-        guard let exifInfo = asset.exifInfo else { return "" }
-        guard let original = exifInfo.dateTimeOriginal else { return "" }
-
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [
-            .withInternetDateTime, .withFractionalSeconds
-        ]
-
-        guard let date = formatter.date(from: original) else {
-            return ""
-        }
-
-        let europeanFormatter = DateFormatter()
-        europeanFormatter.dateFormat = "dd/MM/yyyy HH:mm"
-
-        return europeanFormatter.string(from: date)
-    }
-
-    private func formatLocation(asset: AlbumAsset) -> String {
-        guard let exifInfo = asset.exifInfo else { return "" }
-        guard let city = exifInfo.city else { return "" }
-        guard let state = exifInfo.state else { return "" }
-        guard let country = exifInfo.country else { return "" }
-
-        return city + ", " + state + ", " + country
-    }
-
     private func loadCurrentAsset(slideshowAsset: SlideshowAsset) async {
         // stop actions
         stopSlideshowTimer()
@@ -439,8 +411,8 @@ struct SlideshowView: View {
 
         userAssetIndex = slideshowAsset.counter.current
         userAssetsCount = slideshowAsset.counter.total
-        userDateTime = formatDate(asset: asset)
-        userLocation = formatLocation(asset: asset)
+        userDateTime = formattedCaptureDate(asset)
+        userLocation = formattedLocation(asset)
 
         do {
             if asset.assetType == .image {
