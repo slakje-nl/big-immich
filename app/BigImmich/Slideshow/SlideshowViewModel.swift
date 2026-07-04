@@ -200,6 +200,21 @@ final class SlideshowViewModel: ObservableObject {
         }
     }
 
+    private func loadAssetMetadata(for assetID: AssetID) {
+        Task { [weak self] in
+            guard
+                let detailed: AlbumAsset = try? await ImmichAPI.shared.loadObject(
+                    path: "/api/assets/\(assetID.string)",
+                    queryParams: [:]
+                )
+            else { return }
+
+            guard let self, slideshowAsset?.asset.id == assetID else { return }
+            userDateTime = formattedCaptureDate(detailed)
+            userLocation = formattedLocation(detailed)
+        }
+    }
+
     private func loadCurrentAsset(slideshowAsset: SlideshowAsset) async {
         stopSlideshowTimer()
         stopProgressBarTimer()
@@ -223,6 +238,7 @@ final class SlideshowViewModel: ObservableObject {
         userAssetsCount = slideshowAsset.counter.total
         userDateTime = formattedCaptureDate(asset)
         userLocation = formattedLocation(asset)
+        loadAssetMetadata(for: asset.id)
 
         do {
             if asset.assetType == .image {
