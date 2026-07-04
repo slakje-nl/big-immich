@@ -19,19 +19,16 @@ struct SettingsView: View {
         SlideshowAction = .goToNext
     @AppStorage("slideshowRightAction") private var slideshowRightAction:
         SlideshowAction = .goToPrevious
-    @AppStorage("slideshowOnceEndedAction") private
-        var slideshowOnceEndedAction: SlideshowOnceEndedAction = .stopAndNotify
-    @AppStorage("slideshowOnceEndedAnotherAlbum") private
-        var slideshowOnceEndedAnotherAlbumSelection:
+    @AppStorage("slideshowOnceEndedAction") private var slideshowOnceEndedAction: SlideshowOnceEndedAction = .stopAndNotify
+    @AppStorage("slideshowOnceEndedAnotherAlbum") private var slideshowOnceEndedAnotherAlbumSelection:
         SlideshowOnceEndedAnotherAlbumSelection = .random
-    @AppStorage("slideshowShowProgressBar") private
-        var slideshowShowProgressBar: SlideshowShowProgressBar = .always
+    @AppStorage("slideshowShowProgressBar") private var slideshowShowProgressBar: SlideshowShowProgressBar = .always
 
     // error reporting
     @AppStorage("sentryEnabled") private var sentryEnabled: Bool = false
     @AppStorage("sentryDSN") private var sentryDSN: String = ""
 
-    @State private var fakedPickerOption: Int = 0  // helper for pickers with a single option
+    @State private var fakedPickerOption: Int = 0 // helper for pickers with a single option
 
     @State private var errorWhileSaving: Bool = false
 
@@ -40,7 +37,13 @@ struct SettingsView: View {
     @State private var connectionTested: Bool = false
     @State private var connectionWorking: Bool = true
 
+    @ObservedObject private var appLog = AppLog.shared
+    @State private var outdatedServer = false
+
+    var immichClient: ImmichClientProtocol = ImmichClient.shared
+
     private let leftSideWidth: CGFloat = 200
+    private let minimumImmichVersion = ServerVersion(major: 3, minor: 0, patch: 1)
 
     var body: some View {
         GeometryReader { geo in
@@ -62,8 +65,7 @@ struct SettingsView: View {
                                 )
                                 .bold()
 
-                            Picker("Auth method", selection: $immichAuthMethod)
-                            {
+                            Picker("Auth method", selection: $immichAuthMethod) {
                                 Text("api key (recommended)").tag(
                                     ImmichAPIAuthMethod.apiKey
                                 )
@@ -92,6 +94,7 @@ struct SettingsView: View {
                                 .cornerRadius(6)
                                 .frame(width: geo.size.width * 0.4)
                                 .onChange(of: immichURL, saveSettings)
+                                .accessibilityIdentifier("immichURLField")
                         }
 
                         switch immichAuthMethod {
@@ -114,6 +117,7 @@ struct SettingsView: View {
                                 .cornerRadius(6)
                                 .frame(width: geo.size.width * 0.4)
                                 .onChange(of: immichAuthAPIKey, saveSettings)
+                                .accessibilityIdentifier("apiKeyField")
                             }
 
                             Text(
@@ -173,6 +177,12 @@ struct SettingsView: View {
                             if connectionWorking {
                                 Text("Connection to Immich works!")
                                     .foregroundColor(.green)
+                                if outdatedServer {
+                                    Text(
+                                        "This app is designed for Immich \(minimumImmichVersion.displayString) or newer. Updating Immich is recommended."
+                                    )
+                                    .foregroundColor(.yellow)
+                                }
                             } else {
                                 Text("Couldn't connect to Immich :(")
                                     .foregroundColor(.red)
@@ -211,7 +221,7 @@ struct SettingsView: View {
                                 .bold()
 
                             Picker("Interval", selection: $slideshowInterval) {
-                                ForEach(5...60, id: \.self) { i in
+                                ForEach(5 ... 60, id: \.self) { i in
                                     Text("\(i)s").tag(i)
                                 }
                             }
@@ -226,8 +236,7 @@ struct SettingsView: View {
                                 )
                                 .bold()
 
-                            Picker("Direction", selection: $slideshowDirection)
-                            {
+                            Picker("Direction", selection: $slideshowDirection) {
                                 Text("oldest → newest").tag(
                                     SlideshowDirection.oldestToNewest
                                 )
@@ -280,7 +289,7 @@ struct SettingsView: View {
                                 Picker(
                                     "Another album",
                                     selection:
-                                        $slideshowOnceEndedAnotherAlbumSelection
+                                    $slideshowOnceEndedAnotherAlbumSelection
                                 ) {
                                     Text("older").tag(
                                         SlideshowOnceEndedAnotherAlbumSelection
@@ -466,11 +475,45 @@ struct SettingsView: View {
                         )
                         .foregroundColor(.white)
 
+                        Divider().frame(
+                            width: leftSideWidth + geo.size.width * 0.4
+                        )
+
+                        HStack {
+                            Text("Debug logs")
+                                .frame(
+                                    width: leftSideWidth,
+                                    alignment: .leading
+                                )
+                                .bold()
+
+                            Button("Clear logs") {
+                                appLog.clear()
+                            }
+                            .frame(
+                                width: geo.size.width * 0.4,
+                                alignment: .leading
+                            )
+                        }
+
+                        if appLog.entries.isEmpty {
+                            Text("No logs yet.").foregroundColor(.secondary)
+                        } else {
+                            VStack(alignment: .leading, spacing: 12) {
+                                ForEach(Array(appLog.entries.suffix(20).reversed())) { entry in
+                                    DebugLogRow(
+                                        entry: entry,
+                                        maxWidth: geo.size.width * 0.6
+                                    )
+                                }
+                            }
+                        }
+
                         Spacer()
                     }
                     .padding(40)
                     .onAppear(perform: loadSettings)
-                    Spacer()  // push everything to center horizontally
+                    Spacer() // push everything to center horizontally
                 }
             }
         }
@@ -514,6 +557,7 @@ struct SettingsView: View {
         configurationError = nil
         connectionTested = false
         connectionWorking = false
+        outdatedServer = false
 
         if !isValidHTTPURL(immichURL) {
             configurationError =
@@ -525,26 +569,20 @@ struct SettingsView: View {
         }
     }
 
-    func isValidHTTPURL(_ urlString: String) -> Bool {
-        guard let url = URL(string: urlString) else { return false }
-
-        guard let scheme = url.scheme?.lowercased(),
-            scheme == "http" || scheme == "https"
-        else {
-            return false
-        }
-
-        return url.host != nil
-    }
-
-    private func testConnection() async {
+    func testConnection() async {
         do {
-            let _ = try await ImmichClient.shared.findAlbums(order: .fromOldest)
+            _ = try await immichClient.findAlbums(order: .fromOldest)
 
             connectionTested = true
             connectionWorking = true
 
             configurationError = nil
+
+            if let version = try? await immichClient.getServerVersion() {
+                outdatedServer = version < minimumImmichVersion
+            } else {
+                outdatedServer = false
+            }
         } catch ImmichAPIError.missingConfig {
             connectionTested = false
 
@@ -557,5 +595,28 @@ struct SettingsView: View {
             configurationErrorColour = .red
             configurationError = "error: \(error.localizedDescription)"
         }
+    }
+}
+
+private struct DebugLogRow: View {
+    let entry: LogEntry
+    let maxWidth: CGFloat
+
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        Text("[\(entry.date.formatted(date: .omitted, time: .standard))] \(entry.message)")
+            .font(.system(.caption, design: .monospaced))
+            .foregroundColor(.red)
+            .frame(maxWidth: maxWidth, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(focused ? Color.white.opacity(0.12) : Color.clear)
+            .cornerRadius(8)
+            .focusable(true)
+            .focused($focused)
+            .scaleEffect(focused ? 1.02 : 1.0)
+            .animation(.easeInOut(duration: 0.12), value: focused)
     }
 }

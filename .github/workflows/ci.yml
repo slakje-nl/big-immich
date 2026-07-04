@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: macos-15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tool versions
+        run: xcodebuild -version && swift --version
+
+      - name: Install tools
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
+        run: brew install just swiftformat swiftlint gitleaks
+
+      - name: Format check
+        run: just format-check
+
+      - name: Lint
+        run: just lint
+
+      - name: Secret scan
+        run: just security
+
+      - name: Build & test
+        run: |
+          set -o pipefail
+          just test | tee xcodebuild.log
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: xcodebuild.log

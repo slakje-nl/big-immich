@@ -8,7 +8,7 @@
 import XCTest
 
 final class BigImmichUITestsLaunchTests: XCTestCase {
-
+    // swiftlint:disable:next static_over_final_class - overriding XCTestCase's class property; can't be static.
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
     }
@@ -18,7 +18,7 @@ final class BigImmichUITestsLaunchTests: XCTestCase {
     }
 
     @MainActor
-    func testLaunch() throws {
+    func testLaunch() {
         let app = XCUIApplication()
         app.launch()
 

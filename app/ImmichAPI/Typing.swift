@@ -6,23 +6,22 @@
 //
 
 public protocol CustomString: RawRepresentable, Codable, Hashable, Equatable
-where RawValue == String {
+    where RawValue == String
+{
     init(rawValue: String)
 }
 
-extension CustomString {
-    public init(rawValue: String) {
-        self.init(rawValue: rawValue)
+public extension CustomString {
+    var string: String {
+        rawValue
     }
 
-    public var string: String { rawValue }
-
-    public init(from decoder: Decoder) throws {
+    init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        self.init(rawValue: try container.decode(String.self))
+        try self.init(rawValue: container.decode(String.self))
     }
 
-    public func encode(to encoder: Encoder) throws {
+    func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(rawValue)
     }

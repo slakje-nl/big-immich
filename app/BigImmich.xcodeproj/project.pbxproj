@@ -1,0 +1,1154 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		528F90262F0D9C1400003810 /* libKeychainHelper.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 528F900E2F0D9AEA00003810 /* libKeychainHelper.a */; };
+		528F90292F0D9C6700003810 /* libImmichAPI.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 528F90192F0D9B2800003810 /* libImmichAPI.a */; };
+		528F902C2F0D9C6D00003810 /* libKeychainHelper.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 528F900E2F0D9AEA00003810 /* libKeychainHelper.a */; };
+		528F90542F0DA08500003810 /* TVServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 528F8FEB2F09EBD600003810 /* TVServices.framework */; };
+		528F905B2F0DA08500003810 /* TopShelf.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 528F90532F0DA08500003810 /* TopShelf.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		528F90602F0DA6B200003810 /* libImmichAPI.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 528F90192F0D9B2800003810 /* libImmichAPI.a */; };
+		52D376FF2EF7832E00E29944 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 52D376FE2EF7832E00E29944 /* Sentry */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		52855A592E9721FC00D84054 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 52855A412E9721FA00D84054 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 52855A482E9721FA00D84054;
+			remoteInfo = BigImmich;
+		};
+		52855A632E9721FC00D84054 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 52855A412E9721FA00D84054 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 52855A482E9721FA00D84054;
+			remoteInfo = BigImmich;
+		};
+		528F90272F0D9C1400003810 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 52855A412E9721FA00D84054 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 528F900D2F0D9AEA00003810;
+			remoteInfo = KeychainHelper;
+		};
+		528F902A2F0D9C6700003810 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 52855A412E9721FA00D84054 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 528F90182F0D9B2800003810;
+			remoteInfo = ImmichAPI;
+		};
+		528F902D2F0D9C6D00003810 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 52855A412E9721FA00D84054 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 528F900D2F0D9AEA00003810;
+			remoteInfo = KeychainHelper;
+		};
+		528F90592F0DA08500003810 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 52855A412E9721FA00D84054 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 528F90522F0DA08500003810;
+			remoteInfo = TopShelf;
+		};
+		528F90612F0DA6B200003810 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 52855A412E9721FA00D84054 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 528F90182F0D9B2800003810;
+			remoteInfo = ImmichAPI;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		528F8FF42F09EBD600003810 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				528F905B2F0DA08500003810 /* TopShelf.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		528F8FFF2F0D9A9100003810 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		528F900C2F0D9AEA00003810 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		528F90172F0D9B2800003810 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		52855A492E9721FA00D84054 /* BigImmich.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BigImmich.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		52855A582E9721FC00D84054 /* BigImmichTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BigImmichTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		52855A622E9721FC00D84054 /* BigImmichUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BigImmichUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		528F8FEB2F09EBD600003810 /* TVServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = TVServices.framework; path = System/Library/Frameworks/TVServices.framework; sourceTree = SDKROOT; };
+		528F90012F0D9A9100003810 /* libConfiguration.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libConfiguration.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		528F900E2F0D9AEA00003810 /* libKeychainHelper.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libKeychainHelper.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		528F90192F0D9B2800003810 /* libImmichAPI.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libImmichAPI.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		528F90532F0DA08500003810 /* TopShelf.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TopShelf.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		528F90832F0DC0E500003810 /* Exceptions for "BigImmich" folder in "BigImmich" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 52855A482E9721FA00D84054 /* BigImmich */;
+		};
+		528F90842F0DC0E500003810 /* Exceptions for "TopShelf" folder in "TopShelf" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 528F90522F0DA08500003810 /* TopShelf */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		52855A4B2E9721FA00D84054 /* BigImmich */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				528F90832F0DC0E500003810 /* Exceptions for "BigImmich" folder in "BigImmich" target */,
+			);
+			path = BigImmich;
+			sourceTree = "<group>";
+		};
+		52855A5B2E9721FC00D84054 /* BigImmichTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = BigImmichTests;
+			sourceTree = "<group>";
+		};
+		52855A652E9721FC00D84054 /* BigImmichUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = BigImmichUITests;
+			sourceTree = "<group>";
+		};
+		528F900F2F0D9AEA00003810 /* KeychainHelper */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = KeychainHelper;
+			sourceTree = "<group>";
+		};
+		528F901A2F0D9B2800003810 /* ImmichAPI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ImmichAPI;
+			sourceTree = "<group>";
+		};
+		528F90552F0DA08500003810 /* TopShelf */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				528F90842F0DC0E500003810 /* Exceptions for "TopShelf" folder in "TopShelf" target */,
+			);
+			path = TopShelf;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		52855A462E9721FA00D84054 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				52D376FF2EF7832E00E29944 /* Sentry in Frameworks */,
+				528F90292F0D9C6700003810 /* libImmichAPI.a in Frameworks */,
+				528F902C2F0D9C6D00003810 /* libKeychainHelper.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		52855A552E9721FC00D84054 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		52855A5F2E9721FC00D84054 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		528F8FFE2F0D9A9100003810 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		528F900B2F0D9AEA00003810 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		528F90162F0D9B2800003810 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				528F90262F0D9C1400003810 /* libKeychainHelper.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		528F90502F0DA08500003810 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				528F90542F0DA08500003810 /* TVServices.framework in Frameworks */,
+				528F90602F0DA6B200003810 /* libImmichAPI.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		52855A402E9721FA00D84054 = {
+			isa = PBXGroup;
+			children = (
+				52855A4B2E9721FA00D84054 /* BigImmich */,
+				52855A5B2E9721FC00D84054 /* BigImmichTests */,
+				52855A652E9721FC00D84054 /* BigImmichUITests */,
+				528F900F2F0D9AEA00003810 /* KeychainHelper */,
+				528F901A2F0D9B2800003810 /* ImmichAPI */,
+				528F90552F0DA08500003810 /* TopShelf */,
+				528F8FEA2F09EBD600003810 /* Frameworks */,
+				52855A4A2E9721FA00D84054 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		52855A4A2E9721FA00D84054 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				52855A492E9721FA00D84054 /* BigImmich.app */,
+				52855A582E9721FC00D84054 /* BigImmichTests.xctest */,
+				52855A622E9721FC00D84054 /* BigImmichUITests.xctest */,
+				528F90012F0D9A9100003810 /* libConfiguration.a */,
+				528F900E2F0D9AEA00003810 /* libKeychainHelper.a */,
+				528F90192F0D9B2800003810 /* libImmichAPI.a */,
+				528F90532F0DA08500003810 /* TopShelf.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		528F8FEA2F09EBD600003810 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				528F8FEB2F09EBD600003810 /* TVServices.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		52855A482E9721FA00D84054 /* BigImmich */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 52855A6C2E9721FC00D84054 /* Build configuration list for PBXNativeTarget "BigImmich" */;
+			buildPhases = (
+				52855A452E9721FA00D84054 /* Sources */,
+				52855A462E9721FA00D84054 /* Frameworks */,
+				52855A472E9721FA00D84054 /* Resources */,
+				528F8FF42F09EBD600003810 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				528F902B2F0D9C6700003810 /* PBXTargetDependency */,
+				528F902E2F0D9C6D00003810 /* PBXTargetDependency */,
+				528F905A2F0DA08500003810 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				52855A4B2E9721FA00D84054 /* BigImmich */,
+			);
+			name = BigImmich;
+			packageProductDependencies = (
+				52D376FE2EF7832E00E29944 /* Sentry */,
+			);
+			productName = BigImmich;
+			productReference = 52855A492E9721FA00D84054 /* BigImmich.app */;
+			productType = "com.apple.product-type.application";
+		};
+		52855A572E9721FC00D84054 /* BigImmichTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 52855A6F2E9721FC00D84054 /* Build configuration list for PBXNativeTarget "BigImmichTests" */;
+			buildPhases = (
+				52855A542E9721FC00D84054 /* Sources */,
+				52855A552E9721FC00D84054 /* Frameworks */,
+				52855A562E9721FC00D84054 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				52855A5A2E9721FC00D84054 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				52855A5B2E9721FC00D84054 /* BigImmichTests */,
+			);
+			name = BigImmichTests;
+			packageProductDependencies = (
+			);
+			productName = BigImmichTests;
+			productReference = 52855A582E9721FC00D84054 /* BigImmichTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		52855A612E9721FC00D84054 /* BigImmichUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 52855A722E9721FC00D84054 /* Build configuration list for PBXNativeTarget "BigImmichUITests" */;
+			buildPhases = (
+				52855A5E2E9721FC00D84054 /* Sources */,
+				52855A5F2E9721FC00D84054 /* Frameworks */,
+				52855A602E9721FC00D84054 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				52855A642E9721FC00D84054 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				52855A652E9721FC00D84054 /* BigImmichUITests */,
+			);
+			name = BigImmichUITests;
+			packageProductDependencies = (
+			);
+			productName = BigImmichUITests;
+			productReference = 52855A622E9721FC00D84054 /* BigImmichUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		528F90002F0D9A9100003810 /* Configuration */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 528F90052F0D9A9100003810 /* Build configuration list for PBXNativeTarget "Configuration" */;
+			buildPhases = (
+				528F8FFD2F0D9A9100003810 /* Sources */,
+				528F8FFE2F0D9A9100003810 /* Frameworks */,
+				528F8FFF2F0D9A9100003810 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Configuration;
+			packageProductDependencies = (
+			);
+			productName = Configuration;
+			productReference = 528F90012F0D9A9100003810 /* libConfiguration.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		528F900D2F0D9AEA00003810 /* KeychainHelper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 528F90122F0D9AEA00003810 /* Build configuration list for PBXNativeTarget "KeychainHelper" */;
+			buildPhases = (
+				528F900A2F0D9AEA00003810 /* Sources */,
+				528F900B2F0D9AEA00003810 /* Frameworks */,
+				528F900C2F0D9AEA00003810 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				528F900F2F0D9AEA00003810 /* KeychainHelper */,
+			);
+			name = KeychainHelper;
+			packageProductDependencies = (
+			);
+			productName = KeychainHelper;
+			productReference = 528F900E2F0D9AEA00003810 /* libKeychainHelper.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		528F90182F0D9B2800003810 /* ImmichAPI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 528F901D2F0D9B2800003810 /* Build configuration list for PBXNativeTarget "ImmichAPI" */;
+			buildPhases = (
+				528F90152F0D9B2800003810 /* Sources */,
+				528F90162F0D9B2800003810 /* Frameworks */,
+				528F90172F0D9B2800003810 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				528F90282F0D9C1400003810 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				528F901A2F0D9B2800003810 /* ImmichAPI */,
+			);
+			name = ImmichAPI;
+			packageProductDependencies = (
+			);
+			productName = ImmichAPI;
+			productReference = 528F90192F0D9B2800003810 /* libImmichAPI.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		528F90522F0DA08500003810 /* TopShelf */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 528F905F2F0DA08500003810 /* Build configuration list for PBXNativeTarget "TopShelf" */;
+			buildPhases = (
+				528F904F2F0DA08500003810 /* Sources */,
+				528F90502F0DA08500003810 /* Frameworks */,
+				528F90512F0DA08500003810 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				528F90622F0DA6B200003810 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				528F90552F0DA08500003810 /* TopShelf */,
+			);
+			name = TopShelf;
+			packageProductDependencies = (
+			);
+			productName = TopShelf;
+			productReference = 528F90532F0DA08500003810 /* TopShelf.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		52855A412E9721FA00D84054 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					52855A482E9721FA00D84054 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					52855A572E9721FC00D84054 = {
+						CreatedOnToolsVersion = 26.0.1;
+						TestTargetID = 52855A482E9721FA00D84054;
+					};
+					52855A612E9721FC00D84054 = {
+						CreatedOnToolsVersion = 26.0.1;
+						TestTargetID = 52855A482E9721FA00D84054;
+					};
+					528F90002F0D9A9100003810 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					528F900D2F0D9AEA00003810 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					528F90182F0D9B2800003810 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					528F90522F0DA08500003810 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+				};
+			};
+			buildConfigurationList = 52855A442E9721FA00D84054 /* Build configuration list for PBXProject "BigImmich" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 52855A402E9721FA00D84054;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				52D376FD2EF7832E00E29944 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 52855A4A2E9721FA00D84054 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				52855A482E9721FA00D84054 /* BigImmich */,
+				52855A572E9721FC00D84054 /* BigImmichTests */,
+				52855A612E9721FC00D84054 /* BigImmichUITests */,
+				528F90002F0D9A9100003810 /* Configuration */,
+				528F900D2F0D9AEA00003810 /* KeychainHelper */,
+				528F90182F0D9B2800003810 /* ImmichAPI */,
+				528F90522F0DA08500003810 /* TopShelf */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		52855A472E9721FA00D84054 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		52855A562E9721FC00D84054 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		52855A602E9721FC00D84054 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		528F90512F0DA08500003810 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		52855A452E9721FA00D84054 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		52855A542E9721FC00D84054 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		52855A5E2E9721FC00D84054 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		528F8FFD2F0D9A9100003810 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		528F900A2F0D9AEA00003810 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		528F90152F0D9B2800003810 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		528F904F2F0DA08500003810 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		52855A5A2E9721FC00D84054 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 52855A482E9721FA00D84054 /* BigImmich */;
+			targetProxy = 52855A592E9721FC00D84054 /* PBXContainerItemProxy */;
+		};
+		52855A642E9721FC00D84054 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 52855A482E9721FA00D84054 /* BigImmich */;
+			targetProxy = 52855A632E9721FC00D84054 /* PBXContainerItemProxy */;
+		};
+		528F90282F0D9C1400003810 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 528F900D2F0D9AEA00003810 /* KeychainHelper */;
+			targetProxy = 528F90272F0D9C1400003810 /* PBXContainerItemProxy */;
+		};
+		528F902B2F0D9C6700003810 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 528F90182F0D9B2800003810 /* ImmichAPI */;
+			targetProxy = 528F902A2F0D9C6700003810 /* PBXContainerItemProxy */;
+		};
+		528F902E2F0D9C6D00003810 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 528F900D2F0D9AEA00003810 /* KeychainHelper */;
+			targetProxy = 528F902D2F0D9C6D00003810 /* PBXContainerItemProxy */;
+		};
+		528F905A2F0DA08500003810 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 528F90522F0DA08500003810 /* TopShelf */;
+			targetProxy = 528F90592F0DA08500003810 /* PBXContainerItemProxy */;
+		};
+		528F90622F0DA6B200003810 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 528F90182F0D9B2800003810 /* ImmichAPI */;
+			targetProxy = 528F90612F0DA6B200003810 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		52855A6A2E9721FC00D84054 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = appletvos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+			};
+			name = Debug;
+		};
+		52855A6B2E9721FC00D84054 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = appletvos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		52855A6D2E9721FC00D84054 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = BigImmich/BigImmich.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 12;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BigImmich/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Big Immich";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 2.6;
+				PRODUCT_BUNDLE_IDENTIFIER = nl.slakje.BigImmich;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+			};
+			name = Debug;
+		};
+		52855A6E2E9721FC00D84054 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = BigImmich/BigImmich.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 12;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BigImmich/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Big Immich";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 2.6;
+				PRODUCT_BUNDLE_IDENTIFIER = nl.slakje.BigImmich;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+			};
+			name = Release;
+		};
+		52855A702E9721FC00D84054 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = nl.slakje.BigImmichTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BigImmich.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BigImmich";
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+			};
+			name = Debug;
+		};
+		52855A712E9721FC00D84054 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = nl.slakje.BigImmichTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BigImmich.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BigImmich";
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+			};
+			name = Release;
+		};
+		52855A732E9721FC00D84054 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = nl.slakje.BigImmichUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TEST_TARGET_NAME = BigImmich;
+			};
+			name = Debug;
+		};
+		52855A742E9721FC00D84054 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = nl.slakje.BigImmichUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TEST_TARGET_NAME = BigImmich;
+			};
+			name = Release;
+		};
+		528F90062F0D9A9100003810 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+			};
+			name = Debug;
+		};
+		528F90072F0D9A9100003810 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+			};
+			name = Release;
+		};
+		528F90132F0D9AEA00003810 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+			};
+			name = Debug;
+		};
+		528F90142F0D9AEA00003810 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+			};
+			name = Release;
+		};
+		528F901E2F0D9B2800003810 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+			};
+			name = Debug;
+		};
+		528F901F2F0D9B2800003810 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+			};
+			name = Release;
+		};
+		528F905C2F0DA08500003810 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TopShelf/TopShelf.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 12;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TopShelf/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TopShelf;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.6;
+				PRODUCT_BUNDLE_IDENTIFIER = nl.slakje.BigImmich.TopShelf;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+			};
+			name = Debug;
+		};
+		528F905D2F0DA08500003810 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TopShelf/TopShelf.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 12;
+				DEVELOPMENT_TEAM = 3U4PH469WK;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TopShelf/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TopShelf;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.6;
+				PRODUCT_BUNDLE_IDENTIFIER = nl.slakje.BigImmich.TopShelf;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		52855A442E9721FA00D84054 /* Build configuration list for PBXProject "BigImmich" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				52855A6A2E9721FC00D84054 /* Debug */,
+				52855A6B2E9721FC00D84054 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		52855A6C2E9721FC00D84054 /* Build configuration list for PBXNativeTarget "BigImmich" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				52855A6D2E9721FC00D84054 /* Debug */,
+				52855A6E2E9721FC00D84054 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		52855A6F2E9721FC00D84054 /* Build configuration list for PBXNativeTarget "BigImmichTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				52855A702E9721FC00D84054 /* Debug */,
+				52855A712E9721FC00D84054 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		52855A722E9721FC00D84054 /* Build configuration list for PBXNativeTarget "BigImmichUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				52855A732E9721FC00D84054 /* Debug */,
+				52855A742E9721FC00D84054 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		528F90052F0D9A9100003810 /* Build configuration list for PBXNativeTarget "Configuration" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				528F90062F0D9A9100003810 /* Debug */,
+				528F90072F0D9A9100003810 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		528F90122F0D9AEA00003810 /* Build configuration list for PBXNativeTarget "KeychainHelper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				528F90132F0D9AEA00003810 /* Debug */,
+				528F90142F0D9AEA00003810 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		528F901D2F0D9B2800003810 /* Build configuration list for PBXNativeTarget "ImmichAPI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				528F901E2F0D9B2800003810 /* Debug */,
+				528F901F2F0D9B2800003810 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		528F905F2F0DA08500003810 /* Build configuration list for PBXNativeTarget "TopShelf" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				528F905C2F0DA08500003810 /* Debug */,
+				528F905D2F0DA08500003810 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		52D376FD2EF7832E00E29944 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		52D376FE2EF7832E00E29944 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 52D376FD2EF7832E00E29944 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 52855A412E9721FA00D84054 /* Project object */;
+}

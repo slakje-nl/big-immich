@@ -9,7 +9,6 @@ import ImmichAPI
 import TVServices
 
 class ContentProvider: TVTopShelfContentProvider {
-
     override func loadTopShelfContent() async -> (any TVTopShelfContent)? {
         guard
             let albums = try? await ImmichClient.shared.findAlbums(
@@ -21,17 +20,22 @@ class ContentProvider: TVTopShelfContentProvider {
 
         var items: [TVTopShelfSectionedItem] = []
         for album in albums {
-            items.append(await generateTopShelfItem(album: album))
+            if let item = await generateTopShelfItem(album: album) {
+                items.append(item)
+            }
         }
 
         let section = TVTopShelfItemCollection(items: items)
-        let content = TVTopShelfSectionedContent(sections: [section])
-        return content
+        return TVTopShelfSectionedContent(sections: [section])
     }
 
     private func generateTopShelfItem(album: AlbumSummary) async
-        -> TVTopShelfSectionedItem
+        -> TVTopShelfSectionedItem?
     {
+        guard let thumbnailUrl = await getThumbnailURL(album: album) else {
+            return nil
+        }
+
         let item = TVTopShelfSectionedItem(identifier: album.id.string)
         item.title = album.albumName.string
         item.imageShape = .hdtv
@@ -42,32 +46,25 @@ class ContentProvider: TVTopShelfContentProvider {
         components.path = "/details"
         components.queryItems = [
             URLQueryItem(name: "albumID", value: album.id.string),
-            URLQueryItem(name: "albumName", value: album.albumName.string),
+            URLQueryItem(name: "albumName", value: album.albumName.string)
         ]
         if let url = components.url {
             item.displayAction = TVTopShelfAction(url: url)
         }
 
-        let thumbnailUrl = await getThumbnailURL(album: album)
-        if let thumbnailUrl {
-            item.setImageURL(
-                thumbnailUrl,
-                for: TVTopShelfItem.ImageTraits.screenScale1x
-            )
-        }
+        item.setImageURL(
+            thumbnailUrl,
+            for: TVTopShelfItem.ImageTraits.screenScale1x
+        )
 
         return item
     }
 
     private func getThumbnailURL(album: AlbumSummary) async -> URL? {
-        do {
-            return try await ImmichAPI.shared.getUrlWithQueryAuth(
-                path:
-                    "/api/assets/\(album.albumThumbnailAssetId.string)/thumbnail",
-                queryParams: ["size": "preview"]
-            )
-        } catch {
-            return nil
-        }
+        guard let thumbnailAssetId = album.albumThumbnailAssetId else { return nil }
+        return try? await ImmichClient.shared.thumbnailURL(
+            assetID: thumbnailAssetId,
+            size: .preview
+        )
     }
 }

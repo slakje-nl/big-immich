@@ -3,32 +3,26 @@ import Foundation
 public struct AlbumSummary: Codable, Identifiable, Hashable {
     public let id: AlbumID
     public let albumName: AlbumName
-    public let albumThumbnailAssetId: AssetID
-    public let createdAt: String
-    public let updatedAt: String
-    public let startDate: String
-    public let lastModifiedAssetTimestamp: String
+    public let albumThumbnailAssetId: AssetID?
+    public let startDate: String?
+    public let assetCount: Int?
 
     public init(
         id: AlbumID,
         albumName: AlbumName,
-        albumThumbnailAssetId: AssetID,
-        createdAt: String,
-        updatedAt: String,
-        startDate: String,
-        lastModifiedAssetTimestamp: String
+        albumThumbnailAssetId: AssetID?,
+        startDate: String?,
+        assetCount: Int?
     ) {
         self.id = id
         self.albumName = albumName
         self.albumThumbnailAssetId = albumThumbnailAssetId
-        self.createdAt = createdAt
-        self.updatedAt = updatedAt
         self.startDate = startDate
-        self.lastModifiedAssetTimestamp = lastModifiedAssetTimestamp
+        self.assetCount = assetCount
     }
 
-    static public func == (lhs: AlbumSummary, rhs: AlbumSummary) -> Bool {
-        return lhs.id == rhs.id
+    public static func == (lhs: AlbumSummary, rhs: AlbumSummary) -> Bool {
+        lhs.id == rhs.id
     }
 
     public func hash(into hasher: inout Hasher) {
@@ -39,35 +33,20 @@ public struct AlbumSummary: Codable, Identifiable, Hashable {
 public struct Album: Codable, Identifiable, Hashable {
     public let id: AlbumID
     public let albumName: AlbumName
-    public let albumThumbnailAssetId: AssetID
-    public let createdAt: String
-    public let updatedAt: String
-    public let startDate: String
-    public let lastModifiedAssetTimestamp: String
-    public let assets: [AlbumAsset]
+    public let albumThumbnailAssetId: AssetID?
 
     public init(
         id: AlbumID,
         albumName: AlbumName,
-        albumThumbnailAssetId: AssetID,
-        createdAt: String,
-        updatedAt: String,
-        startDate: String,
-        lastModifiedAssetTimestamp: String,
-        assets: [AlbumAsset],
+        albumThumbnailAssetId: AssetID?
     ) {
         self.id = id
         self.albumName = albumName
         self.albumThumbnailAssetId = albumThumbnailAssetId
-        self.createdAt = createdAt
-        self.updatedAt = updatedAt
-        self.startDate = startDate
-        self.lastModifiedAssetTimestamp = lastModifiedAssetTimestamp
-        self.assets = assets
     }
 
-    static public func == (lhs: Album, rhs: Album) -> Bool {
-        return lhs.id == rhs.id
+    public static func == (lhs: Album, rhs: Album) -> Bool {
+        lhs.id == rhs.id
     }
 
     public func hash(into hasher: inout Hasher) {
@@ -75,25 +54,43 @@ public struct Album: Codable, Identifiable, Hashable {
     }
 }
 
+public enum AssetType {
+    case image
+    case video
+    case other
+}
+
 public struct AlbumAsset: Codable, Identifiable {
     public let id: AssetID
     public let type: String
-    public let originalPath: String
-    public let duration: String
+    public let durationMilliseconds: Int?
     public let exifInfo: ExifInfo?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case type
+        case exifInfo
+        case durationMilliseconds = "duration"
+    }
 
     public init(
         id: AssetID,
         type: String,
-        originalPath: String,
-        duration: String,
+        durationMilliseconds: Int?,
         exifInfo: ExifInfo? = nil
     ) {
         self.id = id
         self.type = type
-        self.originalPath = originalPath
-        self.duration = duration
+        self.durationMilliseconds = durationMilliseconds
         self.exifInfo = exifInfo
+    }
+
+    public var assetType: AssetType {
+        switch type.uppercased() {
+        case "IMAGE": .image
+        case "VIDEO": .video
+        default: .other
+        }
     }
 }
 
@@ -102,4 +99,11 @@ public struct ExifInfo: Codable {
     public let city: String?
     public let state: String?
     public let country: String?
+
+    public init(dateTimeOriginal: String?, city: String?, state: String?, country: String?) {
+        self.dateTimeOriginal = dateTimeOriginal
+        self.city = city
+        self.state = state
+        self.country = country
+    }
 }

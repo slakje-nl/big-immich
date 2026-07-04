@@ -7,10 +7,11 @@ struct AlbumAssetsView: View {
     let initialAssetID: AssetID?
     let startSlideshow: (AssetID) -> Void
     let onExit: () -> Void
+    var immichClient: ImmichClientProtocol = ImmichClient.shared
 
     @FocusState private var focusedAssetIndex: Int?
-    @State private var album: Album? = nil
-    @State private var errors: [String] = []
+    @State private var state: LoadingState<[AlbumAsset]> = .idle
+    @State private var thumbnailErrors: [String] = []
 
     private let columns = Array(
         repeating: GridItem(.flexible(), spacing: 16),
@@ -19,80 +20,82 @@ struct AlbumAssetsView: View {
 
     var body: some View {
         VStack {
-            if !errors.isEmpty {
-                ForEach(errors, id: \.self) { error in
-                    Text(error)
-                        .foregroundColor(.red)
-                }
+            ForEach(thumbnailErrors, id: \.self) { error in
+                Text(error).foregroundColor(.red)
             }
 
-            if let album = album {
-                ScrollViewReader { scrollProxy in
-                    ScrollView {
-                        LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(
-                                Array(album.assets.enumerated()),
-                                id: \.offset
-                            ) { index, asset in
-                                ThumbnailView(
-                                    assetID: asset.id,
-                                    isVideo: asset.type == "VIDEO",
-                                    isHighlighted: focusedAssetIndex == index,
-                                    onLoaded: {},
-                                    onError: { error in
-                                        errors.append(
-                                            "Asset \(asset.id): \(error.localizedDescription)"
-                                        )
-                                        logError(error)
-                                    }
-                                )
-                                .aspectRatio(20 / 9, contentMode: .fit)
-                                .focused($focusedAssetIndex, equals: index)
-                                .onTapGesture {
-                                    startSlideshow(asset.id)
-                                }
-                                .id(index)
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 20)
-                        .onAppear {
-                            guard let initialAssetID else {
-                                focusedAssetIndex = 0
-                                return
-                            }
-
-                            if let index = album.assets.firstIndex(where: {
-                                $0.id == initialAssetID
-                            }) {
-                                scrollProxy.scrollTo(index, anchor: .center)
-                                DispatchQueue.main.asyncAfter(
-                                    deadline: .now() + 0.1
-                                ) {
-                                    focusedAssetIndex = index
-                                }
-                            } else {
-                                focusedAssetIndex = 0
-                            }
-                        }
-                    }
-                }
+            switch state {
+            case .idle, .loading:
+                EmptyView()
+            case let .failed(message):
+                Text(message).foregroundColor(.red)
+            case let .loaded(assets):
+                grid(assets: assets)
             }
         }
         .task {
-            await loadAlbumDetail()
+            await loadAssets()
         }
         .onExitCommand(perform: onExit)
     }
 
-    private func loadAlbumDetail() async {
+    private func grid(assets: [AlbumAsset]) -> some View {
+        ScrollViewReader { scrollProxy in
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: 16) {
+                    ForEach(Array(assets.enumerated()), id: \.offset) { index, asset in
+                        ThumbnailView(
+                            assetID: asset.id,
+                            isVideo: asset.assetType == .video,
+                            isHighlighted: focusedAssetIndex == index,
+                            onLoaded: {},
+                            onError: { error in
+                                thumbnailErrors.append(
+                                    "Asset \(asset.id): \(error.localizedDescription)"
+                                )
+                                logError(error)
+                            }
+                        )
+                        .aspectRatio(20 / 9, contentMode: .fit)
+                        .focused($focusedAssetIndex, equals: index)
+                        .onTapGesture {
+                            startSlideshow(asset.id)
+                        }
+                        .id(index)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 20)
+                .onAppear {
+                    focusInitialAsset(assets: assets, scrollProxy: scrollProxy)
+                }
+            }
+        }
+    }
+
+    private func focusInitialAsset(
+        assets: [AlbumAsset],
+        scrollProxy: ScrollViewProxy
+    ) {
+        guard let initialAssetID,
+              let index = assets.firstIndex(where: { $0.id == initialAssetID })
+        else {
+            focusedAssetIndex = 0
+            return
+        }
+
+        scrollProxy.scrollTo(index, anchor: .center)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            focusedAssetIndex = index
+        }
+    }
+
+    private func loadAssets() async {
+        state = .loading
         do {
-            self.album = try await ImmichAPI.shared.loadObject(
-                path: "/api/albums/\(albumID.string)",
-                queryParams: [:],
-            )
+            state = try await .loaded(immichClient.getAlbumAssets(albumID: albumID))
         } catch {
-            errors.append(error.localizedDescription)
+            state = .failed(error.localizedDescription)
             logError(error)
         }
     }

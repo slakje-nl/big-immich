@@ -1,0 +1,16 @@
+# Extends gitleaks' built-in ruleset and adds project-specific allowlisting.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known non-secret values committed on purpose"
+regexes = [
+  # Public Sentry client DSN (a DSN is a publishable client key, not a secret).
+  # Used as the default error-reporting endpoint in BigImmichApp.swift.
+  '''https://3361208ffd59305f7e5c9d0228940679@o118777\.ingest\.us\.sentry\.io/4510570198269952''',
+  # Keychain access group = Apple Team ID + bundle prefix. Public identifier, not a secret.
+  '''3U4PH469WK\.nl\.slakje\.BigImmich''',
+]
+paths = [
+  '''Package\.resolved''',
+]

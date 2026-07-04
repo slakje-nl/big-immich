@@ -21,7 +21,7 @@ struct LossyArray<Element: Decodable>: Decodable {
             }
         }
 
-        self.elements = items
+        elements = items
     }
 
     private struct Dummy: Decodable {}

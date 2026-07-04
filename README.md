@@ -85,7 +85,7 @@ Issues reported against **outdated Immich versions may be closed** with a reques
 
 ## 🤝 Contributing
 
-I am not a professional tvOS engineer — this app was built with the help of ChatGPT,
+I am not a professional tvOS engineer — this app was built with the help of Claude Code,
 community resources, and a lot of experimentation.
 
 Contributions are **very welcome**, including:

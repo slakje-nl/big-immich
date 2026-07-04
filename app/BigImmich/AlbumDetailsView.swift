@@ -13,10 +13,12 @@ struct AlbumDetailsView: View {
     let startSlideshow: () -> Void
     let viewAssets: () -> Void
     let onExit: () -> Void
+    var immichClient: ImmichClientProtocol = ImmichClient.shared
 
     @FocusState private var focusedButton: ButtonFocus?
-    @State private var album: Album? = nil
-    @State private var thumbnailImage: Image? = nil
+    @State private var album: Album?
+    @State private var assets: [AlbumAsset] = []
+    @State private var thumbnailImage: Image?
     @State private var isLoading = true
     @State private var errors: [String] = []
 
@@ -88,6 +90,7 @@ struct AlbumDetailsView: View {
                                         $focusedButton,
                                         equals: .slideshow
                                     )
+                                    .accessibilityIdentifier("startSlideshowButton")
 
                                     Button(action: viewAssets) {
                                         Label(
@@ -103,6 +106,7 @@ struct AlbumDetailsView: View {
                                         $focusedButton,
                                         equals: .viewAssets
                                     )
+                                    .accessibilityIdentifier("viewAssetsButton")
                                 }
                             }
                             .frame(
@@ -132,63 +136,41 @@ struct AlbumDetailsView: View {
     }
 
     func getItemsCount() -> String {
-        if let album {
-            let images = album.assets.filter { $0.type.uppercased() == "IMAGE" }
-                .count
-            let videos = album.assets.filter { $0.type.uppercased() == "VIDEO" }
-                .count
+        let images = assets.count(where: { $0.assetType == .image })
+        let videos = assets.count(where: { $0.assetType == .video })
 
-            var imagesLabel = ""
-            if images > 1 {
-                imagesLabel = "\(images) images"
-            } else if images == 1 {
-                imagesLabel = "\(images) image"
-            }
-
-            var videosLabel = ""
-            if videos > 1 {
-                videosLabel = "\(videos) videos"
-            } else if videos == 1 {
-                videosLabel = "\(videos) video"
-            }
-
-            if !imagesLabel.isEmpty && !videosLabel.isEmpty {
-                return "\(imagesLabel) and \(videosLabel)"
-            } else if !imagesLabel.isEmpty {
-                return imagesLabel
-            } else if !videosLabel.isEmpty {
-                return videosLabel
-            }
+        var imagesLabel = ""
+        if images > 1 {
+            imagesLabel = "\(images) images"
+        } else if images == 1 {
+            imagesLabel = "\(images) image"
         }
 
-        return "no idea :wtf:"
-    }
-
-    func calculateSlideshowDuration(items: [AlbumAsset]) -> Int {
-        var totalSeconds: Double = 0
-
-        for item in items {
-            if item.type.uppercased() == "IMAGE" {
-                totalSeconds += Double(slideshowInterval)
-            } else if item.type.uppercased() == "VIDEO" {
-                let components = item.duration.split(separator: ":")  // ["hh", "mm", "ss.SSS"]
-                if components.count == 3,
-                    let hours = Double(components[0]),
-                    let minutes = Double(components[1]),
-                    let seconds = Double(components[2])
-                {
-                    totalSeconds += hours * 3600 + minutes * 60 + seconds
-                }
-            }
+        var videosLabel = ""
+        if videos > 1 {
+            videosLabel = "\(videos) videos"
+        } else if videos == 1 {
+            videosLabel = "\(videos) video"
         }
 
-        return Int(ceil(totalSeconds / 60.0))
+        if !imagesLabel.isEmpty, !videosLabel.isEmpty {
+            return "\(imagesLabel) and \(videosLabel)"
+        } else if !imagesLabel.isEmpty {
+            return imagesLabel
+        } else if !videosLabel.isEmpty {
+            return videosLabel
+        }
+
+        return "no items"
     }
 
     private func getSlideshowDurationText() -> String {
-        guard let album else { return "" }
+        guard album != nil else { return "" }
 
-        let duration = calculateSlideshowDuration(items: album.assets)
+        let duration = slideshowDurationMinutes(
+            items: assets,
+            imageInterval: slideshowInterval
+        )
         if duration == 1 {
             return "\(duration) minute"
         }
@@ -196,51 +178,15 @@ struct AlbumDetailsView: View {
         return "\(duration) minutes"
     }
 
-    private func loadThumbnail() {
-        if let album {
-            Task {
-                do {
-                    let data = try await ImmichAPI.shared.loadMediaWithRetries(
-                        path:
-                            "/api/assets/\(album.albumThumbnailAssetId.string)/thumbnail",
-                        queryParams: ["size": "preview"],
-                        retries: 3,
-                    )
-                    if let uiImage = UIImage(data: data) {
-                        thumbnailImage = Image(uiImage: uiImage)
-                    } else {
-                        errors.append(
-                            "thumbnail couldn't get loaded into UIImage"
-                        )
-                    }
-                } catch {
-                    errors.append("\(error.localizedDescription)")
-                    logError(error)
-                }
-            }
-        }
-    }
-
     private func loadAlbumDetail() async {
         isLoading = true
         do {
-            album = try await ImmichAPI.shared.loadObject(
-                path: "/api/albums/\(albumID.string)",
-                queryParams: [:],
-            )
+            album = try await immichClient.getAlbum(albumID: albumID)
+            assets = try await immichClient.getAlbumAssets(albumID: albumID)
 
-            if let album {
-                let data = try await ImmichAPI.shared.loadMediaWithRetries(
-                    path:
-                        "/api/assets/\(album.albumThumbnailAssetId.string)/thumbnail",
-                    queryParams: ["size": "preview"],
-                    retries: 3,
-                )
-                if let uiImage = UIImage(data: data) {
-                    thumbnailImage = Image(uiImage: uiImage)
-                } else {
-                    errors.append("thumbnail couldn't get loaded into UIImage")
-                }
+            if let thumbnailAssetId = album?.albumThumbnailAssetId {
+                thumbnailImage = try await AssetImageLoader(immichClient: immichClient)
+                    .load(assetID: thumbnailAssetId, size: .preview, retries: 3)
             }
         } catch {
             errors.append(error.localizedDescription)

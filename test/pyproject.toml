@@ -1,0 +1,13 @@
+[project]
+name = "big-immich-e2e"
+version = "0"
+description = "Mock Immich server and OpenAPI checks for the Big Immich end-to-end test"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pillow",
+    "requests",
+    "jsonschema",
+    "openapi-schema-validator",
+]
