@@ -488,15 +488,18 @@ struct SettingsView: View {
                             Text("No logs yet.").foregroundColor(.secondary)
                         } else {
                             VStack(alignment: .leading, spacing: 4) {
-                                ForEach(Array(appLog.entries.suffix(100).reversed())) { entry in
-                                    Text("[\(entry.date.formatted(date: .omitted, time: .standard))] \(entry.message)")
-                                        .font(.system(.caption, design: .monospaced))
-                                        .foregroundColor(entry.level == .error ? .red : .secondary)
-                                        .frame(
-                                            maxWidth: geo.size.width * 0.6,
-                                            alignment: .leading
-                                        )
-                                        .fixedSize(horizontal: false, vertical: true)
+                                ForEach(Array(appLog.entries.suffix(20).reversed())) { entry in
+                                    Button {} label: {
+                                        Text("[\(entry.date.formatted(date: .omitted, time: .standard))] \(entry.message)")
+                                            .font(.system(.caption, design: .monospaced))
+                                            .foregroundColor(entry.level == .error ? .red : .secondary)
+                                            .frame(
+                                                maxWidth: geo.size.width * 0.6,
+                                                alignment: .leading
+                                            )
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                         }
