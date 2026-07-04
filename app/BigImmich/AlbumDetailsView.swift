@@ -133,9 +133,9 @@ struct AlbumDetailsView: View {
 
     func getItemsCount() -> String {
         if let album {
-            let images = album.assets.count(where: { $0.type.uppercased() == "IMAGE" })
+            let images = album.assets.count(where: { $0.assetType == .image })
 
-            let videos = album.assets.count(where: { $0.type.uppercased() == "VIDEO" })
+            let videos = album.assets.count(where: { $0.assetType == .video })
 
             var imagesLabel = ""
             if images > 1 {
@@ -163,31 +163,13 @@ struct AlbumDetailsView: View {
         return "no idea :wtf:"
     }
 
-    func calculateSlideshowDuration(items: [AlbumAsset]) -> Int {
-        var totalSeconds: Double = 0
-
-        for item in items {
-            if item.type.uppercased() == "IMAGE" {
-                totalSeconds += Double(slideshowInterval)
-            } else if item.type.uppercased() == "VIDEO" {
-                let components = item.duration.split(separator: ":") // ["hh", "mm", "ss.SSS"]
-                if components.count == 3,
-                   let hours = Double(components[0]),
-                   let minutes = Double(components[1]),
-                   let seconds = Double(components[2])
-                {
-                    totalSeconds += hours * 3600 + minutes * 60 + seconds
-                }
-            }
-        }
-
-        return Int(ceil(totalSeconds / 60.0))
-    }
-
     private func getSlideshowDurationText() -> String {
         guard let album else { return "" }
 
-        let duration = calculateSlideshowDuration(items: album.assets)
+        let duration = slideshowDurationMinutes(
+            items: album.assets,
+            imageInterval: slideshowInterval
+        )
         if duration == 1 {
             return "\(duration) minute"
         }

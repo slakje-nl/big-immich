@@ -78,6 +78,12 @@ public struct Album: Codable, Identifiable, Hashable {
     }
 }
 
+public enum AssetType {
+    case image
+    case video
+    case other
+}
+
 public struct AlbumAsset: Codable, Identifiable {
     public let id: AssetID
     public let type: String
@@ -97,6 +103,14 @@ public struct AlbumAsset: Codable, Identifiable {
         self.originalPath = originalPath
         self.duration = duration
         self.exifInfo = exifInfo
+    }
+
+    public var assetType: AssetType {
+        switch type.uppercased() {
+        case "IMAGE": .image
+        case "VIDEO": .video
+        default: .other
+        }
     }
 }
 

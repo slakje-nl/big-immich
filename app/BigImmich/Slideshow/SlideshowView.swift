@@ -441,7 +441,7 @@ struct SlideshowView: View {
         userLocation = formatLocation(asset: asset)
 
         do {
-            if asset.type.uppercased() == "IMAGE" {
+            if asset.assetType == .image {
                 if let cache = imageCache, let nextImage = cache.get(asset.id) {
                     currentImage = nextImage
                 } else {
@@ -463,7 +463,7 @@ struct SlideshowView: View {
                 if slideshowIsRunning {
                     startImageTimers()
                 }
-            } else if asset.type.uppercased() == "VIDEO" {
+            } else if asset.assetType == .video {
                 var playbackURL: URL
                 do {
                     playbackURL = try await ImmichAPI.shared
@@ -557,7 +557,7 @@ struct SlideshowView: View {
     }
 
     private func preloadAsset(asset: AlbumAsset) async {
-        if let cache = imageCache, asset.type.uppercased() == "IMAGE" {
+        if let cache = imageCache, asset.assetType == .image {
             guard cache.get(asset.id) == nil else { return }
 
             do {

@@ -36,7 +36,7 @@ struct AlbumAssetsView: View {
                             ) { index, asset in
                                 ThumbnailView(
                                     assetID: asset.id,
-                                    isVideo: asset.type == "VIDEO",
+                                    isVideo: asset.assetType == .video,
                                     isHighlighted: focusedAssetIndex == index,
                                     onLoaded: {},
                                     onError: { error in

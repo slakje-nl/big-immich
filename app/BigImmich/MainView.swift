@@ -143,36 +143,11 @@ struct ContentView: View {
         }
     }
 
-    private func getQueryParamValue(queryItems: [URLQueryItem], key: String)
-        -> String?
-    {
-        queryItems.first(where: {
-            $0.name == key
-        })?.value
-    }
-
     func handleTopShelfURL(_ url: URL) {
-        guard url.scheme == "bigimmich" else { return }
-        guard let host = url.host, host == "album" else { return }
+        guard let link = parseTopShelfAlbumLink(url) else { return }
 
-        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-        let queryItems = components?.queryItems ?? []
-
-        let pathComponents = url.pathComponents.filter { $0 != "/" }
-        guard let page = pathComponents.first, page == "details" else { return }
-
-        let selectedAlbumID = getQueryParamValue(
-            queryItems: queryItems,
-            key: "albumID"
-        )
-        let selectedAlbumName = getQueryParamValue(
-            queryItems: queryItems,
-            key: "albumName"
-        )
-        guard let selectedAlbumID, let selectedAlbumName else { return }
-
-        albumID = AlbumID(rawValue: selectedAlbumID)
-        albumName = AlbumName(rawValue: selectedAlbumName)
+        albumID = link.albumID
+        albumName = link.albumName
         assetID = nil
         albumDetailsInitialyFocusedButton = .slideshow
 

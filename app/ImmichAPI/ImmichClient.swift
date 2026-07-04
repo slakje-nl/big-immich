@@ -19,30 +19,28 @@ public protocol ImmichClientProtocol {
     func getAlbum(albumID: AlbumID) async throws -> Album
 }
 
+func joinAlbums(order: AlbumsOrder, albumLists: [[AlbumSummary]]) -> [AlbumSummary] {
+    var uniqueAlbums = [AlbumID: AlbumSummary]()
+    for albumList in albumLists {
+        for album in albumList where uniqueAlbums[album.id] == nil {
+            uniqueAlbums[album.id] = album
+        }
+    }
+
+    let nonEmptyAlbums = uniqueAlbums.values.filter { ($0.assetCount ?? 1) > 0 }
+
+    switch order {
+    case .fromOldest:
+        return nonEmptyAlbums.sorted { $0.startDate < $1.startDate }
+    case .fromNewest:
+        return nonEmptyAlbums.sorted { $0.startDate > $1.startDate }
+    }
+}
+
 public class ImmichClient: ImmichClientProtocol {
     public static let shared = ImmichClient()
 
     private init() {}
-
-    private func joinAlbums(order: AlbumsOrder, albumLists: [[AlbumSummary]])
-        -> [AlbumSummary]
-    {
-        var uniqueAlbums = [AlbumID: AlbumSummary]()
-        for albumList in albumLists {
-            for album in albumList where uniqueAlbums[album.id] == nil {
-                uniqueAlbums[album.id] = album
-            }
-        }
-
-        let nonEmptyAlbums = uniqueAlbums.values.filter { ($0.assetCount ?? 1) > 0 }
-
-        switch order {
-        case .fromOldest:
-            return nonEmptyAlbums.sorted { $0.startDate < $1.startDate }
-        case .fromNewest:
-            return nonEmptyAlbums.sorted { $0.startDate > $1.startDate }
-        }
-    }
 
     public func findAlbums(order: AlbumsOrder) async throws -> [AlbumSummary] {
         let ownAlbums: [AlbumSummary] = try await ImmichAPI.shared.loadArray(
