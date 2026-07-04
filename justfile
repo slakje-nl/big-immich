@@ -16,6 +16,14 @@ build:
     xcodebuild build -project "{{project}}" -scheme "{{scheme}}" \
         -destination "{{destination}}" CODE_SIGNING_ALLOWED=NO
 
+# Compile in Release (-O, whole-module) for a device, mirroring the archive build.
+# The Debug build and the tests run unoptimized, so they miss optimizer-only
+# failures (e.g. a SIL inliner crash on a generic class's deinit). This catches them.
+build-release:
+    xcodebuild build -project "{{project}}" -scheme "{{scheme}}" \
+        -configuration Release -destination "generic/platform=tvOS" \
+        CODE_SIGNING_ALLOWED=NO
+
 # Run the standard test suite (unit + launch UI test) on the tvOS simulator.
 # The end-to-end slideshow journey is excluded; it needs the mock server
 # (see `just e2e-snapshots`).
@@ -48,7 +56,7 @@ security:
     gitleaks detect --config .gitleaks.toml --no-banner --redact
 
 # Everything the fast CI runs, in order. Run this before pushing.
-ci: format-check lint security build test
+ci: format-check lint security build build-release test
 
 # Report whether the vendored Immich OpenAPI spec drifted from the latest
 # upstream spec (fast, no simulator or mock server needed).
