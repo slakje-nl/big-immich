@@ -26,7 +26,7 @@ struct ModelDecodingTests {
 
         #expect(summary.id.string == "album-1")
         #expect(summary.albumName.string == "Holidays")
-        #expect(summary.albumThumbnailAssetId.string == "asset-9")
+        #expect(summary.albumThumbnailAssetId?.string == "asset-9")
         #expect(summary.startDate == "2025-11-06T00:00:00.000Z")
     }
 
@@ -42,8 +42,7 @@ struct ModelDecodingTests {
                         {
                             "id": "asset-1",
                             "type": "IMAGE",
-                            "originalPath": "/data/1.jpg",
-                            "duration": "0:00:00.00000",
+                            "duration": null,
                             "exifInfo": {
                                 "dateTimeOriginal": "2025-11-06T10:15:00.000+00:00",
                                 "city": "Amsterdam",
@@ -54,8 +53,7 @@ struct ModelDecodingTests {
                         {
                             "id": "asset-2",
                             "type": "VIDEO",
-                            "originalPath": "/data/2.mov",
-                            "duration": "0:00:12.500"
+                            "duration": 12500
                         }
                     ]
                 }
@@ -65,7 +63,9 @@ struct ModelDecodingTests {
 
         #expect(response.assets.items.count == 2)
         #expect(response.assets.items[0].exifInfo?.city == "Amsterdam")
+        #expect(response.assets.items[0].durationMilliseconds == nil)
         #expect(response.assets.items[1].exifInfo == nil)
+        #expect(response.assets.items[1].durationMilliseconds == 12500)
         #expect(response.assets.nextPage == "2")
     }
 
@@ -76,8 +76,7 @@ struct ModelDecodingTests {
             {
                 "id": "asset-3",
                 "type": "IMAGE",
-                "originalPath": "/data/3.jpg",
-                "duration": "0:00:00.00000",
+                "duration": null,
                 "exifInfo": { "dateTimeOriginal": null, "city": "Berlin" }
             }
             """

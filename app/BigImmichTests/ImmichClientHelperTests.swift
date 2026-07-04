@@ -3,7 +3,7 @@ import Testing
 
 struct AssetTypeTests {
     private func asset(type: String) -> AlbumAsset {
-        AlbumAsset(id: AssetID(rawValue: "a"), type: type, originalPath: "", duration: "0:00:00")
+        AlbumAsset(id: AssetID(rawValue: "a"), type: type, durationMilliseconds: nil)
     }
 
     @Test func mapsKnownTypesCaseInsensitively() {
@@ -25,10 +25,7 @@ struct JoinAlbumsTests {
             id: AlbumID(rawValue: id),
             albumName: AlbumName(rawValue: id),
             albumThumbnailAssetId: AssetID(rawValue: "t"),
-            createdAt: "",
-            updatedAt: "",
             startDate: startDate,
-            lastModifiedAssetTimestamp: "",
             assetCount: assetCount
         )
     }

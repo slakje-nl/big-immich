@@ -32,9 +32,9 @@ func joinAlbums(order: AlbumsOrder, albumLists: [[AlbumSummary]]) -> [AlbumSumma
 
     switch order {
     case .fromOldest:
-        return nonEmptyAlbums.sorted { $0.startDate < $1.startDate }
+        return nonEmptyAlbums.sorted { ($0.startDate ?? "") < ($1.startDate ?? "") }
     case .fromNewest:
-        return nonEmptyAlbums.sorted { $0.startDate > $1.startDate }
+        return nonEmptyAlbums.sorted { ($0.startDate ?? "") > ($1.startDate ?? "") }
     }
 }
 

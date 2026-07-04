@@ -5,27 +5,27 @@ import Testing
 
 struct SlideshowDurationTests {
     private func image() -> AlbumAsset {
-        AlbumAsset(id: AssetID(rawValue: "img"), type: "IMAGE", originalPath: "", duration: "0:00:00.00000")
+        AlbumAsset(id: AssetID(rawValue: "img"), type: "IMAGE", durationMilliseconds: nil)
     }
 
-    private func video(_ duration: String) -> AlbumAsset {
-        AlbumAsset(id: AssetID(rawValue: "vid"), type: "VIDEO", originalPath: "", duration: duration)
+    private func video(milliseconds: Int?) -> AlbumAsset {
+        AlbumAsset(id: AssetID(rawValue: "vid"), type: "VIDEO", durationMilliseconds: milliseconds)
     }
 
     @Test func imagesUseTheInterval() {
         #expect(slideshowDurationMinutes(items: [image(), image()], imageInterval: 30) == 1)
     }
 
-    @Test func videoDurationIsParsedAndRoundedUp() {
-        #expect(slideshowDurationMinutes(items: [video("0:01:30.500")], imageInterval: 5) == 2)
+    @Test func videoDurationIsRoundedUp() {
+        #expect(slideshowDurationMinutes(items: [video(milliseconds: 90500)], imageInterval: 5) == 2)
     }
 
-    @Test func malformedVideoDurationIsIgnored() {
-        #expect(slideshowDurationMinutes(items: [video("nonsense")], imageInterval: 5) == 0)
+    @Test func missingVideoDurationCountsAsZero() {
+        #expect(slideshowDurationMinutes(items: [video(milliseconds: nil)], imageInterval: 5) == 0)
     }
 
     @Test func mixedItemsRoundUpToWholeMinutes() {
-        #expect(slideshowDurationMinutes(items: [image(), video("0:00:40.000")], imageInterval: 5) == 1)
+        #expect(slideshowDurationMinutes(items: [image(), video(milliseconds: 40000)], imageInterval: 5) == 1)
     }
 }
 
@@ -68,7 +68,7 @@ struct URLValidationTests {
 
 struct AssetMetadataFormattingTests {
     private func asset(exif: ExifInfo?) -> AlbumAsset {
-        AlbumAsset(id: AssetID(rawValue: "a"), type: "IMAGE", originalPath: "", duration: "0:00:00", exifInfo: exif)
+        AlbumAsset(id: AssetID(rawValue: "a"), type: "IMAGE", durationMilliseconds: nil, exifInfo: exif)
     }
 
     @Test func formatsCaptureDateWhenPresent() {
@@ -87,9 +87,12 @@ struct AssetMetadataFormattingTests {
         #expect(formattedLocation(asset(exif: exif)) == "Amsterdam, NH, NL")
     }
 
-    @Test func returnsEmptyLocationWhenIncomplete() {
+    @Test func returnsEmptyLocationWithoutExif() {
         #expect(formattedLocation(asset(exif: nil)).isEmpty)
+    }
+
+    @Test func joinsAvailableLocationParts() {
         let partial = ExifInfo(dateTimeOriginal: nil, city: "Amsterdam", state: nil, country: "NL")
-        #expect(formattedLocation(asset(exif: partial)).isEmpty)
+        #expect(formattedLocation(asset(exif: partial)) == "Amsterdam, NL")
     }
 }

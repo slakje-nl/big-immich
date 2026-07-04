@@ -14,11 +14,10 @@ func formattedCaptureDate(_ asset: AlbumAsset) -> String {
 }
 
 func formattedLocation(_ asset: AlbumAsset) -> String {
-    guard let exif = asset.exifInfo,
-          let city = exif.city,
-          let state = exif.state,
-          let country = exif.country
-    else { return "" }
+    guard let exif = asset.exifInfo else { return "" }
 
-    return "\(city), \(state), \(country)"
+    return [exif.city, exif.state, exif.country]
+        .compactMap(\.self)
+        .filter { !$0.isEmpty }
+        .joined(separator: ", ")
 }

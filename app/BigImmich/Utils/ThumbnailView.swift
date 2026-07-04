@@ -3,7 +3,7 @@ import Sentry
 import SwiftUI
 
 struct ThumbnailView: View {
-    let assetID: AssetID
+    let assetID: AssetID?
     let isVideo: Bool
     let isHighlighted: Bool
     let onLoaded: () -> Void
@@ -55,6 +55,11 @@ struct ThumbnailView: View {
     }
 
     private func loadThumbnail() async {
+        guard let assetID else {
+            isLoading = false
+            onLoaded()
+            return
+        }
         isLoading = true
         do {
             let data: Data = try await ImmichAPI.shared.loadMediaWithRetries(

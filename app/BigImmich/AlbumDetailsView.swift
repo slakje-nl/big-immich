@@ -184,10 +184,10 @@ struct AlbumDetailsView: View {
             )
             assets = try await ImmichClient.shared.getAlbumAssets(albumID: albumID)
 
-            if let album {
+            if let thumbnailAssetId = album?.albumThumbnailAssetId {
                 let data = try await ImmichAPI.shared.loadMediaWithRetries(
                     path:
-                    "/api/assets/\(album.albumThumbnailAssetId.string)/thumbnail",
+                    "/api/assets/\(thumbnailAssetId.string)/thumbnail",
                     queryParams: ["size": "preview"],
                     retries: 3
                 )
