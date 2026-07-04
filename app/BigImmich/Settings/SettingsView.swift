@@ -41,7 +41,7 @@ struct SettingsView: View {
     @State private var outdatedServer = false
 
     private let leftSideWidth: CGFloat = 200
-    private let minimumImmichVersion = ServerVersion(major: 3, minor: 0, patch: 2)
+    private let minimumImmichVersion = ServerVersion(major: 3, minor: 0, patch: 1)
 
     var body: some View {
         GeometryReader { geo in
