@@ -40,7 +40,7 @@ struct SlideshowView: View {
                         .scaleEffect(1.5)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let player = viewModel.currentPlayer {
-                    VideoPlayer(player: player)
+                    PlayerLayerView(player: player)
                         .ignoresSafeArea()
                         .overlay {
                             if viewModel.videoState == .loading {
