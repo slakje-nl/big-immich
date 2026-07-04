@@ -255,6 +255,7 @@ struct SlideshowView: View {
     }
 
     func showError(_ message: String) {
+        AppLog.shared.log(message, level: .error, source: "SlideshowView")
         withAnimation {
             errors.append(message)
         }
@@ -271,6 +272,7 @@ struct SlideshowView: View {
     }
 
     func showInformation(_ message: String) {
+        AppLog.shared.log(message, level: .info, source: "SlideshowView")
         let easterEggs = [
             message,
             "=^..^=",

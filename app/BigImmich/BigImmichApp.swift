@@ -7,6 +7,12 @@ func logError(
     function: String = #function,
     line: Int = #line
 ) {
+    AppLog.shared.log(
+        "\(error)",
+        level: .error,
+        source: "\((file as NSString).lastPathComponent):\(line)"
+    )
+
     let event = Event(level: .error)
     event.message = SentryMessage(formatted: "\(error)")
     event.extra = [
@@ -16,6 +22,10 @@ func logError(
     ]
 
     SentrySDK.capture(event: event)
+}
+
+func logInfo(_ message: String) {
+    AppLog.shared.log(message, level: .info)
 }
 
 @main

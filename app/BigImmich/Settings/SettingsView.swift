@@ -37,6 +37,8 @@ struct SettingsView: View {
     @State private var connectionTested: Bool = false
     @State private var connectionWorking: Bool = true
 
+    @ObservedObject private var appLog = AppLog.shared
+
     private let leftSideWidth: CGFloat = 200
 
     var body: some View {
@@ -460,6 +462,38 @@ struct SettingsView: View {
                             "When enabled and empty, error reporting is sent to the app's creator"
                         )
                         .foregroundColor(.white)
+
+                        Divider().frame(
+                            width: leftSideWidth + geo.size.width * 0.4
+                        )
+
+                        Text("Debug logs:")
+                            .frame(
+                                width: geo.size.width * 0.4,
+                                alignment: .leading
+                            )
+                            .bold()
+
+                        Button("Clear logs") {
+                            appLog.clear()
+                        }
+
+                        if appLog.entries.isEmpty {
+                            Text("No logs yet.").foregroundColor(.secondary)
+                        } else {
+                            VStack(alignment: .leading, spacing: 4) {
+                                ForEach(Array(appLog.entries.suffix(100).reversed())) { entry in
+                                    Text("[\(entry.date.formatted(date: .omitted, time: .standard))] \(entry.message)")
+                                        .font(.system(.caption, design: .monospaced))
+                                        .foregroundColor(entry.level == .error ? .red : .secondary)
+                                        .frame(
+                                            maxWidth: geo.size.width * 0.6,
+                                            alignment: .leading
+                                        )
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                        }
 
                         Spacer()
                     }
