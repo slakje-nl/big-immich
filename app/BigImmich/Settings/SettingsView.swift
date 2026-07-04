@@ -40,6 +40,8 @@ struct SettingsView: View {
     @ObservedObject private var appLog = AppLog.shared
     @State private var outdatedServer = false
 
+    var immichClient: ImmichClientProtocol = ImmichClient.shared
+
     private let leftSideWidth: CGFloat = 200
     private let minimumImmichVersion = ServerVersion(major: 3, minor: 0, patch: 1)
 
@@ -567,14 +569,14 @@ struct SettingsView: View {
 
     func testConnection() async {
         do {
-            _ = try await ImmichClient.shared.findAlbums(order: .fromOldest)
+            _ = try await immichClient.findAlbums(order: .fromOldest)
 
             connectionTested = true
             connectionWorking = true
 
             configurationError = nil
 
-            if let version = try? await ImmichClient.shared.getServerVersion() {
+            if let version = try? await immichClient.getServerVersion() {
                 outdatedServer = version < minimumImmichVersion
             } else {
                 outdatedServer = false

@@ -13,6 +13,7 @@ struct AlbumDetailsView: View {
     let startSlideshow: () -> Void
     let viewAssets: () -> Void
     let onExit: () -> Void
+    var immichClient: ImmichClientProtocol = ImmichClient.shared
 
     @FocusState private var focusedButton: ButtonFocus?
     @State private var album: Album?
@@ -178,11 +179,8 @@ struct AlbumDetailsView: View {
     private func loadAlbumDetail() async {
         isLoading = true
         do {
-            album = try await ImmichAPI.shared.loadObject(
-                path: "/api/albums/\(albumID.string)",
-                queryParams: [:]
-            )
-            assets = try await ImmichClient.shared.getAlbumAssets(albumID: albumID)
+            album = try await immichClient.getAlbum(albumID: albumID)
+            assets = try await immichClient.getAlbumAssets(albumID: albumID)
 
             if let thumbnailAssetId = album?.albumThumbnailAssetId {
                 let data = try await ImmichAPI.shared.loadMediaWithRetries(

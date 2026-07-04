@@ -5,6 +5,7 @@ import SwiftUI
 struct AlbumsView: View {
     let initialAlbumID: AlbumID?
     let onSelectAlbum: (AlbumID, AlbumName) -> Void
+    var immichClient: ImmichClientProtocol = ImmichClient.shared
 
     @FocusState private var focusedAlbumIndex: Int?
     @State private var albums: [AlbumSummary] = []
@@ -116,7 +117,7 @@ struct AlbumsView: View {
     private func loadAlbums() async {
         isLoading = true
         do {
-            albums = try await ImmichClient.shared.findAlbums(
+            albums = try await immichClient.findAlbums(
                 order: .fromNewest
             )
         } catch ImmichAPIError.missingConfig {

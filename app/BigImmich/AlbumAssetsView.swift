@@ -7,6 +7,7 @@ struct AlbumAssetsView: View {
     let initialAssetID: AssetID?
     let startSlideshow: (AssetID) -> Void
     let onExit: () -> Void
+    var immichClient: ImmichClientProtocol = ImmichClient.shared
 
     @FocusState private var focusedAssetIndex: Int?
     @State private var assets: [AlbumAsset]?
@@ -87,7 +88,7 @@ struct AlbumAssetsView: View {
 
     private func loadAlbumDetail() async {
         do {
-            assets = try await ImmichClient.shared.getAlbumAssets(albumID: albumID)
+            assets = try await immichClient.getAlbumAssets(albumID: albumID)
         } catch {
             errors.append(error.localizedDescription)
             logError(error)
