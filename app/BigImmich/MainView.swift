@@ -2,46 +2,37 @@ import ImmichAPI
 import SwiftUI
 
 struct ContentView: View {
-    @State private var selectedTab: Tab = .albums
-
-    @State private var albumID: AlbumID?
-    @State private var albumName: AlbumName?
-    @State private var assetID: AssetID?
-
-    @State private var isShowingSlideshow = false
-    @State private var albumDetailsInitialyFocusedButton: ButtonFocus =
-        .slideshow
+    @StateObject private var router = AppRouter()
 
     var body: some View {
         ZStack {
-            if isShowingSlideshow, let curentAlbumID = albumID,
-               let currentAlbumName = albumName
+            if router.isShowingSlideshow, let albumID = router.albumID,
+               let albumName = router.albumName
             {
                 SlideshowView(
-                    initialAlbumID: curentAlbumID,
-                    initialAlbumName: currentAlbumName,
-                    initialAssetID: assetID,
+                    initialAlbumID: albumID,
+                    initialAlbumName: albumName,
+                    initialAssetID: router.assetID,
                     onExit: { exitAlbumID, exitAlbumName, exitAssetID in
-                        selectedTab = .albumAssets
-
-                        isShowingSlideshow = false
-                        albumID = exitAlbumID
-                        albumName = exitAlbumName
-                        assetID = exitAssetID
+                        router.exitSlideshow(
+                            albumID: exitAlbumID,
+                            albumName: exitAlbumName,
+                            assetID: exitAssetID
+                        )
                     }
                 )
                 .zIndex(50)
             } else {
                 VStack {
-                    Picker("Menu", selection: $selectedTab) {
+                    Picker("Menu", selection: $router.selectedTab) {
                         Text("Albums").tag(Tab.albums)
-                        if selectedTab == .albumAssets,
-                           let albumName
+                        if router.selectedTab == .albumAssets,
+                           let albumName = router.albumName
                         {
                             Text(albumName.string).tag(Tab.albumAssets)
                         }
-                        if selectedTab == .albumDetails,
-                           let albumName
+                        if router.selectedTab == .albumDetails,
+                           let albumName = router.albumName
                         {
                             Text(albumName.string).tag(Tab.albumDetails)
                         }
@@ -50,114 +41,65 @@ struct ContentView: View {
                     .pickerStyle(.segmented)
                     .frame(maxWidth: 1200)
                     .padding(.top, 40)
-                    .onChange(of: selectedTab) {
-                        if selectedTab == .settings {
-                            albumID = nil
-                            albumName = nil
-                            assetID = nil
-                        }
+                    .onChange(of: router.selectedTab) {
+                        router.handleTabChange()
                     }
-                    .onExitCommand(perform: {
-                        if selectedTab == .albumAssets {
-                            selectedTab = .albumDetails
-                        } else if selectedTab == .albumDetails {
-                            selectedTab = .albums
-                        } else {
-                            albumID = nil
-                            albumName = nil
-                            assetID = nil
-                        }
-                    })
+                    .onExitCommand(perform: router.handleExitCommand)
 
                     Spacer()
 
-                    switch selectedTab {
-                    case .albums:
-                        AlbumsView(
-                            initialAlbumID: albumID,
-                            onSelectAlbum: {
-                                selectedAlbumID,
-                                selectedAlbumName in
-                                albumID = selectedAlbumID
-                                albumName = selectedAlbumName
-                                assetID = nil
-                                albumDetailsInitialyFocusedButton = .slideshow
-
-                                selectedTab = .albumDetails
-                            }
-                        )
-                    case .albumDetails:
-                        if let currentAlbumID = albumID {
-                            AlbumDetailsView(
-                                albumID: currentAlbumID,
-                                initialyFocusedButton:
-                                albumDetailsInitialyFocusedButton,
-                                startSlideshow: {
-                                    assetID = nil
-
-                                    isShowingSlideshow = true
-                                },
-                                viewAssets: {
-                                    assetID = nil
-
-                                    selectedTab = .albumAssets
-                                },
-                                onExit: {
-                                    selectedTab = .albums
-                                }
-                            )
-                        }
-                    case .albumAssets:
-                        if let currentAlbumID = albumID {
-                            AlbumAssetsView(
-                                albumID: currentAlbumID,
-                                initialAssetID: assetID,
-                                startSlideshow: { exitAssetID in
-                                    assetID = exitAssetID
-
-                                    isShowingSlideshow = true
-                                },
-                                onExit: {
-                                    selectedTab = .albumDetails
-                                    albumDetailsInitialyFocusedButton =
-                                        .viewAssets
-                                }
-                            )
-                        }
-                    case .settings:
-                        SettingsView()
-                            .onExitCommand(perform: {
-                                albumID = nil
-                                albumName = nil
-                                assetID = nil
-
-                                selectedTab = .albums
-                            })
-                    }
+                    tabContent
 
                     Spacer()
                 }
             }
         }.onOpenURL { url in
-            handleTopShelfURL(url)
+            router.openTopShelfLink(url)
         }
     }
 
-    func handleTopShelfURL(_ url: URL) {
-        guard let link = parseTopShelfAlbumLink(url) else { return }
-
-        albumID = link.albumID
-        albumName = link.albumName
-        assetID = nil
-        albumDetailsInitialyFocusedButton = .slideshow
-
-        selectedTab = .albumDetails
+    @ViewBuilder
+    private var tabContent: some View {
+        switch router.selectedTab {
+        case .albums:
+            AlbumsView(
+                initialAlbumID: router.albumID,
+                onSelectAlbum: { selectedAlbumID, selectedAlbumName in
+                    router.selectAlbum(selectedAlbumID, selectedAlbumName)
+                }
+            )
+        case .albumDetails:
+            if let albumID = router.albumID {
+                AlbumDetailsView(
+                    albumID: albumID,
+                    initialyFocusedButton: router.albumDetailsInitialFocus,
+                    startSlideshow: {
+                        router.startSlideshow(assetID: nil)
+                    },
+                    viewAssets: {
+                        router.viewAssets()
+                    },
+                    onExit: {
+                        router.exitAlbumDetails()
+                    }
+                )
+            }
+        case .albumAssets:
+            if let albumID = router.albumID {
+                AlbumAssetsView(
+                    albumID: albumID,
+                    initialAssetID: router.assetID,
+                    startSlideshow: { exitAssetID in
+                        router.startSlideshow(assetID: exitAssetID)
+                    },
+                    onExit: {
+                        router.exitAlbumAssets()
+                    }
+                )
+            }
+        case .settings:
+            SettingsView()
+                .onExitCommand(perform: router.exitSettings)
+        }
     }
-}
-
-enum Tab: Hashable {
-    case albums
-    case albumAssets
-    case albumDetails
-    case settings
 }
