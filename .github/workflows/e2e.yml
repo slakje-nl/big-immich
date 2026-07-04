@@ -1,0 +1,40 @@
+name: E2E
+
+# The end-to-end journey spins up a tvOS simulator, so it is expensive. Run it
+# on main and on demand rather than on every PR. Trigger manually from the
+# Actions tab (workflow_dispatch) when you want it on a branch.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: macos-15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
+        run: brew install just uv
+
+      - name: OpenAPI conformance + drift
+        run: just openapi-check
+
+      - name: Slideshow journey (screenshots)
+        run: just e2e-snapshots
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots
+          path: test/snapshots

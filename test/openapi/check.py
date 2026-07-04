@@ -133,12 +133,19 @@ def main() -> int:
     parser.add_argument("--mock-url", default="http://127.0.0.1:8123")
     parser.add_argument("--skip-drift", action="store_true")
     parser.add_argument("--strict-drift", action="store_true")
+    parser.add_argument(
+        "--drift-only",
+        action="store_true",
+        help="only check spec drift; no running mock server required",
+    )
     args = parser.parse_args()
 
     spec = json.loads(SPEC_PATH.read_text())
 
-    print("== mock conformance ==")
-    failures = validate_mock(spec, args.mock_url)
+    failures = 0
+    if not args.drift_only:
+        print("== mock conformance ==")
+        failures = validate_mock(spec, args.mock_url)
 
     drift = 0
     if not args.skip_drift:

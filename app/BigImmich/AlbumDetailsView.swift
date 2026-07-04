@@ -90,6 +90,7 @@ struct AlbumDetailsView: View {
                                         $focusedButton,
                                         equals: .slideshow
                                     )
+                                    .accessibilityIdentifier("startSlideshowButton")
 
                                     Button(action: viewAssets) {
                                         Label(
@@ -105,6 +106,7 @@ struct AlbumDetailsView: View {
                                         $focusedButton,
                                         equals: .viewAssets
                                     )
+                                    .accessibilityIdentifier("viewAssetsButton")
                                 }
                             }
                             .frame(

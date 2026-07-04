@@ -94,6 +94,7 @@ struct SettingsView: View {
                                 .cornerRadius(6)
                                 .frame(width: geo.size.width * 0.4)
                                 .onChange(of: immichURL, saveSettings)
+                                .accessibilityIdentifier("immichURLField")
                         }
 
                         switch immichAuthMethod {
@@ -116,6 +117,7 @@ struct SettingsView: View {
                                 .cornerRadius(6)
                                 .frame(width: geo.size.width * 0.4)
                                 .onChange(of: immichAuthAPIKey, saveSettings)
+                                .accessibilityIdentifier("apiKeyField")
                             }
 
                             Text(

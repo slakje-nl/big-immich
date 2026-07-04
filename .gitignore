@@ -67,3 +67,4 @@ app/BigImmich.xcodeproj/*
 test/.venv/
 __pycache__/
 *.pyc
+test/snapshots/
