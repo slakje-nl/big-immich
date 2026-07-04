@@ -8,6 +8,7 @@ struct ThumbnailView: View {
     let isHighlighted: Bool
     let onLoaded: () -> Void
     let onError: (Error) -> Void
+    var immichClient: ImmichClientProtocol = ImmichClient.shared
 
     @State private var image: Image?
     @State private var isLoading = true
@@ -62,16 +63,8 @@ struct ThumbnailView: View {
         }
         isLoading = true
         do {
-            let data: Data = try await ImmichAPI.shared.loadMediaWithRetries(
-                path: "/api/assets/\(assetID.string)/thumbnail",
-                queryParams: [:],
-                retries: 3
-            )
-            if let uiImage = UIImage(data: data) {
-                image = Image(uiImage: uiImage)
-            } else {
-                throw URLError(.cannotDecodeContentData)
-            }
+            image = try await AssetImageLoader(immichClient: immichClient)
+                .load(assetID: assetID, size: .thumbnail, retries: 3)
         } catch {
             if !(error is CancellationError) {
                 onError(error)

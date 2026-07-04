@@ -110,4 +110,24 @@ class FakeImmichClient: ImmichClientProtocol {
     func getServerVersion() async throws -> ServerVersion {
         ServerVersion(major: 3, minor: 0, patch: 2)
     }
+
+    func getAsset(assetID: AssetID) async throws -> AlbumAsset {
+        AlbumAsset.dummy(id: assetID.string)
+    }
+
+    func loadThumbnail(
+        assetID _: AssetID,
+        size _: ThumbnailSize,
+        retries _: Int
+    ) async throws -> Data {
+        Data()
+    }
+
+    func thumbnailURL(assetID: AssetID, size _: ThumbnailSize) async throws -> URL {
+        URL(string: "https://example.test/\(assetID.string)")!
+    }
+
+    func videoPlaybackURL(assetID: AssetID) async throws -> URL {
+        URL(string: "https://example.test/\(assetID.string)/video")!
+    }
 }

@@ -185,17 +185,8 @@ struct AlbumDetailsView: View {
             assets = try await immichClient.getAlbumAssets(albumID: albumID)
 
             if let thumbnailAssetId = album?.albumThumbnailAssetId {
-                let data = try await ImmichAPI.shared.loadMediaWithRetries(
-                    path:
-                    "/api/assets/\(thumbnailAssetId.string)/thumbnail",
-                    queryParams: ["size": "preview"],
-                    retries: 3
-                )
-                if let uiImage = UIImage(data: data) {
-                    thumbnailImage = Image(uiImage: uiImage)
-                } else {
-                    errors.append("thumbnail couldn't get loaded into UIImage")
-                }
+                thumbnailImage = try await AssetImageLoader(immichClient: immichClient)
+                    .load(assetID: thumbnailAssetId, size: .preview, retries: 3)
             }
         } catch {
             errors.append(error.localizedDescription)

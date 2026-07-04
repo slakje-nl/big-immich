@@ -62,14 +62,9 @@ class ContentProvider: TVTopShelfContentProvider {
 
     private func getThumbnailURL(album: AlbumSummary) async -> URL? {
         guard let thumbnailAssetId = album.albumThumbnailAssetId else { return nil }
-        do {
-            return try await ImmichAPI.shared.getUrlWithQueryAuth(
-                path:
-                "/api/assets/\(thumbnailAssetId.string)/thumbnail",
-                queryParams: ["size": "preview"]
-            )
-        } catch {
-            return nil
-        }
+        return try? await ImmichClient.shared.thumbnailURL(
+            assetID: thumbnailAssetId,
+            size: .preview
+        )
     }
 }
