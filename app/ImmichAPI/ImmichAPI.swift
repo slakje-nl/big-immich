@@ -79,7 +79,7 @@ class ImmichAPIClient {
         path: String,
         queryParams: [String: String]?,
         headers: [String: String]?,
-        jsonPayload: [String: String]?
+        jsonPayload: [String: Any]?
     ) async throws -> URLRequest {
         guard let url = getUrl(path: path, queryParams: queryParams) else {
             throw ImmichAPIError.badUrl
@@ -114,7 +114,7 @@ class ImmichAPIClient {
         path: String,
         queryParams: [String: String]?,
         headers: [String: String]?,
-        jsonPayload: [String: String]?
+        jsonPayload: [String: Any]?
     ) async throws -> Data {
         let request = try await prepareRequest(
             httpMethod: httpMethod,
@@ -164,7 +164,7 @@ class ImmichAPIClient {
         path: String,
         queryParams: [String: String]?,
         headers: [String: String]?,
-        jsonPayload: [String: String]?
+        jsonPayload: [String: Any]?
     ) async throws -> T {
         let data = try await request(
             httpMethod: httpMethod,
@@ -188,7 +188,7 @@ class ImmichAPIClient {
         path: String,
         queryParams: [String: String]?,
         headers: [String: String]? = nil,
-        jsonPayload: [String: String]? = nil
+        jsonPayload: [String: Any]? = nil
     ) async throws -> [T] {
         let data = try await request(
             httpMethod: httpMethod,
@@ -214,7 +214,7 @@ class ImmichAPIClient {
         path: String,
         queryParams: [String: String]?,
         headers: [String: String]?,
-        jsonPayload: [String: String]?
+        jsonPayload: [String: Any]?
     ) async throws -> Data {
         var request = try await prepareRequest(
             httpMethod: httpMethod,
@@ -412,6 +412,21 @@ public actor ImmichAPI {
                 queryParams: queryParams,
                 headers: findAuthHeaders(),
                 jsonPayload: nil
+            )
+        }
+    }
+
+    public func postObject<T: Decodable>(
+        path: String,
+        jsonPayload: [String: Any]
+    ) async throws -> T {
+        try await withAuthRetry { client in
+            try await client.loadObject(
+                httpMethod: "POST",
+                path: path,
+                queryParams: nil,
+                headers: findAuthHeaders(),
+                jsonPayload: jsonPayload
             )
         }
     }

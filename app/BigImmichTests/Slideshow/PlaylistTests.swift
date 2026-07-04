@@ -25,15 +25,12 @@ struct PlaylistGetterAlbumsTests {
                 AlbumSummary.dummy(id: "album.2"),
                 AlbumSummary.dummy(id: "album.3")
             ],
-            albums: [
-                AlbumID(rawValue: "album.2"): Album.dummy(
-                    id: "album.2",
-                    assets: [
-                        AlbumAsset.dummy(id: "asset.1"),
-                        AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3")
-                    ]
-                )
+            albumAssets: [
+                AlbumID(rawValue: "album.2"): [
+                    AlbumAsset.dummy(id: "asset.1"),
+                    AlbumAsset.dummy(id: "asset.2"),
+                    AlbumAsset.dummy(id: "asset.3")
+                ]
             ]
         )
 
@@ -64,15 +61,12 @@ struct PlaylistGetterAlbumsTests {
                 AlbumSummary.dummy(id: "album.2"),
                 AlbumSummary.dummy(id: "album.3")
             ],
-            albums: [
-                AlbumID(rawValue: "album.2"): Album.dummy(
-                    id: "album.2",
-                    assets: [
-                        AlbumAsset.dummy(id: "asset.1"),
-                        AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3")
-                    ]
-                )
+            albumAssets: [
+                AlbumID(rawValue: "album.2"): [
+                    AlbumAsset.dummy(id: "asset.1"),
+                    AlbumAsset.dummy(id: "asset.2"),
+                    AlbumAsset.dummy(id: "asset.3")
+                ]
             ]
         )
 
@@ -102,21 +96,15 @@ struct PlaylistGetterAlbumsTests {
                 AlbumSummary.dummy(id: "album.1"),
                 AlbumSummary.dummy(id: "album.2")
             ],
-            albums: [
-                AlbumID(rawValue: "album.1"): Album.dummy(
-                    id: "album.1",
-                    assets: [
-                        AlbumAsset.dummy(id: "asset.1"),
-                        AlbumAsset.dummy(id: "asset.2")
-                    ]
-                ),
-                AlbumID(rawValue: "album.2"): Album.dummy(
-                    id: "album.2",
-                    assets: [
-                        AlbumAsset.dummy(id: "asset.3"),
-                        AlbumAsset.dummy(id: "asset.4")
-                    ]
-                )
+            albumAssets: [
+                AlbumID(rawValue: "album.1"): [
+                    AlbumAsset.dummy(id: "asset.1"),
+                    AlbumAsset.dummy(id: "asset.2")
+                ],
+                AlbumID(rawValue: "album.2"): [
+                    AlbumAsset.dummy(id: "asset.3"),
+                    AlbumAsset.dummy(id: "asset.4")
+                ]
             ]
         )
 
@@ -148,21 +136,15 @@ struct PlaylistGetterAlbumsTests {
                 AlbumSummary.dummy(id: "album.1"),
                 AlbumSummary.dummy(id: "album.2")
             ],
-            albums: [
-                AlbumID(rawValue: "album.1"): Album.dummy(
-                    id: "album.1",
-                    assets: [
-                        AlbumAsset.dummy(id: "asset.1"),
-                        AlbumAsset.dummy(id: "asset.2")
-                    ]
-                ),
-                AlbumID(rawValue: "album.2"): Album.dummy(
-                    id: "album.2",
-                    assets: [
-                        AlbumAsset.dummy(id: "asset.3"),
-                        AlbumAsset.dummy(id: "asset.4")
-                    ]
-                )
+            albumAssets: [
+                AlbumID(rawValue: "album.1"): [
+                    AlbumAsset.dummy(id: "asset.1"),
+                    AlbumAsset.dummy(id: "asset.2")
+                ],
+                AlbumID(rawValue: "album.2"): [
+                    AlbumAsset.dummy(id: "asset.3"),
+                    AlbumAsset.dummy(id: "asset.4")
+                ]
             ]
         )
 
@@ -195,7 +177,7 @@ struct PlaylistGetterAlbumsTests {
                 AlbumSummary.dummy(id: "album.2"),
                 AlbumSummary.dummy(id: "album.3")
             ],
-            albums: [:]
+            albumAssets: [:]
         )
 
         let playlistGetter = SlideshowPlaylistGetter(
@@ -231,15 +213,12 @@ struct PlaylistGetterAssetsTests {
                 AlbumSummary.dummy(id: "album.2"),
                 AlbumSummary.dummy(id: "album.3")
             ],
-            albums: [
-                AlbumID(rawValue: "album.2"): Album.dummy(
-                    id: "album.2",
-                    assets: [
-                        AlbumAsset.dummy(id: "asset.1"),
-                        AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3")
-                    ]
-                )
+            albumAssets: [
+                AlbumID(rawValue: "album.2"): [
+                    AlbumAsset.dummy(id: "asset.1"),
+                    AlbumAsset.dummy(id: "asset.2"),
+                    AlbumAsset.dummy(id: "asset.3")
+                ]
             ]
         )
 
@@ -272,15 +251,12 @@ struct PlaylistGetterAssetsTests {
                 AlbumSummary.dummy(id: "album.2"),
                 AlbumSummary.dummy(id: "album.3")
             ],
-            albums: [
-                AlbumID(rawValue: "album.2"): Album.dummy(
-                    id: "album.2",
-                    assets: [
-                        AlbumAsset.dummy(id: "asset.1"),
-                        AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3")
-                    ]
-                )
+            albumAssets: [
+                AlbumID(rawValue: "album.2"): [
+                    AlbumAsset.dummy(id: "asset.1"),
+                    AlbumAsset.dummy(id: "asset.2"),
+                    AlbumAsset.dummy(id: "asset.3")
+                ]
             ]
         )
 
@@ -313,15 +289,12 @@ struct PlaylistGetterAssetsTests {
                 AlbumSummary.dummy(id: "album.2"),
                 AlbumSummary.dummy(id: "album.3")
             ],
-            albums: [
-                AlbumID(rawValue: "album.2"): Album.dummy(
-                    id: "album.2",
-                    assets: [
-                        AlbumAsset.dummy(id: "asset.1"),
-                        AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3")
-                    ]
-                )
+            albumAssets: [
+                AlbumID(rawValue: "album.2"): [
+                    AlbumAsset.dummy(id: "asset.1"),
+                    AlbumAsset.dummy(id: "asset.2"),
+                    AlbumAsset.dummy(id: "asset.3")
+                ]
             ]
         )
 
@@ -350,15 +323,12 @@ struct PlaylistGetterAssetsTests {
                 AlbumSummary.dummy(id: "album.2"),
                 AlbumSummary.dummy(id: "album.3")
             ],
-            albums: [
-                AlbumID(rawValue: "album.2"): Album.dummy(
-                    id: "album.2",
-                    assets: [
-                        AlbumAsset.dummy(id: "asset.1"),
-                        AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3")
-                    ]
-                )
+            albumAssets: [
+                AlbumID(rawValue: "album.2"): [
+                    AlbumAsset.dummy(id: "asset.1"),
+                    AlbumAsset.dummy(id: "asset.2"),
+                    AlbumAsset.dummy(id: "asset.3")
+                ]
             ]
         )
 
@@ -383,15 +353,12 @@ struct PlaylistGetterAssetsTests {
 
         let fakeClient = FakeImmichClient(
             albumSummaries: [AlbumSummary.dummy(id: "album.1")],
-            albums: [
-                AlbumID(rawValue: "album.1"): Album.dummy(
-                    id: "album.1",
-                    assets: [
-                        AlbumAsset.dummy(id: "asset.1"),
-                        AlbumAsset.dummy(id: "asset.2"),
-                        AlbumAsset.dummy(id: "asset.3")
-                    ]
-                )
+            albumAssets: [
+                AlbumID(rawValue: "album.1"): [
+                    AlbumAsset.dummy(id: "asset.1"),
+                    AlbumAsset.dummy(id: "asset.2"),
+                    AlbumAsset.dummy(id: "asset.3")
+                ]
             ]
         )
 

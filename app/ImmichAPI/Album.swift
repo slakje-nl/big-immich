@@ -47,7 +47,6 @@ public struct Album: Codable, Identifiable, Hashable {
     public let updatedAt: String
     public let startDate: String
     public let lastModifiedAssetTimestamp: String
-    public let assets: [AlbumAsset]
 
     public init(
         id: AlbumID,
@@ -56,8 +55,7 @@ public struct Album: Codable, Identifiable, Hashable {
         createdAt: String,
         updatedAt: String,
         startDate: String,
-        lastModifiedAssetTimestamp: String,
-        assets: [AlbumAsset]
+        lastModifiedAssetTimestamp: String
     ) {
         self.id = id
         self.albumName = albumName
@@ -66,7 +64,6 @@ public struct Album: Codable, Identifiable, Hashable {
         self.updatedAt = updatedAt
         self.startDate = startDate
         self.lastModifiedAssetTimestamp = lastModifiedAssetTimestamp
-        self.assets = assets
     }
 
     public static func == (lhs: Album, rhs: Album) -> Bool {

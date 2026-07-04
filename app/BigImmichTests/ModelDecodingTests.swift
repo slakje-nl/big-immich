@@ -30,46 +30,43 @@ struct ModelDecodingTests {
         #expect(summary.startDate == "2025-11-06T00:00:00.000Z")
     }
 
-    @Test func decodesAlbumWithAssetsAndExif() throws {
-        let album = try decode(
-            Album.self,
+    @Test func decodesSearchResponseAssets() throws {
+        let response = try decode(
+            SearchResponse.self,
             from: """
             {
-                "id": "album-1",
-                "albumName": "Holidays",
-                "albumThumbnailAssetId": "asset-9",
-                "createdAt": "2025-11-19T19:52:35.661517+00:00",
-                "updatedAt": "2025-11-19T19:52:39.064032+00:00",
-                "startDate": "2025-11-06T00:00:00.000Z",
-                "lastModifiedAssetTimestamp": "2025-11-19T21:07:02.749Z",
-                "assets": [
-                    {
-                        "id": "asset-1",
-                        "type": "IMAGE",
-                        "originalPath": "/data/1.jpg",
-                        "duration": "0:00:00.00000",
-                        "exifInfo": {
-                            "dateTimeOriginal": "2025-11-06T10:15:00.000+00:00",
-                            "city": "Amsterdam",
-                            "state": "North Holland",
-                            "country": "Netherlands"
+                "assets": {
+                    "count": 2,
+                    "nextPage": "2",
+                    "items": [
+                        {
+                            "id": "asset-1",
+                            "type": "IMAGE",
+                            "originalPath": "/data/1.jpg",
+                            "duration": "0:00:00.00000",
+                            "exifInfo": {
+                                "dateTimeOriginal": "2025-11-06T10:15:00.000+00:00",
+                                "city": "Amsterdam",
+                                "state": "North Holland",
+                                "country": "Netherlands"
+                            }
+                        },
+                        {
+                            "id": "asset-2",
+                            "type": "VIDEO",
+                            "originalPath": "/data/2.mov",
+                            "duration": "0:00:12.500"
                         }
-                    },
-                    {
-                        "id": "asset-2",
-                        "type": "VIDEO",
-                        "originalPath": "/data/2.mov",
-                        "duration": "0:00:12.500"
-                    }
-                ]
+                    ]
+                }
             }
             """
         )
 
-        #expect(album.assets.count == 2)
-        #expect(album.assets[0].exifInfo?.city == "Amsterdam")
-        #expect(album.assets[1].exifInfo == nil)
-        #expect(album.assets[1].duration == "0:00:12.500")
+        #expect(response.assets.items.count == 2)
+        #expect(response.assets.items[0].exifInfo?.city == "Amsterdam")
+        #expect(response.assets.items[1].exifInfo == nil)
+        #expect(response.assets.nextPage == "2")
     }
 
     @Test func decodesAssetWithPartialExif() throws {
@@ -91,24 +88,25 @@ struct ModelDecodingTests {
         #expect(asset.exifInfo?.dateTimeOriginal == nil)
     }
 
-    @Test func decodesAlbumWithZeroAssets() throws {
+    @Test func decodesAlbumMetadataWithoutAssets() throws {
         let album = try decode(
             Album.self,
             from: """
             {
-                "id": "empty",
-                "albumName": "Empty",
-                "albumThumbnailAssetId": "asset-0",
+                "id": "album-1",
+                "albumName": "Holidays",
+                "albumThumbnailAssetId": "asset-9",
                 "createdAt": "2025-11-19T19:52:35.661517+00:00",
                 "updatedAt": "2025-11-19T19:52:39.064032+00:00",
                 "startDate": "2025-11-06T00:00:00.000Z",
                 "lastModifiedAssetTimestamp": "2025-11-19T21:07:02.749Z",
-                "assets": []
+                "assetCount": 5
             }
             """
         )
 
-        #expect(album.assets.isEmpty)
+        #expect(album.id.string == "album-1")
+        #expect(album.albumName.string == "Holidays")
     }
 
     @Test func customStringIdRoundTrips() throws {

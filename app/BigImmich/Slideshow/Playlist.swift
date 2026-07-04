@@ -61,9 +61,9 @@ class SlideshowPlaylistGetter: SlideshowPlaylistGetterProtocol {
     func getAssetsPlaylist(albumID: AlbumID) async throws -> Playlist<
         AlbumAsset
     > {
-        let loadedAlbum = try await immichClient.getAlbum(albumID: albumID)
+        let loadedAssets = try await immichClient.getAlbumAssets(albumID: albumID)
 
-        var looped = switch settings.slideshowOnceEndedAction {
+        let looped = switch settings.slideshowOnceEndedAction {
         case .stopAndNotify:
             false
         case .startAgain:
@@ -72,13 +72,13 @@ class SlideshowPlaylistGetter: SlideshowPlaylistGetterProtocol {
             false
         }
 
-        var assets: [AlbumAsset] = switch settings.slideshowDirection {
+        let assets: [AlbumAsset] = switch settings.slideshowDirection {
         case .oldestToNewest:
-            loadedAlbum.assets.reversed()
+            loadedAssets.reversed()
         case .newestToOldest:
-            loadedAlbum.assets
+            loadedAssets
         case .randomized:
-            loadedAlbum.assets.shuffled()
+            loadedAssets.shuffled()
         }
 
         return Playlist(elements: assets, looped: looped)

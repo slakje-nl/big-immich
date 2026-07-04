@@ -17,6 +17,7 @@ public enum AlbumsOrder: String, CaseIterable, Identifiable {
 public protocol ImmichClientProtocol {
     func findAlbums(order: AlbumsOrder) async throws -> [AlbumSummary]
     func getAlbum(albumID: AlbumID) async throws -> Album
+    func getAlbumAssets(albumID: AlbumID) async throws -> [AlbumAsset]
 }
 
 func joinAlbums(order: AlbumsOrder, albumLists: [[AlbumSummary]]) -> [AlbumSummary] {
@@ -60,5 +61,25 @@ public class ImmichClient: ImmichClientProtocol {
             path: "/api/albums/\(albumID.string)",
             queryParams: [:]
         )
+    }
+
+    public func getAlbumAssets(albumID: AlbumID) async throws -> [AlbumAsset] {
+        var assets: [AlbumAsset] = []
+        var page = 1
+
+        while true {
+            let response: SearchResponse = try await ImmichAPI.shared.postObject(
+                path: "/api/search/metadata",
+                jsonPayload: ["albumIds": [albumID.string], "page": page, "size": 1000]
+            )
+            assets.append(contentsOf: response.assets.items)
+
+            guard let next = response.assets.nextPage, let nextPage = Int(next) else {
+                break
+            }
+            page = nextPage
+        }
+
+        return assets
     }
 }

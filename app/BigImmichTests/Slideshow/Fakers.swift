@@ -54,7 +54,7 @@ extension AlbumSummary {
 }
 
 extension Album {
-    static func dummy(id: String, assets: [AlbumAsset]) -> Album {
+    static func dummy(id: String) -> Album {
         Album(
             id: AlbumID(rawValue: id),
             albumName: AlbumName(rawValue: "album name"),
@@ -62,8 +62,7 @@ extension Album {
             createdAt: "2025-11-19T19:52:35.661517+00:00",
             updatedAt: "2025-11-19T19:52:39.064032+00:00",
             startDate: "2025-11-06T00:00:00.000Z",
-            lastModifiedAssetTimestamp: "2025-11-19T21:07:02.749Z",
-            assets: assets
+            lastModifiedAssetTimestamp: "2025-11-19T21:07:02.749Z"
         )
     }
 }
@@ -93,13 +92,13 @@ struct FakeSettings: SlideshowSettingsProtocol {
 
 class FakeImmichClient: ImmichClientProtocol {
     let albumSummaries: [AlbumSummary]
-    let albums: [AlbumID: Album]
+    let albumAssets: [AlbumID: [AlbumAsset]]
 
     var lastAlbumsOrder: AlbumsOrder = .fromOldest
 
-    init(albumSummaries: [AlbumSummary], albums: [AlbumID: Album]) {
+    init(albumSummaries: [AlbumSummary], albumAssets: [AlbumID: [AlbumAsset]]) {
         self.albumSummaries = albumSummaries
-        self.albums = albums
+        self.albumAssets = albumAssets
     }
 
     func findAlbums(order: AlbumsOrder) async throws -> [AlbumSummary] {
@@ -109,9 +108,10 @@ class FakeImmichClient: ImmichClientProtocol {
     }
 
     func getAlbum(albumID: AlbumID) async throws -> Album {
-        if let exists = albums[albumID] {
-            return exists
-        }
-        return Album.dummy(id: "dummy", assets: [])
+        Album.dummy(id: albumID.string)
+    }
+
+    func getAlbumAssets(albumID: AlbumID) async throws -> [AlbumAsset] {
+        albumAssets[albumID] ?? []
     }
 }

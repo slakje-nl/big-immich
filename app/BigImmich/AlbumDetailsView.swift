@@ -16,6 +16,7 @@ struct AlbumDetailsView: View {
 
     @FocusState private var focusedButton: ButtonFocus?
     @State private var album: Album?
+    @State private var assets: [AlbumAsset] = []
     @State private var thumbnailImage: Image?
     @State private var isLoading = true
     @State private var errors: [String] = []
@@ -132,42 +133,39 @@ struct AlbumDetailsView: View {
     }
 
     func getItemsCount() -> String {
-        if let album {
-            let images = album.assets.count(where: { $0.assetType == .image })
+        let images = assets.count(where: { $0.assetType == .image })
+        let videos = assets.count(where: { $0.assetType == .video })
 
-            let videos = album.assets.count(where: { $0.assetType == .video })
+        var imagesLabel = ""
+        if images > 1 {
+            imagesLabel = "\(images) images"
+        } else if images == 1 {
+            imagesLabel = "\(images) image"
+        }
 
-            var imagesLabel = ""
-            if images > 1 {
-                imagesLabel = "\(images) images"
-            } else if images == 1 {
-                imagesLabel = "\(images) image"
-            }
+        var videosLabel = ""
+        if videos > 1 {
+            videosLabel = "\(videos) videos"
+        } else if videos == 1 {
+            videosLabel = "\(videos) video"
+        }
 
-            var videosLabel = ""
-            if videos > 1 {
-                videosLabel = "\(videos) videos"
-            } else if videos == 1 {
-                videosLabel = "\(videos) video"
-            }
-
-            if !imagesLabel.isEmpty, !videosLabel.isEmpty {
-                return "\(imagesLabel) and \(videosLabel)"
-            } else if !imagesLabel.isEmpty {
-                return imagesLabel
-            } else if !videosLabel.isEmpty {
-                return videosLabel
-            }
+        if !imagesLabel.isEmpty, !videosLabel.isEmpty {
+            return "\(imagesLabel) and \(videosLabel)"
+        } else if !imagesLabel.isEmpty {
+            return imagesLabel
+        } else if !videosLabel.isEmpty {
+            return videosLabel
         }
 
         return "no items"
     }
 
     private func getSlideshowDurationText() -> String {
-        guard let album else { return "" }
+        guard album != nil else { return "" }
 
         let duration = slideshowDurationMinutes(
-            items: album.assets,
+            items: assets,
             imageInterval: slideshowInterval
         )
         if duration == 1 {
@@ -184,6 +182,7 @@ struct AlbumDetailsView: View {
                 path: "/api/albums/\(albumID.string)",
                 queryParams: [:]
             )
+            assets = try await ImmichClient.shared.getAlbumAssets(albumID: albumID)
 
             if let album {
                 let data = try await ImmichAPI.shared.loadMediaWithRetries(
