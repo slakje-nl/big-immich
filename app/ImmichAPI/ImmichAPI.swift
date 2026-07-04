@@ -30,16 +30,24 @@ public enum ImmichAPIError: Error, LocalizedError {
     }
 }
 
-public struct ImmichAPIConfig {
+public enum ImmichAuth: Sendable {
+    case apiKey(String)
+    case emailAndPassword(email: String, password: String)
+}
+
+public struct ImmichAPIConfig: Sendable {
     let baseURL: String
-    let authMethod: ImmichAPIAuthMethod
+    let auth: ImmichAuth
+}
 
-    /// api-key based auth
-    let APIKey: String
+public protocol RequestExecuting: Sendable {
+    func execute(_ request: URLRequest) async throws -> (Data, URLResponse)
+}
 
-    // email/password based auth
-    let email: String
-    let password: String
+extension URLSession: RequestExecuting {
+    public func execute(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        try await data(for: request)
+    }
 }
 
 /// Create a session that never stores or sends cookies
@@ -52,10 +60,12 @@ let statelessSession: URLSession = {
 }()
 
 class ImmichAPIClient {
-    private var baseURL: String
+    private let baseURL: String
+    private let executor: RequestExecuting
 
-    init(baseURL: String) {
+    init(baseURL: String, executor: RequestExecuting = statelessSession) {
         self.baseURL = baseURL
+        self.executor = executor
     }
 
     func getUrl(path: String, queryParams: [String: String]?) -> URL? {
@@ -124,7 +134,7 @@ class ImmichAPIClient {
             jsonPayload: jsonPayload
         )
 
-        let (data, response) = try await statelessSession.data(for: request)
+        let (data, response) = try await executor.execute(request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw ImmichAPIError.badResponse
         }
@@ -225,7 +235,7 @@ class ImmichAPIClient {
         )
         request.cachePolicy = .returnCacheDataElseLoad
 
-        let (data, response) = try await statelessSession.data(for: request)
+        let (data, response) = try await executor.execute(request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw ImmichAPIError.badResponse
         }
@@ -258,10 +268,10 @@ public actor ImmichAPIAuthenticator {
         token = nil
     }
 
-    public func login(config: ImmichAPIConfig) async throws -> String {
-        guard config.authMethod == .emailAndPassword else {
+    public func login(config: ImmichAPIConfig, executor: RequestExecuting) async throws -> String {
+        guard case let .emailAndPassword(email, password) = config.auth else {
             throw ImmichAPIError.unknownError
-        } // this method supports email/pass auth only
+        }
 
         if let token {
             return token
@@ -277,7 +287,12 @@ public actor ImmichAPIAuthenticator {
         defer { isAuthenticating = false }
 
         do {
-            let token = try await performLogin(config: config)
+            let token = try await performLogin(
+                baseURL: config.baseURL,
+                email: email,
+                password: password,
+                executor: executor
+            )
             self.token = token
 
             // resume all waiting callers
@@ -293,15 +308,21 @@ public actor ImmichAPIAuthenticator {
         }
     }
 
-    private func performLogin(config: ImmichAPIConfig) async throws -> String {
+    private func performLogin(
+        baseURL: String,
+        email: String,
+        password: String,
+        executor: RequestExecuting
+    ) async throws -> String {
         let response: LoginResponse = try await ImmichAPIClient(
-            baseURL: config.baseURL
+            baseURL: baseURL,
+            executor: executor
         ).loadObject(
             httpMethod: "POST",
             path: "/api/auth/login",
             queryParams: nil,
             headers: nil,
-            jsonPayload: ["email": config.email, "password": config.password]
+            jsonPayload: ["email": email, "password": password]
         )
         return response.accessToken
     }
@@ -310,60 +331,51 @@ public actor ImmichAPIAuthenticator {
 public actor ImmichAPI {
     public static let shared = ImmichAPI()
 
-    private init() {}
+    private let executor: RequestExecuting
+    private let configProvider: @Sendable () -> ImmichAPIConfig?
 
-    private func getConfig() -> ImmichAPIConfig? {
+    init(
+        executor: RequestExecuting = statelessSession,
+        configProvider: @escaping @Sendable () -> ImmichAPIConfig? = ImmichAPI.keychainConfig
+    ) {
+        self.executor = executor
+        self.configProvider = configProvider
+    }
+
+    static func keychainConfig() -> ImmichAPIConfig? {
         guard let baseURL = KeychainHelper.loadImmichURL() else { return nil }
-        let authMethod =
-            KeychainHelper.loadImmichAPIAuthMethod()
-                ?? ImmichAPIAuthMethod.apiKey
+        let authMethod = KeychainHelper.loadImmichAPIAuthMethod() ?? .apiKey
 
         switch authMethod {
         case .apiKey:
-            guard let apiKey = KeychainHelper.loadImmichAPIKey() else {
-                return nil
-            }
-
-            return ImmichAPIConfig(
-                baseURL: baseURL,
-                authMethod: .apiKey,
-                APIKey: apiKey,
-                email: "",
-                password: ""
-            )
+            guard let apiKey = KeychainHelper.loadImmichAPIKey() else { return nil }
+            return ImmichAPIConfig(baseURL: baseURL, auth: .apiKey(apiKey))
 
         case .emailAndPassword:
-            guard let email = KeychainHelper.loadImmichAuthEmail() else {
-                return nil
-            }
-            guard let password = KeychainHelper.loadImmichAuthPassword() else {
-                return nil
-            }
-
+            guard let email = KeychainHelper.loadImmichAuthEmail(),
+                  let password = KeychainHelper.loadImmichAuthPassword()
+            else { return nil }
             return ImmichAPIConfig(
                 baseURL: baseURL,
-                authMethod: .emailAndPassword,
-                APIKey: "",
-                email: email,
-                password: password
+                auth: .emailAndPassword(email: email, password: password)
             )
         }
+    }
+
+    private func getConfig() -> ImmichAPIConfig? {
+        configProvider()
     }
 
     private func findAuthHeaders() async throws -> [String: String] {
         guard let config = getConfig() else { return [:] }
 
-        switch config.authMethod {
-        case .apiKey:
-            return [
-                "x-api-key": config.APIKey
-            ]
+        switch config.auth {
+        case let .apiKey(key):
+            return ["x-api-key": key]
         case .emailAndPassword:
             return try await [
                 "x-immich-session-token":
-                    ImmichAPIAuthenticator.shared.login(
-                        config: config
-                    )
+                    ImmichAPIAuthenticator.shared.login(config: config, executor: executor)
             ]
         }
     }
@@ -371,16 +383,13 @@ public actor ImmichAPI {
     private func findAuthQueryParams() async throws -> [String: String] {
         guard let config = getConfig() else { return [:] }
 
-        switch config.authMethod {
-        case .apiKey:
-            return [
-                "apiKey": config.APIKey
-            ]
+        switch config.auth {
+        case let .apiKey(key):
+            return ["apiKey": key]
         case .emailAndPassword:
             return try await [
-                "sessionKey": ImmichAPIAuthenticator.shared.login(
-                    config: config
-                )
+                "sessionKey":
+                    ImmichAPIAuthenticator.shared.login(config: config, executor: executor)
             ]
         }
     }
@@ -391,7 +400,7 @@ public actor ImmichAPI {
         guard let config = getConfig() else {
             throw ImmichAPIError.missingConfig
         }
-        let client = ImmichAPIClient(baseURL: config.baseURL)
+        let client = ImmichAPIClient(baseURL: config.baseURL, executor: executor)
 
         do {
             return try await operation(client)
@@ -505,7 +514,8 @@ public actor ImmichAPI {
         }
 
         let playbackUrl = ImmichAPIClient(
-            baseURL: config.baseURL
+            baseURL: config.baseURL,
+            executor: executor
         ).getUrl(
             path: path,
             queryParams: urlQueryParams
