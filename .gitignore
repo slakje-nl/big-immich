@@ -61,7 +61,10 @@ fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
 
-app/BigImmich.xcodeproj/*
+# Track the project file, shared scheme and workspace metadata (CI needs these);
+# ignore only per-user state.
+app/BigImmich.xcodeproj/xcuserdata/
+app/BigImmich.xcodeproj/project.xcworkspace/xcuserdata/
 
 # Python E2E tooling
 test/.venv/
