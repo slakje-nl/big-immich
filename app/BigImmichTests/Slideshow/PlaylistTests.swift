@@ -181,6 +181,39 @@ struct PlaylistGetterAlbumsTests {
         XCTAssertEqual(albums.elements[1].id.string, "album.2")
         XCTAssertEqual(fakeClient.lastAlbumsOrder, .fromOldest)
     }
+
+    @Test func getMultipleAlbumsRandom() async throws {
+        let settings = FakeSettings(
+            slideshowOnceEndedAction: .loadAnotherAlbum,
+            slideshowOnceEndedAnotherAlbumSelection: .random,
+            slideshowDirection: .oldestToNewest
+        )
+
+        let fakeClient = FakeImmichClient(
+            albumSummaries: [
+                AlbumSummary.dummy(id: "album.1"),
+                AlbumSummary.dummy(id: "album.2"),
+                AlbumSummary.dummy(id: "album.3")
+            ],
+            albums: [:]
+        )
+
+        let playlistGetter = SlideshowPlaylistGetter(
+            settings: settings,
+            immichClient: fakeClient
+        )
+
+        let albums = try await playlistGetter.getAlbumsPlaylist(
+            initialAlbumID: AlbumID(rawValue: "album.1")
+        )
+
+        #expect(albums.looped)
+        #expect(albums.elements.count == 3)
+        #expect(
+            Set(albums.elements.map(\.id.string)) == ["album.1", "album.2", "album.3"]
+        )
+        #expect(fakeClient.lastAlbumsOrder == .fromNewest)
+    }
 }
 
 @MainActor
@@ -339,5 +372,41 @@ struct PlaylistGetterAssetsTests {
         )
 
         XCTAssertEqual(assets.looped, true)
+    }
+
+    @Test func randomizedDirectionKeepsSameAssets() async throws {
+        let settings = FakeSettings(
+            slideshowOnceEndedAction: .stopAndNotify,
+            slideshowOnceEndedAnotherAlbumSelection: .random,
+            slideshowDirection: .randomized
+        )
+
+        let fakeClient = FakeImmichClient(
+            albumSummaries: [AlbumSummary.dummy(id: "album.1")],
+            albums: [
+                AlbumID(rawValue: "album.1"): Album.dummy(
+                    id: "album.1",
+                    assets: [
+                        AlbumAsset.dummy(id: "asset.1"),
+                        AlbumAsset.dummy(id: "asset.2"),
+                        AlbumAsset.dummy(id: "asset.3")
+                    ]
+                )
+            ]
+        )
+
+        let playlistGetter = SlideshowPlaylistGetter(
+            settings: settings,
+            immichClient: fakeClient
+        )
+
+        let assets = try await playlistGetter.getAssetsPlaylist(
+            albumID: AlbumID(rawValue: "album.1")
+        )
+
+        #expect(assets.elements.count == 3)
+        #expect(
+            Set(assets.elements.map(\.id.string)) == ["asset.1", "asset.2", "asset.3"]
+        )
     }
 }

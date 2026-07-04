@@ -11,6 +11,72 @@ import Testing
 import XCTest
 
 @MainActor
+struct SlideshowSequencerEdgeCaseTests {
+    private func singleAlbumGetter() -> FakePlaylistGetter {
+        FakePlaylistGetter(
+            albumPlaylist: Playlist(
+                elements: [AlbumSummary.dummy(id: "album.1")],
+                looped: false
+            ),
+            assetsPlaylists: [
+                AlbumID(rawValue: "album.1"): Playlist(
+                    elements: [
+                        AlbumAsset.dummy(id: "asset.1"),
+                        AlbumAsset.dummy(id: "asset.2"),
+                        AlbumAsset.dummy(id: "asset.3")
+                    ],
+                    looped: false
+                )
+            ]
+        )
+    }
+
+    @Test func unknownInitialAssetStartsAtFirst() async throws {
+        let slideshow = try await SlideshowSequencer(
+            playlistGetter: singleAlbumGetter(),
+            initialAlbumID: AlbumID(rawValue: "album.1"),
+            initialAssetID: AssetID(rawValue: "does-not-exist")
+        )
+
+        let current = try #require(await slideshow.current())
+        #expect(current.asset.id.string == "asset.1")
+    }
+
+    @Test func counterReflectsPositionAndTotal() async throws {
+        let slideshow = try await SlideshowSequencer(
+            playlistGetter: singleAlbumGetter(),
+            initialAlbumID: AlbumID(rawValue: "album.1"),
+            initialAssetID: nil
+        )
+
+        let first = try #require(await slideshow.current())
+        #expect(first.counter.current == 1)
+        #expect(first.counter.total == 3)
+
+        let second = try #require(await slideshow.next())
+        #expect(second.counter.current == 2)
+        #expect(second.counter.total == 3)
+    }
+
+    @Test func previewDoesNotAdvancePosition() async throws {
+        let slideshow = try await SlideshowSequencer(
+            playlistGetter: singleAlbumGetter(),
+            initialAlbumID: AlbumID(rawValue: "album.1"),
+            initialAssetID: nil
+        )
+
+        let previewedNext = try #require(await slideshow.previewNext())
+        #expect(previewedNext.asset.id.string == "asset.2")
+
+        let previewedAgain = try #require(await slideshow.previewNext())
+        #expect(previewedAgain.asset.id.string == "asset.2")
+
+        let current = try #require(await slideshow.current())
+        #expect(current.asset.id.string == "asset.1")
+    }
+}
+
+@MainActor
 struct SlideshowSequencerSingleAlbumTests {
     private func verifySlideshowAsset(
         asset: SlideshowAsset?,
