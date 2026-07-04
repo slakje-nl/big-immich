@@ -19,6 +19,7 @@ final class SlideshowViewModel {
 
     var currentImage: Image?
     var currentPlayer: AVPlayer?
+    var videoState: VideoState = .loading
 
     var isLoading = false
     var errors: [String] = []
@@ -59,6 +60,14 @@ final class SlideshowViewModel {
         )
         videoController.onProgress = { [weak self] progress in
             self?.assetProgress = progress
+        }
+        videoController.onStateChange = { [weak self] state in
+            guard let self else { return }
+            videoState = state
+            if case let .failed(message) = state {
+                showError(message)
+                Task { await self.moveToNext() }
+            }
         }
     }
 
@@ -260,10 +269,6 @@ final class SlideshowViewModel {
                     url: playbackURL,
                     autoplay: slideshowIsRunning,
                     onEnded: { [weak self] in
-                        Task { await self?.moveToNext() }
-                    },
-                    onFailure: { [weak self] message in
-                        self?.showError(message)
                         Task { await self?.moveToNext() }
                     }
                 )

@@ -42,6 +42,12 @@ struct SlideshowView: View {
                 } else if let player = viewModel.currentPlayer {
                     VideoPlayer(player: player)
                         .ignoresSafeArea()
+                        .overlay {
+                            if viewModel.videoState == .loading {
+                                ProgressView()
+                                    .scaleEffect(1.5)
+                            }
+                        }
                 } else if let image = viewModel.currentImage {
                     image
                         .resizable()
