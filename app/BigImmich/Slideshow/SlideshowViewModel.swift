@@ -84,7 +84,6 @@ final class SlideshowViewModel: ObservableObject {
     }
 
     func showInformation(_ message: String) {
-        AppLog.shared.log(message, level: .info, source: "SlideshowView")
         let easterEggs = [
             message,
             "=^..^=",

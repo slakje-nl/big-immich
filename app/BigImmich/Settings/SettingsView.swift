@@ -487,19 +487,12 @@ struct SettingsView: View {
                         if appLog.entries.isEmpty {
                             Text("No logs yet.").foregroundColor(.secondary)
                         } else {
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: 12) {
                                 ForEach(Array(appLog.entries.suffix(20).reversed())) { entry in
-                                    Button {} label: {
-                                        Text("[\(entry.date.formatted(date: .omitted, time: .standard))] \(entry.message)")
-                                            .font(.system(.caption, design: .monospaced))
-                                            .foregroundColor(entry.level == .error ? .red : .secondary)
-                                            .frame(
-                                                maxWidth: geo.size.width * 0.6,
-                                                alignment: .leading
-                                            )
-                                            .fixedSize(horizontal: false, vertical: true)
-                                    }
-                                    .buttonStyle(.plain)
+                                    DebugLogRow(
+                                        entry: entry,
+                                        maxWidth: geo.size.width * 0.6
+                                    )
                                 }
                             }
                         }
@@ -583,5 +576,28 @@ struct SettingsView: View {
             configurationErrorColour = .red
             configurationError = "error: \(error.localizedDescription)"
         }
+    }
+}
+
+private struct DebugLogRow: View {
+    let entry: LogEntry
+    let maxWidth: CGFloat
+
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        Text("[\(entry.date.formatted(date: .omitted, time: .standard))] \(entry.message)")
+            .font(.system(.caption, design: .monospaced))
+            .foregroundColor(.red)
+            .frame(maxWidth: maxWidth, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(focused ? Color.white.opacity(0.12) : Color.clear)
+            .cornerRadius(8)
+            .focusable(true)
+            .focused($focused)
+            .scaleEffect(focused ? 1.02 : 1.0)
+            .animation(.easeInOut(duration: 0.12), value: focused)
     }
 }

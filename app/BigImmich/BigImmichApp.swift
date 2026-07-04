@@ -24,10 +24,6 @@ func logError(
     SentrySDK.capture(event: event)
 }
 
-func logInfo(_ message: String) {
-    AppLog.shared.log(message, level: .info)
-}
-
 @main
 struct BigImmichApp: App {
     @AppStorage("sentryEnabled") private var sentryEnabled: Bool = false
