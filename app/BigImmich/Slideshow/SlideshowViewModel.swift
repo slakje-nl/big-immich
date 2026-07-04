@@ -36,6 +36,11 @@ final class SlideshowViewModel {
     @ObservationIgnored private var slideshow: SlideshowSequencer?
     @ObservationIgnored private var previousAlbumID: AlbumID?
 
+    /// Set by `stop()` when the view disappears. The async load/advance loop
+    /// (`loadCurrentAsset` ⇄ `moveToNext`/`moveToPrevious`) checks this so a slideshow
+    /// full of faulty assets doesn't keep churning — and spamming errors — after exit.
+    @ObservationIgnored private var isStopped = false
+
     @ObservationIgnored private let videoController = VideoPlaybackController()
 
     @ObservationIgnored private var clearErrors: DispatchWorkItem?
@@ -72,10 +77,12 @@ final class SlideshowViewModel {
     }
 
     func start() async {
+        isStopped = false
         await initSlideshow()
     }
 
     func stop() {
+        isStopped = true
         stopSlideshowTimer()
         stopProgressBarTimer()
         stopCurrentPlayer()
@@ -210,6 +217,8 @@ final class SlideshowViewModel {
     }
 
     private func loadCurrentAsset(slideshowAsset: SlideshowAsset) async {
+        guard !isStopped else { return }
+
         stopSlideshowTimer()
         stopProgressBarTimer()
         stopCurrentPlayer()
@@ -360,7 +369,7 @@ final class SlideshowViewModel {
     }
 
     private func moveToNext() async {
-        guard let slideshow else { return }
+        guard !isStopped, let slideshow else { return }
 
         var next: SlideshowAsset?
         do {
@@ -388,7 +397,7 @@ final class SlideshowViewModel {
     }
 
     private func moveToPrevious() async {
-        guard let slideshow else { return }
+        guard !isStopped, let slideshow else { return }
 
         var previous: SlideshowAsset?
         do {
