@@ -39,7 +39,7 @@ extension AlbumAsset {
 }
 
 extension AlbumSummary {
-    static func dummy(id: String) -> AlbumSummary {
+    static func dummy(id: String, assetCount: Int? = nil) -> AlbumSummary {
         AlbumSummary(
             id: AlbumID(rawValue: id),
             albumName: AlbumName(rawValue: "album name"),
@@ -47,7 +47,8 @@ extension AlbumSummary {
             createdAt: "2025-11-19T19:52:35.661517+00:00",
             updatedAt: "2025-11-19T19:52:39.064032+00:00",
             startDate: "2025-11-06T00:00:00.000Z",
-            lastModifiedAssetTimestamp: "2025-11-19T21:07:02.749Z"
+            lastModifiedAssetTimestamp: "2025-11-19T21:07:02.749Z",
+            assetCount: assetCount
         )
     }
 }

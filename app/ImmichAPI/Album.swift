@@ -8,6 +8,7 @@ public struct AlbumSummary: Codable, Identifiable, Hashable {
     public let updatedAt: String
     public let startDate: String
     public let lastModifiedAssetTimestamp: String
+    public let assetCount: Int?
 
     public init(
         id: AlbumID,
@@ -16,7 +17,8 @@ public struct AlbumSummary: Codable, Identifiable, Hashable {
         createdAt: String,
         updatedAt: String,
         startDate: String,
-        lastModifiedAssetTimestamp: String
+        lastModifiedAssetTimestamp: String,
+        assetCount: Int?
     ) {
         self.id = id
         self.albumName = albumName
@@ -25,6 +27,7 @@ public struct AlbumSummary: Codable, Identifiable, Hashable {
         self.updatedAt = updatedAt
         self.startDate = startDate
         self.lastModifiedAssetTimestamp = lastModifiedAssetTimestamp
+        self.assetCount = assetCount
     }
 
     public static func == (lhs: AlbumSummary, rhs: AlbumSummary) -> Bool {

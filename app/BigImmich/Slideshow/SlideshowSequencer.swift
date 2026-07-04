@@ -18,14 +18,14 @@ struct SlideshowAsset {
     let counter: SlideshowCounter
 }
 
-class SlideshowSequencer {
-    let playlistGetter: SlideshowPlaylistGetterProtocol
+actor SlideshowSequencer {
+    private let playlistGetter: SlideshowPlaylistGetterProtocol
 
-    var albumPlaylist: Playlist<AlbumSummary>
-    var albumIndex: Int = 0
+    private let albumPlaylist: Playlist<AlbumSummary>
+    private var albumIndex = 0
 
-    var assetsPlaylist: MemoryCache<AlbumID, Playlist<AlbumAsset>>
-    var assetIndex: Int = 0
+    private var assetsPlaylists: [AlbumID: Playlist<AlbumAsset>] = [:]
+    private var assetIndex = 0
 
     init(
         playlistGetter: SlideshowPlaylistGetterProtocol,
@@ -33,164 +33,164 @@ class SlideshowSequencer {
         initialAssetID: AssetID?
     ) async throws {
         self.playlistGetter = playlistGetter
-
-        self.assetsPlaylist = MemoryCache(countLimit: 10)
-
-        albumPlaylist = try await self.playlistGetter.getAlbumsPlaylist(
+        albumPlaylist = try await playlistGetter.getAlbumsPlaylist(
             initialAlbumID: initialAlbumID
         )
-        albumIndex =
-            albumPlaylist.elements.firstIndex { $0.id == initialAlbumID } ?? 0
+        albumIndex = albumPlaylist.elements.firstIndex { $0.id == initialAlbumID } ?? 0
 
-        let assetsPlaylist = try await getAssetsPlaylist(
-            albumID: initialAlbumID
-        )
-        assetIndex =
-            assetsPlaylist.elements.firstIndex { $0.id == initialAssetID } ?? 0
+        try await positionAtStart(initialAssetID: initialAssetID)
     }
 
-    private func getAssetsPlaylist(albumID: AlbumID) async throws
-        -> Playlist<AlbumAsset>
-    {
-        if let cached = assetsPlaylist.get(albumID) { return cached }
+    private func positionAtStart(initialAssetID: AssetID?) async throws {
+        guard !albumPlaylist.elements.isEmpty else { return }
 
-        let playlist = try await playlistGetter.getAssetsPlaylist(
-            albumID: albumID
-        )
+        if try await assetCount(atAlbum: albumIndex) == 0 {
+            albumIndex = try await firstNonEmptyAlbumIndex() ?? albumIndex
+            assetIndex = 0
+            return
+        }
 
-        assetsPlaylist.set(albumID, value: playlist)
+        guard let initialAssetID else {
+            assetIndex = 0
+            return
+        }
+        let assets = try await assetsPlaylist(atAlbum: albumIndex)
+        assetIndex = assets.elements.firstIndex { $0.id == initialAssetID } ?? 0
+    }
+
+    private func assetsPlaylist(albumID: AlbumID) async throws -> Playlist<AlbumAsset> {
+        if let cached = assetsPlaylists[albumID] { return cached }
+
+        let playlist = try await playlistGetter.getAssetsPlaylist(albumID: albumID)
+        assetsPlaylists[albumID] = playlist
         return playlist
     }
 
-    private func getNextAssetIndex() async throws -> (Int, Int)? {
-        let album = albumPlaylist.elements[albumIndex]
-        let assetsPlaylist = try await getAssetsPlaylist(albumID: album.id)
+    private func assetsPlaylist(atAlbum index: Int) async throws -> Playlist<AlbumAsset> {
+        try await assetsPlaylist(albumID: albumPlaylist.elements[index].id)
+    }
 
-        if assetIndex < assetsPlaylist.elements.count - 1 {
+    private func assetCount(atAlbum index: Int) async throws -> Int {
+        guard albumPlaylist.elements.indices.contains(index) else { return 0 }
+        return try await assetsPlaylist(atAlbum: index).elements.count
+    }
+
+    private func firstNonEmptyAlbumIndex() async throws -> Int? {
+        for index in albumPlaylist.elements.indices {
+            if try await assetCount(atAlbum: index) > 0 { return index }
+        }
+        return nil
+    }
+
+    private func nextNonEmptyAlbumIndex(after index: Int) async throws -> Int? {
+        let count = albumPlaylist.elements.count
+        guard count > 0 else { return nil }
+
+        for offset in 1 ... count {
+            let raw = index + offset
+            let candidate = albumPlaylist.looped ? raw % count : raw
+            if candidate >= count { break }
+            if try await assetCount(atAlbum: candidate) > 0 { return candidate }
+        }
+        return nil
+    }
+
+    private func previousNonEmptyAlbumIndex(before index: Int) async throws -> Int? {
+        let count = albumPlaylist.elements.count
+        guard count > 0 else { return nil }
+
+        for offset in 1 ... count {
+            let raw = index - offset
+            let candidate = albumPlaylist.looped ? (raw % count + count) % count : raw
+            if candidate < 0 { break }
+            if try await assetCount(atAlbum: candidate) > 0 { return candidate }
+        }
+        return nil
+    }
+
+    private func getNextAssetIndex() async throws -> (Int, Int)? {
+        guard albumPlaylist.elements.indices.contains(albumIndex) else { return nil }
+        let assets = try await assetsPlaylist(atAlbum: albumIndex)
+
+        if assetIndex + 1 < assets.elements.count {
             return (albumIndex, assetIndex + 1)
         }
-
-        if assetsPlaylist.looped {
+        if assets.looped, !assets.elements.isEmpty {
             return (albumIndex, 0)
         }
-
-        if albumIndex < albumPlaylist.elements.count - 1 {
-            return (albumIndex + 1, 0)
+        if let nextAlbum = try await nextNonEmptyAlbumIndex(after: albumIndex) {
+            return (nextAlbum, 0)
         }
-
-        if albumPlaylist.looped {
-            return (0, 0)
-        }
-
         return nil
     }
 
     private func getPreviousAssetIndex() async throws -> (Int, Int)? {
-        let album = albumPlaylist.elements[albumIndex]
-        let assetsPlaylist = try await getAssetsPlaylist(albumID: album.id)
+        guard albumPlaylist.elements.indices.contains(albumIndex) else { return nil }
+        let assets = try await assetsPlaylist(atAlbum: albumIndex)
 
         if assetIndex > 0 {
             return (albumIndex, assetIndex - 1)
         }
-
-        if assetsPlaylist.looped {
-            return (albumIndex, assetsPlaylist.elements.count - 1)
+        if assets.looped, !assets.elements.isEmpty {
+            return (albumIndex, assets.elements.count - 1)
         }
-
-        if albumIndex > 0 {
-            let previousAlbum = albumPlaylist.elements[albumIndex - 1]
-            let previousAssets = try await getAssetsPlaylist(
-                albumID: previousAlbum.id
-            )
-
-            return (albumIndex - 1, previousAssets.elements.count - 1)
+        if let previousAlbum = try await previousNonEmptyAlbumIndex(before: albumIndex) {
+            let count = try await assetCount(atAlbum: previousAlbum)
+            return (previousAlbum, count - 1)
         }
-
-        if albumPlaylist.looped {
-            let previousAlbum = albumPlaylist.elements[
-                albumPlaylist.elements.count - 1
-            ]
-            let previousAssets = try await getAssetsPlaylist(
-                albumID: previousAlbum.id
-            )
-
-            return (
-                albumPlaylist.elements.count - 1,
-                previousAssets.elements.count - 1
-            )
-        }
-
         return nil
     }
 
-    private func getSlideshowAsset(albumIndex: Int, assetIndex: Int)
-        async throws -> SlideshowAsset?
-    {
+    private func getSlideshowAsset(albumIndex: Int, assetIndex: Int) async throws -> SlideshowAsset? {
+        guard albumPlaylist.elements.indices.contains(albumIndex) else { return nil }
         let album = albumPlaylist.elements[albumIndex]
-        let assetsPlaylist = try await getAssetsPlaylist(albumID: album.id)
+
+        let assets = try await assetsPlaylist(albumID: album.id)
+        guard assets.elements.indices.contains(assetIndex) else { return nil }
 
         return SlideshowAsset(
             album: album,
-            asset: assetsPlaylist.elements[assetIndex],
+            asset: assets.elements[assetIndex],
             counter: SlideshowCounter(
                 current: assetIndex + 1,
-                total: assetsPlaylist.elements.count
+                total: assets.elements.count
             )
         )
     }
 
     func previous() async throws -> SlideshowAsset? {
-        if let (nextAlbumIndex, nextAssetIndex) =
-            try await getPreviousAssetIndex()
-        {
-            albumIndex = nextAlbumIndex
-            assetIndex = nextAssetIndex
-            return try await getSlideshowAsset(
-                albumIndex: nextAlbumIndex,
-                assetIndex: nextAssetIndex
-            )
+        guard let (albumIndex, assetIndex) = try await getPreviousAssetIndex() else {
+            return nil
         }
-        return nil
+        self.albumIndex = albumIndex
+        self.assetIndex = assetIndex
+        return try await getSlideshowAsset(albumIndex: albumIndex, assetIndex: assetIndex)
     }
 
     func previewPrevious() async throws -> SlideshowAsset? {
-        if let (nextAlbumIndex, nextAssetIndex) =
-            try await getPreviousAssetIndex()
-        {
-            return try await getSlideshowAsset(
-                albumIndex: nextAlbumIndex,
-                assetIndex: nextAssetIndex
-            )
+        guard let (albumIndex, assetIndex) = try await getPreviousAssetIndex() else {
+            return nil
         }
-        return nil
+        return try await getSlideshowAsset(albumIndex: albumIndex, assetIndex: assetIndex)
     }
 
     func next() async throws -> SlideshowAsset? {
-        if let (nextAlbumIndex, nextAssetIndex) = try await getNextAssetIndex() {
-            albumIndex = nextAlbumIndex
-            assetIndex = nextAssetIndex
-            return try await getSlideshowAsset(
-                albumIndex: nextAlbumIndex,
-                assetIndex: nextAssetIndex
-            )
+        guard let (albumIndex, assetIndex) = try await getNextAssetIndex() else {
+            return nil
         }
-        return nil
+        self.albumIndex = albumIndex
+        self.assetIndex = assetIndex
+        return try await getSlideshowAsset(albumIndex: albumIndex, assetIndex: assetIndex)
     }
 
     func previewNext() async throws -> SlideshowAsset? {
-        if let (nextAlbumIndex, nextAssetIndex) = try await getNextAssetIndex() {
-            return try await getSlideshowAsset(
-                albumIndex: nextAlbumIndex,
-                assetIndex: nextAssetIndex
-            )
+        guard let (albumIndex, assetIndex) = try await getNextAssetIndex() else {
+            return nil
         }
-        return nil
+        return try await getSlideshowAsset(albumIndex: albumIndex, assetIndex: assetIndex)
     }
 
     func current() async throws -> SlideshowAsset? {
-        try await getSlideshowAsset(
-            albumIndex: albumIndex,
-            assetIndex: assetIndex
-        )
+        try await getSlideshowAsset(albumIndex: albumIndex, assetIndex: assetIndex)
     }
 }

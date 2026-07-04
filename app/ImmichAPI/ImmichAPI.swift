@@ -63,14 +63,15 @@ class ImmichAPIClient {
 
         let fullURL = loadedBaseURL.appendingPathComponent(path)
 
-        var components = URLComponents(
-            url: fullURL,
-            resolvingAgainstBaseURL: false
-        )!
-        components.queryItems = (queryParams ?? [:]).map {
-            URLQueryItem(name: $0.key, value: $0.value)
+        guard var components = URLComponents(url: fullURL, resolvingAgainstBaseURL: false) else {
+            return nil
         }
-        return components.url!
+        if let queryParams, !queryParams.isEmpty {
+            components.queryItems = queryParams.map {
+                URLQueryItem(name: $0.key, value: $0.value)
+            }
+        }
+        return components.url
     }
 
     private func prepareRequest(

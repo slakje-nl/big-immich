@@ -74,6 +74,93 @@ struct SlideshowSequencerEdgeCaseTests {
         let current = try #require(await slideshow.current())
         #expect(current.asset.id.string == "asset.1")
     }
+
+    @Test func emptyAlbumInChainIsSkippedGoingForward() async throws {
+        let playlistGetter = FakePlaylistGetter(
+            albumPlaylist: Playlist(
+                elements: [
+                    AlbumSummary.dummy(id: "album.1"),
+                    AlbumSummary.dummy(id: "album.2"),
+                    AlbumSummary.dummy(id: "album.3")
+                ],
+                looped: false
+            ),
+            assetsPlaylists: [
+                AlbumID(rawValue: "album.1"): Playlist(
+                    elements: [AlbumAsset.dummy(id: "asset.1")],
+                    looped: false
+                ),
+                AlbumID(rawValue: "album.2"): Playlist(elements: [], looped: false),
+                AlbumID(rawValue: "album.3"): Playlist(
+                    elements: [AlbumAsset.dummy(id: "asset.2")],
+                    looped: false
+                )
+            ]
+        )
+
+        let slideshow = try await SlideshowSequencer(
+            playlistGetter: playlistGetter,
+            initialAlbumID: AlbumID(rawValue: "album.1"),
+            initialAssetID: nil
+        )
+
+        let next = try #require(await slideshow.next())
+        #expect(next.album.id.string == "album.3")
+        #expect(next.asset.id.string == "asset.2")
+    }
+
+    @Test func emptyInitialAlbumStartsAtFirstNonEmpty() async throws {
+        let playlistGetter = FakePlaylistGetter(
+            albumPlaylist: Playlist(
+                elements: [
+                    AlbumSummary.dummy(id: "album.1"),
+                    AlbumSummary.dummy(id: "album.2")
+                ],
+                looped: false
+            ),
+            assetsPlaylists: [
+                AlbumID(rawValue: "album.1"): Playlist(elements: [], looped: false),
+                AlbumID(rawValue: "album.2"): Playlist(
+                    elements: [AlbumAsset.dummy(id: "asset.1")],
+                    looped: false
+                )
+            ]
+        )
+
+        let slideshow = try await SlideshowSequencer(
+            playlistGetter: playlistGetter,
+            initialAlbumID: AlbumID(rawValue: "album.1"),
+            initialAssetID: nil
+        )
+
+        let current = try #require(await slideshow.current())
+        #expect(current.album.id.string == "album.2")
+        #expect(current.asset.id.string == "asset.1")
+    }
+
+    @Test func allAlbumsEmptyReturnsNilWithoutCrashing() async throws {
+        let playlistGetter = FakePlaylistGetter(
+            albumPlaylist: Playlist(
+                elements: [AlbumSummary.dummy(id: "album.1")],
+                looped: false
+            ),
+            assetsPlaylists: [
+                AlbumID(rawValue: "album.1"): Playlist(elements: [], looped: false)
+            ]
+        )
+
+        let slideshow = try await SlideshowSequencer(
+            playlistGetter: playlistGetter,
+            initialAlbumID: AlbumID(rawValue: "album.1"),
+            initialAssetID: nil
+        )
+
+        let current = try await slideshow.current()
+        #expect(current == nil)
+
+        let next = try await slideshow.next()
+        #expect(next == nil)
+    }
 }
 
 @MainActor

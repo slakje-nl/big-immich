@@ -29,18 +29,18 @@ public class ImmichClient: ImmichClientProtocol {
     {
         var uniqueAlbums = [AlbumID: AlbumSummary]()
         for albumList in albumLists {
-            for album in albumList {
-                if uniqueAlbums[album.id] == nil {
-                    uniqueAlbums[album.id] = album
-                }
+            for album in albumList where uniqueAlbums[album.id] == nil {
+                uniqueAlbums[album.id] = album
             }
         }
 
+        let nonEmptyAlbums = uniqueAlbums.values.filter { ($0.assetCount ?? 1) > 0 }
+
         switch order {
         case .fromOldest:
-            return uniqueAlbums.values.sorted { $0.startDate < $1.startDate }
+            return nonEmptyAlbums.sorted { $0.startDate < $1.startDate }
         case .fromNewest:
-            return uniqueAlbums.values.sorted { $0.startDate > $1.startDate }
+            return nonEmptyAlbums.sorted { $0.startDate > $1.startDate }
         }
     }
 

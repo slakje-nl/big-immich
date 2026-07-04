@@ -23,7 +23,9 @@ struct SlideshowView: View {
     @State private var currentImage: Image?
     @State private var currentPlayer: AVPlayer?
     @State private var playerObserver: NSObjectProtocol?
+    @State private var timeObserverToken: Any?
     @State private var playerIsVisible: Bool = false
+    @State private var videoPausedByUser = false
 
     // loading assets and error reporting
     @State private var isLoading = false
@@ -363,8 +365,10 @@ struct SlideshowView: View {
 
             if isPlaying {
                 player.pause()
+                videoPausedByUser = true
             } else {
                 player.play()
+                videoPausedByUser = false
                 observeVideoProgress()
             }
         } else if currentImage != nil {
@@ -478,13 +482,11 @@ struct SlideshowView: View {
                 let playerItem = AVPlayerItem(url: playbackURL)
                 let player = AVPlayer(playerItem: playerItem)
                 currentPlayer = player
+                videoPausedByUser = false
 
                 let oldAssetID = asset.id
                 DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
                     [oldAssetID] in
-                    // monitoring if video is started and playing in 5s
-                    // there's no reason for 5s, it just sounds like a good amount of time
-                    // FIXME: this is sometimes flaky, I'm not yet sure why
                     guard let player = currentPlayer else { return }
                     guard let sAsset = self.slideshowAsset,
                           sAsset.asset.id == oldAssetID
@@ -498,7 +500,7 @@ struct SlideshowView: View {
                             await moveToNext()
                         }
                         return
-                    } else if player.timeControlStatus != .playing {
+                    } else if player.timeControlStatus != .playing, !videoPausedByUser {
                         showError("video did not start playing")
                         Task {
                             await moveToNext()
@@ -508,10 +510,6 @@ struct SlideshowView: View {
                 }
 
                 observeVideoProgress()
-
-                if let playerObserver {
-                    NotificationCenter.default.removeObserver(playerObserver)
-                }
 
                 if let currentPlayer {
                     playerObserver = NotificationCenter.default.addObserver(
@@ -620,13 +618,14 @@ struct SlideshowView: View {
 
     private func observeVideoProgress() {
         stopProgressBarTimer()
+        removeTimeObserver()
         guard let player = currentPlayer else { return }
 
         let interval = CMTime(
             seconds: 0.05,
             preferredTimescale: CMTimeScale(NSEC_PER_SEC)
         )
-        player.addPeriodicTimeObserver(forInterval: interval, queue: .main) {
+        timeObserverToken = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) {
             time in
             if let duration = player.currentItem?.duration.seconds, duration > 0 {
                 assetProgress = min(time.seconds / duration, 1.0)
@@ -634,7 +633,19 @@ struct SlideshowView: View {
         }
     }
 
+    private func removeTimeObserver() {
+        if let timeObserverToken {
+            currentPlayer?.removeTimeObserver(timeObserverToken)
+            self.timeObserverToken = nil
+        }
+    }
+
     private func stopCurrentPlayer() {
+        removeTimeObserver()
+        if let playerObserver {
+            NotificationCenter.default.removeObserver(playerObserver)
+            self.playerObserver = nil
+        }
         currentPlayer?.pause()
         currentPlayer = nil
     }

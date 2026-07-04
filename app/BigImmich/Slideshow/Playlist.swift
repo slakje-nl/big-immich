@@ -38,8 +38,9 @@ class SlideshowPlaylistGetter: SlideshowPlaylistGetterProtocol {
     {
         guard settings.slideshowOnceEndedAction == .loadAnotherAlbum else {
             let albums = try await immichClient.findAlbums(order: .fromNewest)
-            let currentAlbum =
-                albums.first { $0.id == initialAlbumID } ?? albums[0]
+            guard let currentAlbum = albums.first(where: { $0.id == initialAlbumID }) ?? albums.first else {
+                return Playlist(elements: [], looped: false)
+            }
             return Playlist(elements: [currentAlbum], looped: false)
         }
 
