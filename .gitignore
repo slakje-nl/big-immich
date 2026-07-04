@@ -62,3 +62,8 @@ fastlane/screenshots/**/*.png
 fastlane/test_output
 
 app/BigImmich.xcodeproj/*
+
+# Python E2E tooling
+test/.venv/
+__pycache__/
+*.pyc
