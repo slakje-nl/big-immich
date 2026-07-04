@@ -467,15 +467,21 @@ struct SettingsView: View {
                             width: leftSideWidth + geo.size.width * 0.4
                         )
 
-                        Text("Debug logs:")
+                        HStack {
+                            Text("Debug logs")
+                                .frame(
+                                    width: leftSideWidth,
+                                    alignment: .leading
+                                )
+                                .bold()
+
+                            Button("Clear logs") {
+                                appLog.clear()
+                            }
                             .frame(
                                 width: geo.size.width * 0.4,
                                 alignment: .leading
                             )
-                            .bold()
-
-                        Button("Clear logs") {
-                            appLog.clear()
                         }
 
                         if appLog.entries.isEmpty {
