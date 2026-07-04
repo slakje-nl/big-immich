@@ -1,58 +1,68 @@
 import AVKit
-import Combine
 import ImmichAPI
+import Observation
 import SwiftUI
 
-final class SlideshowViewModel: ObservableObject {
+@MainActor
+@Observable
+final class SlideshowViewModel {
     let initialAlbumID: AlbumID
     let initialAlbumName: AlbumName
     let initialAssetID: AssetID?
 
-    @Published var slideshowAsset: SlideshowAsset?
+    var slideshowAsset: SlideshowAsset?
 
-    @Published var userAssetIndex: Int = 0
-    @Published var userAssetsCount: Int = 0
-    @Published var userDateTime: String = ""
-    @Published var userLocation: String = ""
+    var userAssetIndex: Int = 0
+    var userAssetsCount: Int = 0
+    var userDateTime: String = ""
+    var userLocation: String = ""
 
-    @Published var currentImage: Image?
-    @Published var currentPlayer: AVPlayer?
+    var currentImage: Image?
+    var currentPlayer: AVPlayer?
 
-    @Published var isLoading = false
-    @Published var errors: [String] = []
-    @Published var informations: [String] = []
+    var isLoading = false
+    var errors: [String] = []
+    var informations: [String] = []
 
-    @Published var slideshowIsRunning = true
-    @Published var showAssetDetails = false
-    @Published var assetProgress: Double = 0.0
+    var slideshowIsRunning = true
+    var showAssetDetails = false
+    var assetProgress: Double = 0.0
 
-    let settings = SlideshowSettings()
+    @ObservationIgnored let settings = SlideshowSettings()
 
-    private var slideshow: SlideshowSequencer?
-    private var previousAlbumID: AlbumID?
+    @ObservationIgnored let immichClient: ImmichClientProtocol
 
-    private var playerObserver: NSObjectProtocol?
-    private var timeObserverToken: Any?
-    private var videoPausedByUser = false
+    @ObservationIgnored private var slideshow: SlideshowSequencer?
+    @ObservationIgnored private var previousAlbumID: AlbumID?
 
-    private var clearErrors: DispatchWorkItem?
-    private var slideshowTimer: Timer?
-    private var progressBarTimer: Timer?
+    @ObservationIgnored private let videoController = VideoPlaybackController()
 
-    private var imageCache: MemoryCache<AssetID, Image>?
+    @ObservationIgnored private var clearErrors: DispatchWorkItem?
+    @ObservationIgnored private var slideshowTimer: Timer?
+    @ObservationIgnored private var progressBarTimer: Timer?
+
+    @ObservationIgnored private let imageLoader: AssetImageLoader
 
     init(
         initialAlbumID: AlbumID,
         initialAlbumName: AlbumName,
-        initialAssetID: AssetID?
+        initialAssetID: AssetID?,
+        immichClient: ImmichClientProtocol = ImmichClient.shared
     ) {
         self.initialAlbumID = initialAlbumID
         self.initialAlbumName = initialAlbumName
         self.initialAssetID = initialAssetID
+        self.immichClient = immichClient
+        imageLoader = AssetImageLoader(
+            immichClient: immichClient,
+            cacheCountLimit: 10
+        )
+        videoController.onProgress = { [weak self] progress in
+            self?.assetProgress = progress
+        }
     }
 
     func start() async {
-        imageCache = MemoryCache(countLimit: 10, megaBytesLimit: nil)
         await initSlideshow()
     }
 
@@ -63,7 +73,7 @@ final class SlideshowViewModel: ObservableObject {
     }
 
     func clearImageCache() {
-        imageCache?.clear()
+        imageLoader.clear()
     }
 
     func showError(_ message: String) {
@@ -136,63 +146,42 @@ final class SlideshowViewModel: ObservableObject {
                 await moveToPrevious()
             }
         case .up:
-            if let player = currentPlayer {
-                seek(player: player, seconds: 15)
+            if currentPlayer != nil {
+                videoController.seek(seconds: 15)
             }
         case .down:
-            if let player = currentPlayer {
-                seek(player: player, seconds: -15)
+            if currentPlayer != nil {
+                videoController.seek(seconds: -15)
             }
         default:
             break
         }
     }
 
-    private func seek(player: AVPlayer, seconds: Double) {
-        guard let currentItem = player.currentItem else { return }
-        let currentTime = player.currentTime()
-        let newTime = CMTimeAdd(
-            currentTime,
-            CMTimeMakeWithSeconds(
-                seconds,
-                preferredTimescale: currentTime.timescale
-            )
-        )
-
-        let clampedTime: CMTime
-        if CMTimeCompare(newTime, .zero) < 0 {
-            clampedTime = .zero
-        } else if CMTimeCompare(newTime, currentItem.duration) > 0 {
-            return
-        } else {
-            clampedTime = newTime
+    func togglePause() {
+        withAnimation {
+            slideshowIsRunning.toggle()
         }
-
-        player.seek(to: clampedTime)
+        applyPlaybackState()
+        if !slideshowIsRunning {
+            showAssetDetails = true
+        }
     }
 
-    func togglePause() {
-        if let player = currentPlayer {
-            let isPlaying =
-                player.timeControlStatus == .playing && player.rate != 0
-
-            if isPlaying {
-                player.pause()
-                videoPausedByUser = true
+    /// Applies the current `slideshowIsRunning` state to whatever asset is showing, so a paused
+    /// slideshow keeps videos paused and images from advancing — and resuming does the reverse.
+    /// This is the single pause switch for both media types.
+    private func applyPlaybackState() {
+        if currentPlayer != nil {
+            if slideshowIsRunning {
+                videoController.play()
             } else {
-                player.play()
-                videoPausedByUser = false
-                observeVideoProgress()
+                videoController.pause()
             }
         } else if currentImage != nil {
-            withAnimation {
-                slideshowIsRunning.toggle()
-            }
-
             if slideshowIsRunning {
                 startImageTimers()
             } else {
-                showAssetDetails = true
                 stopSlideshowTimer()
                 stopProgressBarTimer()
             }
@@ -200,12 +189,9 @@ final class SlideshowViewModel: ObservableObject {
     }
 
     private func loadAssetMetadata(for assetID: AssetID) {
+        let client = immichClient
         Task { [weak self] in
-            guard
-                let detailed: AlbumAsset = try? await ImmichAPI.shared.loadObject(
-                    path: "/api/assets/\(assetID.string)",
-                    queryParams: [:]
-                )
+            guard let detailed = try? await client.getAsset(assetID: assetID)
             else { return }
 
             guard let self, slideshowAsset?.asset.id == assetID else { return }
@@ -241,22 +227,17 @@ final class SlideshowViewModel: ObservableObject {
 
         do {
             if asset.assetType == .image {
-                if let cache = imageCache, let nextImage = cache.get(asset.id) {
-                    currentImage = nextImage
-                } else {
-                    let data = try await ImmichAPI.shared.loadMediaWithRetries(
-                        path:
-                        "/api/assets/\(slideshowAsset.asset.id.string)/thumbnail",
-                        queryParams: ["size": "fullsize"],
+                do {
+                    currentImage = try await imageLoader.load(
+                        assetID: asset.id,
+                        size: .fullsize,
                         retries: 3
                     )
-                    if let uiImage = UIImage(data: data) {
-                        currentImage = Image(uiImage: uiImage)
-                    } else {
-                        showError("loading image failed: id=\(asset.id)")
-                        await moveToNext()
-                        return
-                    }
+                } catch {
+                    showError("loading image failed: id=\(asset.id)")
+                    logError(error)
+                    await moveToNext()
+                    return
                 }
 
                 if slideshowIsRunning {
@@ -265,12 +246,9 @@ final class SlideshowViewModel: ObservableObject {
             } else if asset.assetType == .video {
                 var playbackURL: URL
                 do {
-                    playbackURL = try await ImmichAPI.shared
-                        .getUrlWithQueryAuth(
-                            path:
-                            "/api/assets/\(asset.id.string)/video/playback",
-                            queryParams: nil
-                        )
+                    playbackURL = try await immichClient.videoPlaybackURL(
+                        assetID: asset.id
+                    )
                 } catch {
                     showError(
                         "loading video failed: failed to construct playback URL"
@@ -278,49 +256,18 @@ final class SlideshowViewModel: ObservableObject {
                     return
                 }
 
-                let playerItem = AVPlayerItem(url: playbackURL)
-                let player = AVPlayer(playerItem: playerItem)
-                currentPlayer = player
-                videoPausedByUser = false
-
-                let oldAssetID = asset.id
-                DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-                    [weak self, oldAssetID] in
-                    guard let self, let player = currentPlayer else { return }
-                    guard let sAsset = self.slideshowAsset,
-                          sAsset.asset.id == oldAssetID
-                    else { return }
-
-                    if player.status == .failed
-                        || player.currentItem?.status == .failed
-                    {
-                        showError("video failed to load")
-                        Task {
-                            await self.moveToNext()
-                        }
-                        return
-                    } else if player.timeControlStatus != .playing, !videoPausedByUser {
-                        showError("video did not start playing")
-                        Task {
-                            await self.moveToNext()
-                        }
-                        return
+                videoController.start(
+                    url: playbackURL,
+                    autoplay: slideshowIsRunning,
+                    onEnded: { [weak self] in
+                        Task { await self?.moveToNext() }
+                    },
+                    onFailure: { [weak self] message in
+                        self?.showError(message)
+                        Task { await self?.moveToNext() }
                     }
-                }
-
-                observeVideoProgress()
-
-                if let currentPlayer {
-                    playerObserver = NotificationCenter.default.addObserver(
-                        forName: .AVPlayerItemDidPlayToEndTime,
-                        object: currentPlayer.currentItem,
-                        queue: .main
-                    ) { [weak self] _ in
-                        Task {
-                            await self?.moveToNext()
-                        }
-                    }
-                }
+                )
+                currentPlayer = videoController.player
             }
         } catch {
             showError(error.localizedDescription)
@@ -352,22 +299,16 @@ final class SlideshowViewModel: ObservableObject {
     }
 
     private func preloadAsset(asset: AlbumAsset) async {
-        if let cache = imageCache, asset.assetType == .image {
-            guard cache.get(asset.id) == nil else { return }
+        guard asset.assetType == .image else { return }
 
-            do {
-                let data = try await ImmichAPI.shared.loadMediaWithRetries(
-                    path: "/api/assets/\(asset.id.string)/thumbnail",
-                    queryParams: ["size": "fullsize"],
-                    retries: 2
-                )
-                if let uiImage = UIImage(data: data) {
-                    cache.set(asset.id, value: Image(uiImage: uiImage))
-                }
-            } catch {
-                logError(error)
-                return
-            }
+        do {
+            try await imageLoader.load(
+                assetID: asset.id,
+                size: .fullsize,
+                retries: 2
+            )
+        } catch {
+            logError(error)
         }
     }
 
@@ -408,37 +349,8 @@ final class SlideshowViewModel: ObservableObject {
         progressBarTimer = nil
     }
 
-    private func observeVideoProgress() {
-        stopProgressBarTimer()
-        removeTimeObserver()
-        guard let player = currentPlayer else { return }
-
-        let interval = CMTime(
-            seconds: 0.05,
-            preferredTimescale: CMTimeScale(NSEC_PER_SEC)
-        )
-        timeObserverToken = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) {
-            [weak self] time in
-            if let duration = player.currentItem?.duration.seconds, duration > 0 {
-                self?.assetProgress = min(time.seconds / duration, 1.0)
-            }
-        }
-    }
-
-    private func removeTimeObserver() {
-        if let timeObserverToken {
-            currentPlayer?.removeTimeObserver(timeObserverToken)
-            self.timeObserverToken = nil
-        }
-    }
-
     private func stopCurrentPlayer() {
-        removeTimeObserver()
-        if let playerObserver {
-            NotificationCenter.default.removeObserver(playerObserver)
-            self.playerObserver = nil
-        }
-        currentPlayer?.pause()
+        videoController.stop()
         currentPlayer = nil
     }
 
@@ -459,7 +371,7 @@ final class SlideshowViewModel: ObservableObject {
         } else {
             stopSlideshowTimer()
             stopProgressBarTimer()
-            currentPlayer?.pause()
+            videoController.pause()
             assetProgress = 0
 
             if settings.slideshowDirection == .newestToOldest {
@@ -487,7 +399,7 @@ final class SlideshowViewModel: ObservableObject {
         } else {
             stopSlideshowTimer()
             stopProgressBarTimer()
-            currentPlayer?.pause()
+            videoController.pause()
             assetProgress = 0
 
             if settings.slideshowDirection == .newestToOldest {
@@ -503,7 +415,7 @@ final class SlideshowViewModel: ObservableObject {
             slideshow = try await SlideshowSequencer(
                 playlistGetter: SlideshowPlaylistGetter(
                     settings: settings,
-                    immichClient: ImmichClient.shared
+                    immichClient: immichClient
                 ),
                 initialAlbumID: initialAlbumID,
                 initialAssetID: initialAssetID

@@ -8,7 +8,7 @@ struct SlideshowView: View {
     let initialAssetID: AssetID?
     let onExit: (AlbumID, AlbumName, AssetID?) -> Void
 
-    @StateObject private var viewModel: SlideshowViewModel
+    @State private var viewModel: SlideshowViewModel
     @State private var assetDetailsTimer: Timer?
 
     init(
@@ -21,8 +21,8 @@ struct SlideshowView: View {
         self.initialAlbumName = initialAlbumName
         self.initialAssetID = initialAssetID
         self.onExit = onExit
-        _viewModel = StateObject(
-            wrappedValue: SlideshowViewModel(
+        _viewModel = State(
+            initialValue: SlideshowViewModel(
                 initialAlbumID: initialAlbumID,
                 initialAlbumName: initialAlbumName,
                 initialAssetID: initialAssetID
@@ -42,9 +42,6 @@ struct SlideshowView: View {
                 } else if let player = viewModel.currentPlayer {
                     VideoPlayer(player: player)
                         .ignoresSafeArea()
-                        .onAppear {
-                            player.play()
-                        }
                 } else if let image = viewModel.currentImage {
                     image
                         .resizable()
@@ -188,8 +185,8 @@ struct SlideshowView: View {
             HStack {
                 Spacer()
                 VStack(alignment: .trailing, spacing: 6) {
-                    ForEach(viewModel.errors.indices, id: \.self) { index in
-                        Text(viewModel.errors[index])
+                    ForEach(Array(viewModel.errors.enumerated()), id: \.offset) { _, error in
+                        Text(error)
                             .foregroundColor(.white)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
@@ -198,8 +195,8 @@ struct SlideshowView: View {
                             .shadow(radius: 3)
                     }
 
-                    ForEach(viewModel.informations.indices, id: \.self) { index in
-                        Text(viewModel.informations[index])
+                    ForEach(Array(viewModel.informations.enumerated()), id: \.offset) { _, information in
+                        Text(information)
                             .foregroundColor(.white)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
