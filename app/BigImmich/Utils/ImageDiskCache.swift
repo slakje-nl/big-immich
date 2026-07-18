@@ -10,7 +10,7 @@ import Foundation
 /// filesystem-safe. Writes are async and reads/size/clear are serialized on a single queue,
 /// so concurrent callers stay consistent. Living in `Caches` means tvOS may purge it under
 /// storage pressure — that's fine, a miss just re-downloads.
-final class ImageDiskCache: @unchecked Sendable {
+final nonisolated class ImageDiskCache: @unchecked Sendable {
     static let shared = ImageDiskCache()
 
     /// `@AppStorage` key for caching browsing renditions (thumbnail/preview). Defaults to on.
