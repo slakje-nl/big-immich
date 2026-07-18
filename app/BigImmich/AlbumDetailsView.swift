@@ -136,12 +136,13 @@ struct AlbumDetailsView: View {
         .onExitCommand(perform: onExit)
     }
 
-    private var imageCount: Int {
-        max((album?.assetCount ?? 0) - videoCount, 0)
+    /// Still-image count, or `nil` when the album's total isn't known yet.
+    private var imageCount: Int? {
+        albumImageCount(assetCount: album?.assetCount, videoCount: videoCount)
     }
 
     func getItemsCount() -> String {
-        let images = imageCount
+        let images = imageCount ?? 0
         let videos = videoCount
 
         var imagesLabel = ""
@@ -173,7 +174,7 @@ struct AlbumDetailsView: View {
         guard album != nil else { return "" }
 
         let duration = slideshowDurationMinutes(
-            imageCount: imageCount,
+            imageCount: imageCount ?? 0,
             videoDurationMilliseconds: videoDurationMs,
             imageInterval: slideshowInterval
         )

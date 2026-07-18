@@ -21,6 +21,24 @@ struct SlideshowDurationTests {
     }
 }
 
+struct AlbumImageCountTests {
+    @Test func subtractsVideosFromTheTotal() {
+        #expect(albumImageCount(assetCount: 10, videoCount: 3) == 7)
+    }
+
+    @Test func neverGoesNegative() {
+        #expect(albumImageCount(assetCount: 2, videoCount: 5) == 0)
+    }
+
+    @Test func unknownTotalReturnsNil() {
+        #expect(albumImageCount(assetCount: nil, videoCount: 3) == nil)
+    }
+
+    @Test func allVideosLeaveNoImages() {
+        #expect(albumImageCount(assetCount: 4, videoCount: 4) == 0)
+    }
+}
+
 struct ImageDiskCacheTests {
     private func makeCache() -> ImageDiskCache {
         ImageDiskCache(directoryName: "test-\(UUID().uuidString)")
