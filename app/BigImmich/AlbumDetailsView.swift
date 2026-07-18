@@ -17,7 +17,8 @@ struct AlbumDetailsView: View {
 
     @FocusState private var focusedButton: ButtonFocus?
     @State private var album: Album?
-    @State private var videoAssets: [AlbumAsset] = []
+    @State private var videoCount: Int = 0
+    @State private var videoDurationMs: Int = 0
     @State private var thumbnailImage: Image?
     @State private var isLoading = true
     @State private var errors: [String] = []
@@ -136,12 +137,12 @@ struct AlbumDetailsView: View {
     }
 
     private var imageCount: Int {
-        max((album?.assetCount ?? 0) - videoAssets.count, 0)
+        max((album?.assetCount ?? 0) - videoCount, 0)
     }
 
     func getItemsCount() -> String {
         let images = imageCount
-        let videos = videoAssets.count
+        let videos = videoCount
 
         var imagesLabel = ""
         if images > 1 {
@@ -173,7 +174,7 @@ struct AlbumDetailsView: View {
 
         let duration = slideshowDurationMinutes(
             imageCount: imageCount,
-            videos: videoAssets,
+            videoDurationMilliseconds: videoDurationMs,
             imageInterval: slideshowInterval
         )
         if duration == 1 {
@@ -186,22 +187,49 @@ struct AlbumDetailsView: View {
     private func loadAlbumDetail() async {
         isLoading = true
         do {
-            // Independent calls — fetch the album and its videos concurrently.
-            async let albumResult = immichClient.getAlbum(albumID: albumID)
-            async let videoResult = immichClient.getAlbumVideoAssets(albumID: albumID)
-
-            let loadedAlbum = try await albumResult
+            let loadedAlbum = try await immichClient.getAlbum(albumID: albumID)
             album = loadedAlbum
-            videoAssets = try await videoResult
 
-            if let thumbnailAssetId = loadedAlbum.albumThumbnailAssetId {
-                thumbnailImage = try await AssetImageLoader(immichClient: immichClient)
-                    .load(assetID: thumbnailAssetId, size: .preview, retries: 3)
-            }
+            // Duration info (may skip the video fetch on a cache hit) and the thumbnail
+            // are independent — fetch them concurrently, assign on this actor.
+            async let durationInfo = fetchDurationInfo(for: loadedAlbum)
+            async let thumbnail = fetchThumbnail(for: loadedAlbum)
+
+            let info = try await durationInfo
+            videoCount = info.videoCount
+            videoDurationMs = info.videoDurationMilliseconds
+            thumbnailImage = try await thumbnail
         } catch {
             errors.append(error.localizedDescription)
             logError(error)
         }
         isLoading = false
+    }
+
+    /// Video count + total video duration for the album, from the cache when the album is
+    /// unchanged, otherwise by fetching just the album's videos (and caching the result).
+    private func fetchDurationInfo(for album: Album) async throws -> SlideshowDurationInfo {
+        let token = SlideshowDurationCache.token(
+            assetCount: album.assetCount,
+            lastModifiedAssetTimestamp: album.lastModifiedAssetTimestamp
+        )
+        if let cached = SlideshowDurationCache.get(albumID: albumID, token: token) {
+            return cached
+        }
+
+        let videos = try await immichClient.getAlbumVideoAssets(albumID: albumID)
+        let info = SlideshowDurationInfo(
+            token: token,
+            videoCount: videos.count,
+            videoDurationMilliseconds: videos.reduce(0) { $0 + ($1.durationMilliseconds ?? 0) }
+        )
+        SlideshowDurationCache.set(albumID: albumID, info: info)
+        return info
+    }
+
+    private func fetchThumbnail(for album: Album) async throws -> Image? {
+        guard let thumbnailAssetId = album.albumThumbnailAssetId else { return nil }
+        return try await AssetImageLoader(immichClient: immichClient)
+            .load(assetID: thumbnailAssetId, size: .preview, retries: 3)
     }
 }

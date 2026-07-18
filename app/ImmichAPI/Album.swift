@@ -35,17 +35,22 @@ public struct Album: Codable, Identifiable, Hashable {
     public let albumName: AlbumName
     public let albumThumbnailAssetId: AssetID?
     public let assetCount: Int?
+    /// ISO timestamp of the album's last asset change; used to invalidate cached
+    /// per-album computations (e.g. the slideshow duration).
+    public let lastModifiedAssetTimestamp: String?
 
     public init(
         id: AlbumID,
         albumName: AlbumName,
         albumThumbnailAssetId: AssetID?,
-        assetCount: Int? = nil
+        assetCount: Int? = nil,
+        lastModifiedAssetTimestamp: String? = nil
     ) {
         self.id = id
         self.albumName = albumName
         self.albumThumbnailAssetId = albumThumbnailAssetId
         self.assetCount = assetCount
+        self.lastModifiedAssetTimestamp = lastModifiedAssetTimestamp
     }
 
     public static func == (lhs: Album, rhs: Album) -> Bool {

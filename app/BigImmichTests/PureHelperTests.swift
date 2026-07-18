@@ -4,24 +4,20 @@ import ImmichAPI
 import Testing
 
 struct SlideshowDurationTests {
-    private func video(milliseconds: Int?) -> AlbumAsset {
-        AlbumAsset(id: AssetID(rawValue: "vid"), type: "VIDEO", durationMilliseconds: milliseconds)
-    }
-
     @Test func imagesUseTheInterval() {
-        #expect(slideshowDurationMinutes(imageCount: 2, videos: [], imageInterval: 30) == 1)
+        #expect(slideshowDurationMinutes(imageCount: 2, videoDurationMilliseconds: 0, imageInterval: 30) == 1)
     }
 
     @Test func videoDurationIsRoundedUp() {
-        #expect(slideshowDurationMinutes(imageCount: 0, videos: [video(milliseconds: 90500)], imageInterval: 5) == 2)
+        #expect(slideshowDurationMinutes(imageCount: 0, videoDurationMilliseconds: 90500, imageInterval: 5) == 2)
     }
 
-    @Test func missingVideoDurationCountsAsZero() {
-        #expect(slideshowDurationMinutes(imageCount: 0, videos: [video(milliseconds: nil)], imageInterval: 5) == 0)
+    @Test func noVideoDurationCountsAsZero() {
+        #expect(slideshowDurationMinutes(imageCount: 0, videoDurationMilliseconds: 0, imageInterval: 5) == 0)
     }
 
     @Test func mixedItemsRoundUpToWholeMinutes() {
-        #expect(slideshowDurationMinutes(imageCount: 1, videos: [video(milliseconds: 40000)], imageInterval: 5) == 1)
+        #expect(slideshowDurationMinutes(imageCount: 1, videoDurationMilliseconds: 40000, imageInterval: 5) == 1)
     }
 }
 
