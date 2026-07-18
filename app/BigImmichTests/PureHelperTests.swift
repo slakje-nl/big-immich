@@ -25,6 +25,35 @@ struct SlideshowDurationTests {
     }
 }
 
+struct ImageDiskCacheTests {
+    private func makeCache() -> ImageDiskCache {
+        ImageDiskCache(directoryName: "test-\(UUID().uuidString)")
+    }
+
+    @Test func storesAndReadsBack() {
+        let cache = makeCache()
+        let payload = Data("hello".utf8)
+        cache.store(payload, forKey: "k")
+        #expect(cache.data(forKey: "k") == payload)
+        cache.clear()
+    }
+
+    @Test func missingKeyReturnsNil() {
+        let cache = makeCache()
+        #expect(cache.data(forKey: "absent") == nil)
+    }
+
+    @Test func clearEmptiesTheCache() {
+        let cache = makeCache()
+        cache.store(Data("abc".utf8), forKey: "a")
+        cache.store(Data("defgh".utf8), forKey: "b")
+        #expect(cache.totalSizeBytes() == 8)
+        cache.clear()
+        #expect(cache.totalSizeBytes() == 0)
+        #expect(cache.data(forKey: "a") == nil)
+    }
+}
+
 struct TopShelfLinkTests {
     private func link(_ string: String) -> TopShelfAlbumLink? {
         guard let url = URL(string: string) else { return nil }

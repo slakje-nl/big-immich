@@ -36,6 +36,17 @@ final class AssetImageLoader {
             return cached
         }
 
+        let diskKey = Self.diskCacheKey(assetID: assetID, size: size)
+        let diskCacheEnabled = Self.isDiskCacheEnabled(for: size)
+        if diskCacheEnabled,
+           let data = ImageDiskCache.shared.data(forKey: diskKey),
+           let uiImage = UIImage(data: data)
+        {
+            let image = Image(uiImage: uiImage)
+            cache?.set(assetID, value: image)
+            return image
+        }
+
         let data = try await immichClient.loadThumbnail(
             assetID: assetID,
             size: size,
@@ -45,8 +56,33 @@ final class AssetImageLoader {
             throw URLError(.cannotDecodeContentData)
         }
 
+        if diskCacheEnabled {
+            ImageDiskCache.shared.store(data, forKey: diskKey)
+        }
+
         let image = Image(uiImage: uiImage)
         cache?.set(assetID, value: image)
         return image
+    }
+
+    /// Whether the on-disk cache is active for this rendition. Browsing renditions
+    /// (thumbnail/preview) follow the "cache images" setting; the heavy full-size
+    /// slideshow rendition follows the separate, opt-in "cache slideshow images" setting.
+    private static func isDiskCacheEnabled(for size: ThumbnailSize) -> Bool {
+        switch size {
+        case .thumbnail, .preview: ImageDiskCache.isThumbnailsEnabled
+        case .fullsize: ImageDiskCache.isFullSizeImagesEnabled
+        }
+    }
+
+    /// Disk-cache key for an asset rendition. Includes the size so the different
+    /// renditions of one asset (thumbnail / preview / fullsize) don't collide.
+    private static func diskCacheKey(assetID: AssetID, size: ThumbnailSize) -> String {
+        let sizeKey = switch size {
+        case .thumbnail: "thumbnail"
+        case .preview: "preview"
+        case .fullsize: "fullsize"
+        }
+        return "\(assetID.string)_\(sizeKey)"
     }
 }

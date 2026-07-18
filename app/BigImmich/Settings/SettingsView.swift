@@ -24,6 +24,11 @@ struct SettingsView: View {
         SlideshowOnceEndedAnotherAlbumSelection = .random
     @AppStorage("slideshowShowProgressBar") private var slideshowShowProgressBar: SlideshowShowProgressBar = .always
 
+    // performance
+    @AppStorage(ImageDiskCache.thumbnailsEnabledDefaultsKey) private var cacheThumbnails: Bool = true
+    @AppStorage(ImageDiskCache.fullSizeEnabledDefaultsKey) private var cacheFullSizeImages: Bool = false
+    @State private var imageCacheSize: String = "…"
+
     // error reporting
     @AppStorage("sentryEnabled") private var sentryEnabled: Bool = false
     @AppStorage("sentryDSN") private var sentryDSN: String = ""
@@ -42,7 +47,7 @@ struct SettingsView: View {
 
     var immichClient: ImmichClientProtocol = ImmichClient.shared
 
-    private let leftSideWidth: CGFloat = 200
+    private let leftSideWidth: CGFloat = 280
     private let minimumImmichVersion = ServerVersion(major: 3, minor: 0, patch: 1)
 
     var body: some View {
@@ -428,6 +433,90 @@ struct SettingsView: View {
                             width: leftSideWidth + geo.size.width * 0.4
                         )
 
+                        Text("Performance:")
+                            .frame(
+                                width: geo.size.width * 0.4,
+                                alignment: .leading
+                            )
+                            .bold()
+
+                        HStack {
+                            Text("Cache thumbnails")
+                                .frame(
+                                    width: leftSideWidth,
+                                    alignment: .leading
+                                )
+                                .bold()
+
+                            Picker(
+                                "Cache thumbnails",
+                                selection: $cacheThumbnails
+                            ) {
+                                Text("true").tag(true)
+                                Text("false").tag(false)
+                            }
+                            .pickerStyle(.inline)
+                            .frame(width: geo.size.width * 0.3)
+                        }
+
+                        Text(
+                            "Stores album and grid thumbnails on this device so they don't reload over the network each time."
+                        )
+                        .foregroundColor(.white)
+                        .frame(
+                            width: leftSideWidth + geo.size.width * 0.4,
+                            alignment: .leading
+                        )
+                        .multilineTextAlignment(.leading)
+
+                        HStack {
+                            Text("Cache slideshow")
+                                .frame(
+                                    width: leftSideWidth,
+                                    alignment: .leading
+                                )
+                                .bold()
+
+                            Picker(
+                                "Cache slideshow",
+                                selection: $cacheFullSizeImages
+                            ) {
+                                Text("true").tag(true)
+                                Text("false").tag(false)
+                            }
+                            .pickerStyle(.inline)
+                            .frame(width: geo.size.width * 0.3)
+                        }
+
+                        Text(
+                            "Stores the full-size photos shown during the slideshow so they don't reload over the network. Uses more space."
+                        )
+                        .foregroundColor(.white)
+                        .frame(
+                            width: leftSideWidth + geo.size.width * 0.4,
+                            alignment: .leading
+                        )
+                        .multilineTextAlignment(.leading)
+
+                        HStack {
+                            Text("Image cache")
+                                .frame(
+                                    width: leftSideWidth,
+                                    alignment: .leading
+                                )
+                                .bold()
+
+                            Text(imageCacheSize)
+
+                            Button("Clear cache") {
+                                clearImageCache()
+                            }
+                        }
+
+                        Divider().frame(
+                            width: leftSideWidth + geo.size.width * 0.4
+                        )
+
                         Text("Error reporting: (may require restart)")
                             .frame(
                                 width: geo.size.width * 0.4,
@@ -550,7 +639,27 @@ struct SettingsView: View {
         immichAuthEmail = KeychainHelper.loadImmichAuthEmail() ?? ""
         immichAuthPassword = KeychainHelper.loadImmichAuthPassword() ?? ""
 
+        refreshImageCacheSize()
         validateConfig()
+    }
+
+    private func refreshImageCacheSize() {
+        Task { @MainActor in
+            let bytes = await Task.detached {
+                ImageDiskCache.shared.totalSizeBytes()
+            }.value
+            imageCacheSize = bytes == 0
+                ? "empty"
+                : ByteCountFormatter.string(
+                    fromByteCount: bytes,
+                    countStyle: .file
+                )
+        }
+    }
+
+    private func clearImageCache() {
+        ImageDiskCache.shared.clear()
+        refreshImageCacheSize()
     }
 
     func validateConfig() {
