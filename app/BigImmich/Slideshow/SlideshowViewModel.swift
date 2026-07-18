@@ -49,6 +49,10 @@ final class SlideshowViewModel {
 
     @ObservationIgnored private let imageLoader: AssetImageLoader
 
+    /// Videos warmed ahead of time (connection + initial data), keyed by asset id, so the
+    /// next video starts sooner. Consumed when its asset becomes current; cleared on stop.
+    @ObservationIgnored private var prewarmedVideos: [AssetID: AVURLAsset] = [:]
+
     init(
         initialAlbumID: AlbumID,
         initialAlbumName: AlbumName,
@@ -86,6 +90,7 @@ final class SlideshowViewModel {
         stopSlideshowTimer()
         stopProgressBarTimer()
         stopCurrentPlayer()
+        prewarmedVideos.removeAll()
     }
 
     func clearImageCache() {
@@ -266,20 +271,25 @@ final class SlideshowViewModel {
                 startImageTimers()
             }
         } else if asset.assetType == .video {
-            let playbackURL: URL
-            do {
-                playbackURL = try await immichClient.videoPlaybackURL(
-                    assetID: asset.id
-                )
-            } catch {
-                showError(
-                    "loading video failed: failed to construct playback URL"
-                )
-                return
+            let urlAsset: AVURLAsset
+            if let prewarmed = prewarmedVideos.removeValue(forKey: asset.id) {
+                urlAsset = prewarmed
+            } else {
+                do {
+                    let playbackURL = try await immichClient.videoPlaybackURL(
+                        assetID: asset.id
+                    )
+                    urlAsset = AVURLAsset(url: playbackURL)
+                } catch {
+                    showError(
+                        "loading video failed: failed to construct playback URL"
+                    )
+                    return
+                }
             }
 
             videoController.start(
-                url: playbackURL,
+                asset: urlAsset,
                 autoplay: slideshowIsRunning,
                 onEnded: { [weak self] in
                     Task { await self?.moveToNext() }
@@ -305,17 +315,20 @@ final class SlideshowViewModel {
         let earlier = await (try? slideshow.previewPrevious(count: 2)) ?? []
 
         await withTaskGroup(of: Void.self) { group in
-            for slide in upcoming + earlier {
+            for slide in upcoming + earlier where slide.asset.assetType == .image {
                 group.addTask { [weak self] in
-                    await self?.preloadAsset(asset: slide.asset)
+                    await self?.preloadImage(asset: slide.asset)
                 }
             }
         }
+
+        // Warm only the immediate next video, to avoid opening several streams at once.
+        if let next = upcoming.first, next.asset.assetType == .video {
+            await prewarmVideo(asset: next.asset)
+        }
     }
 
-    private func preloadAsset(asset: AlbumAsset) async {
-        guard asset.assetType == .image else { return }
-
+    private func preloadImage(asset: AlbumAsset) async {
         do {
             try await imageLoader.load(
                 assetID: asset.id,
@@ -325,6 +338,21 @@ final class SlideshowViewModel {
         } catch {
             logError(error)
         }
+    }
+
+    /// Warms the next video's connection and initial data so playback starts sooner when we
+    /// reach it. Bounded so we never hold more than a couple of warm streams.
+    private func prewarmVideo(asset: AlbumAsset) async {
+        guard prewarmedVideos[asset.id] == nil else { return }
+        if prewarmedVideos.count >= 3 {
+            prewarmedVideos.removeAll()
+        }
+        guard let url = try? await immichClient.videoPlaybackURL(assetID: asset.id)
+        else { return }
+
+        let urlAsset = AVURLAsset(url: url)
+        prewarmedVideos[asset.id] = urlAsset
+        _ = try? await urlAsset.load(.isPlayable)
     }
 
     private func startImageTimers() {

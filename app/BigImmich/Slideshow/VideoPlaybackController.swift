@@ -43,14 +43,16 @@ final class VideoPlaybackController {
     ///   - autoplay: when `false` the video is loaded paused (the slideshow is paused).
     ///   - onEnded: called when the item plays to the end.
     func start(
-        url: URL,
+        asset: AVURLAsset,
         autoplay: Bool,
         onEnded: @escaping () -> Void
     ) {
         stop()
 
-        let playerItem = AVPlayerItem(url: url)
+        let playerItem = AVPlayerItem(asset: asset)
         let player = AVPlayer(playerItem: playerItem)
+        // Prefer building a buffer over starting instantly, so brief network dips don't stall.
+        player.automaticallyWaitsToMinimizeStalling = true
         self.player = player
 
         observeStatus(of: playerItem)
