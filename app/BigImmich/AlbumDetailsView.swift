@@ -17,7 +17,7 @@ struct AlbumDetailsView: View {
 
     @FocusState private var focusedButton: ButtonFocus?
     @State private var album: Album?
-    @State private var assets: [AlbumAsset] = []
+    @State private var videoAssets: [AlbumAsset] = []
     @State private var thumbnailImage: Image?
     @State private var isLoading = true
     @State private var errors: [String] = []
@@ -135,9 +135,13 @@ struct AlbumDetailsView: View {
         .onExitCommand(perform: onExit)
     }
 
+    private var imageCount: Int {
+        max((album?.assetCount ?? 0) - videoAssets.count, 0)
+    }
+
     func getItemsCount() -> String {
-        let images = assets.count(where: { $0.assetType == .image })
-        let videos = assets.count(where: { $0.assetType == .video })
+        let images = imageCount
+        let videos = videoAssets.count
 
         var imagesLabel = ""
         if images > 1 {
@@ -168,7 +172,8 @@ struct AlbumDetailsView: View {
         guard album != nil else { return "" }
 
         let duration = slideshowDurationMinutes(
-            items: assets,
+            imageCount: imageCount,
+            videos: videoAssets,
             imageInterval: slideshowInterval
         )
         if duration == 1 {
@@ -182,7 +187,7 @@ struct AlbumDetailsView: View {
         isLoading = true
         do {
             album = try await immichClient.getAlbum(albumID: albumID)
-            assets = try await immichClient.getAlbumAssets(albumID: albumID)
+            videoAssets = try await immichClient.getAlbumVideoAssets(albumID: albumID)
 
             if let thumbnailAssetId = album?.albumThumbnailAssetId {
                 thumbnailImage = try await AssetImageLoader(immichClient: immichClient)

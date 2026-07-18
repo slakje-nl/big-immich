@@ -34,15 +34,18 @@ public struct Album: Codable, Identifiable, Hashable {
     public let id: AlbumID
     public let albumName: AlbumName
     public let albumThumbnailAssetId: AssetID?
+    public let assetCount: Int?
 
     public init(
         id: AlbumID,
         albumName: AlbumName,
-        albumThumbnailAssetId: AssetID?
+        albumThumbnailAssetId: AssetID?,
+        assetCount: Int? = nil
     ) {
         self.id = id
         self.albumName = albumName
         self.albumThumbnailAssetId = albumThumbnailAssetId
+        self.assetCount = assetCount
     }
 
     public static func == (lhs: Album, rhs: Album) -> Bool {

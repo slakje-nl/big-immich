@@ -36,6 +36,7 @@ public protocol ImmichClientProtocol {
     func findAlbums(order: AlbumsOrder) async throws -> [AlbumSummary]
     func getAlbum(albumID: AlbumID) async throws -> Album
     func getAlbumAssets(albumID: AlbumID) async throws -> [AlbumAsset]
+    func getAlbumVideoAssets(albumID: AlbumID) async throws -> [AlbumAsset]
     func getServerVersion() async throws -> ServerVersion
     func getAsset(assetID: AssetID) async throws -> AlbumAsset
     func loadThumbnail(assetID: AssetID, size: ThumbnailSize, retries: Int) async throws -> Data
@@ -132,13 +133,34 @@ public class ImmichClient: ImmichClientProtocol {
     }
 
     public func getAlbumAssets(albumID: AlbumID) async throws -> [AlbumAsset] {
+        try await searchAlbumAssets(albumID: albumID, type: nil)
+    }
+
+    /// Fetches only the album's videos (`type: VIDEO`), so the details screen can
+    /// sum video durations without downloading every photo's metadata.
+    public func getAlbumVideoAssets(albumID: AlbumID) async throws -> [AlbumAsset] {
+        try await searchAlbumAssets(albumID: albumID, type: "VIDEO")
+    }
+
+    private func searchAlbumAssets(
+        albumID: AlbumID,
+        type: String?
+    ) async throws -> [AlbumAsset] {
         var assets: [AlbumAsset] = []
         var page = 1
 
         while true {
+            var payload: [String: Any] = [
+                "albumIds": [albumID.string],
+                "page": page,
+                "size": 1000
+            ]
+            if let type {
+                payload["type"] = type
+            }
             let response: SearchResponse = try await ImmichAPI.shared.postObject(
                 path: "/api/search/metadata",
-                jsonPayload: ["albumIds": [albumID.string], "page": page, "size": 1000]
+                jsonPayload: payload
             )
             assets.append(contentsOf: response.assets.items)
 
