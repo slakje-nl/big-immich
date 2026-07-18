@@ -25,6 +25,7 @@ struct SettingsView: View {
     @AppStorage("slideshowShowProgressBar") private var slideshowShowProgressBar: SlideshowShowProgressBar = .always
 
     // performance
+    @AppStorage("slideshowImageQuality") private var slideshowImageQuality: SlideshowImageQuality = .fullsize
     @AppStorage(ImageDiskCache.thumbnailsEnabledDefaultsKey) private var cacheThumbnails: Bool = true
     @AppStorage(ImageDiskCache.fullSizeEnabledDefaultsKey) private var cacheFullSizeImages: Bool = false
     @State private var imageCacheSize: String = "…"
@@ -441,6 +442,30 @@ struct SettingsView: View {
                             .bold()
 
                         HStack {
+                            Text("Slideshow quality")
+                                .frame(
+                                    width: leftSideWidth,
+                                    alignment: .leading
+                                )
+                                .bold()
+
+                            Picker(
+                                "Slideshow quality",
+                                selection: $slideshowImageQuality
+                            ) {
+                                Text("thumbnail").tag(SlideshowImageQuality.thumbnail)
+                                Text("preview").tag(SlideshowImageQuality.preview)
+                                Text("full-size (recommended)").tag(SlideshowImageQuality.fullsize)
+                                Text("original").tag(SlideshowImageQuality.original)
+                            }
+                            .pickerStyle(.menu)
+                            .frame(
+                                width: geo.size.width * 0.4,
+                                alignment: .leading
+                            )
+                        }
+
+                        HStack {
                             Text("Cache thumbnails")
                                 .frame(
                                     width: leftSideWidth,
@@ -458,16 +483,6 @@ struct SettingsView: View {
                             .pickerStyle(.inline)
                             .frame(width: geo.size.width * 0.3)
                         }
-
-                        Text(
-                            "Stores album and grid thumbnails on this device so they don't reload over the network each time."
-                        )
-                        .foregroundColor(.white)
-                        .frame(
-                            width: leftSideWidth + geo.size.width * 0.4,
-                            alignment: .leading
-                        )
-                        .multilineTextAlignment(.leading)
 
                         HStack {
                             Text("Cache slideshow")
@@ -488,18 +503,16 @@ struct SettingsView: View {
                             .frame(width: geo.size.width * 0.3)
                         }
 
-                        Text(
-                            "Stores the full-size photos shown during the slideshow so they don't reload over the network. Uses more space."
-                        )
-                        .foregroundColor(.white)
-                        .frame(
-                            width: leftSideWidth + geo.size.width * 0.4,
-                            alignment: .leading
-                        )
-                        .multilineTextAlignment(.leading)
+                        Text("Caches full-size photos, uses more space.")
+                            .foregroundColor(.white)
+                            .frame(
+                                width: leftSideWidth + geo.size.width * 0.4,
+                                alignment: .leading
+                            )
+                            .multilineTextAlignment(.leading)
 
                         HStack {
-                            Text("Image cache")
+                            Text("Cache size")
                                 .frame(
                                     width: leftSideWidth,
                                     alignment: .leading

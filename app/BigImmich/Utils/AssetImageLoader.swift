@@ -71,7 +71,7 @@ final class AssetImageLoader {
     private static func isDiskCacheEnabled(for size: ThumbnailSize) -> Bool {
         switch size {
         case .thumbnail, .preview: ImageDiskCache.isThumbnailsEnabled
-        case .fullsize: ImageDiskCache.isFullSizeImagesEnabled
+        case .fullsize, .original: ImageDiskCache.isFullSizeImagesEnabled
         }
     }
 
@@ -82,6 +82,7 @@ final class AssetImageLoader {
         case .thumbnail: "thumbnail"
         case .preview: "preview"
         case .fullsize: "fullsize"
+        case .original: "original"
         }
         return "\(assetID.string)_\(sizeKey)"
     }

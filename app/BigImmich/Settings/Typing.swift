@@ -58,6 +58,28 @@ enum SlideshowShowProgressBar: String, CaseIterable, Identifiable {
     }
 }
 
+/// Which Immich rendition the slideshow requests for each photo. Smaller renditions
+/// download faster on slow networks; maps to the `size` param on the thumbnail endpoint.
+enum SlideshowImageQuality: String, CaseIterable, Identifiable {
+    case thumbnail
+    case preview
+    case fullsize
+    case original
+
+    var id: String {
+        rawValue
+    }
+
+    var thumbnailSize: ThumbnailSize {
+        switch self {
+        case .thumbnail: .thumbnail
+        case .preview: .preview
+        case .fullsize: .fullsize
+        case .original: .original
+        }
+    }
+}
+
 protocol SlideshowSettingsProtocol {
     var slideshowInterval: Int { get set }
     var slideshowDirection: SlideshowDirection { get set }
@@ -67,6 +89,7 @@ protocol SlideshowSettingsProtocol {
     var slideshowOnceEndedAnotherAlbumSelection:
         SlideshowOnceEndedAnotherAlbumSelection { get set }
     var slideshowShowProgressBar: SlideshowShowProgressBar { get set }
+    var slideshowImageQuality: SlideshowImageQuality { get set }
 }
 
 final class SlideshowSettings: ObservableObject, SlideshowSettingsProtocol {
@@ -81,4 +104,5 @@ final class SlideshowSettings: ObservableObject, SlideshowSettingsProtocol {
     @AppStorage("slideshowOnceEndedAnotherAlbum") var slideshowOnceEndedAnotherAlbumSelection:
         SlideshowOnceEndedAnotherAlbumSelection = .random
     @AppStorage("slideshowShowProgressBar") var slideshowShowProgressBar: SlideshowShowProgressBar = .always
+    @AppStorage("slideshowImageQuality") var slideshowImageQuality: SlideshowImageQuality = .fullsize
 }

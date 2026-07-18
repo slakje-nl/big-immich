@@ -247,7 +247,7 @@ final class SlideshowViewModel {
             do {
                 currentImage = try await imageLoader.load(
                     assetID: asset.id,
-                    size: .fullsize,
+                    size: settings.slideshowImageQuality.thumbnailSize,
                     retries: 3
                 )
             } catch {
@@ -310,7 +310,7 @@ final class SlideshowViewModel {
         do {
             try await imageLoader.load(
                 assetID: asset.id,
-                size: .fullsize,
+                size: settings.slideshowImageQuality.thumbnailSize,
                 retries: 2
             )
         } catch {
