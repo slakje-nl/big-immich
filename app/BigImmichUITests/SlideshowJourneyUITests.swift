@@ -165,7 +165,9 @@ final class SlideshowJourneyUITests: XCTestCase {
         pressing direction: XCUIRemote.Button
     ) -> Bool {
         for _ in 0 ..< 6 {
-            if button.exists, button.hasFocus { return true }
+            if button.exists, button.hasFocus {
+                return true
+            }
             XCUIRemote.shared.press(direction)
             Thread.sleep(forTimeInterval: 0.3)
         }

@@ -59,7 +59,9 @@ actor SlideshowSequencer {
     }
 
     private func assetsPlaylist(albumID: AlbumID) async throws -> Playlist<AlbumAsset> {
-        if let cached = assetsPlaylists[albumID] { return cached }
+        if let cached = assetsPlaylists[albumID] {
+            return cached
+        }
 
         let playlist = try await playlistGetter.getAssetsPlaylist(albumID: albumID)
         assetsPlaylists[albumID] = playlist
@@ -78,7 +80,9 @@ actor SlideshowSequencer {
     private func firstNonEmptyAlbumIndex() async throws -> Int? {
         for index in albumPlaylist.elements.indices {
             // swiftlint:disable:next for_where - a `where` clause can't hold the `try await` count call.
-            if try await assetCount(atAlbum: index) > 0 { return index }
+            if try await assetCount(atAlbum: index) > 0 {
+                return index
+            }
         }
         return nil
     }
@@ -90,8 +94,12 @@ actor SlideshowSequencer {
         for offset in 1 ... count {
             let raw = index + offset
             let candidate = albumPlaylist.looped ? raw % count : raw
-            if candidate >= count { break }
-            if try await assetCount(atAlbum: candidate) > 0 { return candidate }
+            if candidate >= count {
+                break
+            }
+            if try await assetCount(atAlbum: candidate) > 0 {
+                return candidate
+            }
         }
         return nil
     }
@@ -103,8 +111,12 @@ actor SlideshowSequencer {
         for offset in 1 ... count {
             let raw = index - offset
             let candidate = albumPlaylist.looped ? (raw % count + count) % count : raw
-            if candidate < 0 { break }
-            if try await assetCount(atAlbum: candidate) > 0 { return candidate }
+            if candidate < 0 {
+                break
+            }
+            if try await assetCount(atAlbum: candidate) > 0 {
+                return candidate
+            }
         }
         return nil
     }
