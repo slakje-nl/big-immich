@@ -43,14 +43,16 @@ final class VideoPlaybackController {
     ///   - autoplay: when `false` the video is loaded paused (the slideshow is paused).
     ///   - onEnded: called when the item plays to the end.
     func start(
-        url: URL,
+        asset: AVURLAsset,
         autoplay: Bool,
         onEnded: @escaping () -> Void
     ) {
         stop()
 
-        let playerItem = AVPlayerItem(url: url)
+        let playerItem = AVPlayerItem(asset: asset)
         let player = AVPlayer(playerItem: playerItem)
+        // Prefer building a buffer over starting instantly, so brief network dips don't stall.
+        player.automaticallyWaitsToMinimizeStalling = true
         self.player = player
 
         observeStatus(of: playerItem)
@@ -132,13 +134,15 @@ final class VideoPlaybackController {
 
     private func observeStatus(of item: AVPlayerItem) {
         statusObservation = item.observe(\.status) { [weak self] _, _ in
-            Task { @MainActor in self?.refreshState() }
+            guard let self else { return }
+            Task { @MainActor in self.refreshState() }
         }
     }
 
     private func observeTimeControl(of player: AVPlayer) {
         timeControlObservation = player.observe(\.timeControlStatus) { [weak self] _, _ in
-            Task { @MainActor in self?.refreshState() }
+            guard let self else { return }
+            Task { @MainActor in self.refreshState() }
         }
     }
 
@@ -196,10 +200,12 @@ final class VideoPlaybackController {
             forInterval: interval,
             queue: .main
         ) { [weak self] time in
-            if let duration = player.currentItem?.duration.seconds,
-               duration > 0
-            {
-                self?.onProgress?(min(time.seconds / duration, 1.0))
+            // The observer is scheduled on the main queue, so we're already on the main actor.
+            MainActor.assumeIsolated {
+                guard let self, let item = self.player?.currentItem else { return }
+                let duration = item.duration.seconds
+                guard duration > 0 else { return }
+                self.onProgress?(min(time.seconds / duration, 1.0))
             }
         }
     }

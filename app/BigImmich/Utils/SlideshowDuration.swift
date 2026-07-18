@@ -1,17 +1,17 @@
 import Foundation
 import ImmichAPI
 
-func slideshowDurationMinutes(items: [AlbumAsset], imageInterval: Int) -> Int {
-    var totalSeconds = 0.0
-    for item in items {
-        switch item.assetType {
-        case .image:
-            totalSeconds += Double(imageInterval)
-        case .video:
-            totalSeconds += Double(item.durationMilliseconds ?? 0) / 1000.0
-        case .other:
-            break
-        }
-    }
+/// Total slideshow runtime, in minutes rounded up.
+///
+/// Images all play for the fixed `imageInterval`, so only their count is needed —
+/// never their metadata. Videos play for their own length, passed as a summed total
+/// so the inputs can be cached without keeping the asset list around.
+func slideshowDurationMinutes(
+    imageCount: Int,
+    videoDurationMilliseconds: Int,
+    imageInterval: Int
+) -> Int {
+    let totalSeconds = Double(imageCount * imageInterval)
+        + Double(videoDurationMilliseconds) / 1000.0
     return Int((totalSeconds / 60.0).rounded(.up))
 }

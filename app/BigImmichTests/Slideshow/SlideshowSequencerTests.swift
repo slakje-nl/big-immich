@@ -509,3 +509,95 @@ struct SlideshowSequencerMultiAlbumTests {
         )
     }
 }
+
+@MainActor
+struct SlideshowSequencerPreviewTests {
+    private func singleAlbumGetter() -> FakePlaylistGetter {
+        FakePlaylistGetter(
+            albumPlaylist: Playlist(
+                elements: [AlbumSummary.dummy(id: "album.1")],
+                looped: false
+            ),
+            assetsPlaylists: [
+                AlbumID(rawValue: "album.1"): Playlist(
+                    elements: [
+                        AlbumAsset.dummy(id: "asset.1"),
+                        AlbumAsset.dummy(id: "asset.2"),
+                        AlbumAsset.dummy(id: "asset.3")
+                    ],
+                    looped: false
+                )
+            ]
+        )
+    }
+
+    @Test func previewNextReturnsTheNextCountWithoutAdvancing() async throws {
+        let slideshow = try await SlideshowSequencer(
+            playlistGetter: singleAlbumGetter(),
+            initialAlbumID: AlbumID(rawValue: "album.1"),
+            initialAssetID: nil
+        )
+
+        let previewed = try await slideshow.previewNext(count: 2)
+        #expect(previewed.map(\.asset.id.string) == ["asset.2", "asset.3"])
+
+        // Position is unchanged after previewing.
+        let current = try #require(await slideshow.current())
+        #expect(current.asset.id.string == "asset.1")
+    }
+
+    @Test func previewNextStopsAtTheEndWhenNotLooping() async throws {
+        let slideshow = try await SlideshowSequencer(
+            playlistGetter: singleAlbumGetter(),
+            initialAlbumID: AlbumID(rawValue: "album.1"),
+            initialAssetID: nil
+        )
+
+        let previewed = try await slideshow.previewNext(count: 5)
+        #expect(previewed.map(\.asset.id.string) == ["asset.2", "asset.3"])
+    }
+
+    @Test func previewPreviousReturnsThePreviousCountNearestFirst() async throws {
+        let slideshow = try await SlideshowSequencer(
+            playlistGetter: singleAlbumGetter(),
+            initialAlbumID: AlbumID(rawValue: "album.1"),
+            initialAssetID: AssetID(rawValue: "asset.3")
+        )
+
+        let previewed = try await slideshow.previewPrevious(count: 5)
+        #expect(previewed.map(\.asset.id.string) == ["asset.2", "asset.1"])
+    }
+
+    @Test func previewNextCrossesAlbumsAndSkipsEmptyOnes() async throws {
+        let playlistGetter = FakePlaylistGetter(
+            albumPlaylist: Playlist(
+                elements: [
+                    AlbumSummary.dummy(id: "album.1"),
+                    AlbumSummary.dummy(id: "album.2"),
+                    AlbumSummary.dummy(id: "album.3")
+                ],
+                looped: false
+            ),
+            assetsPlaylists: [
+                AlbumID(rawValue: "album.1"): Playlist(
+                    elements: [AlbumAsset.dummy(id: "asset.1")],
+                    looped: false
+                ),
+                AlbumID(rawValue: "album.2"): Playlist(elements: [], looped: false),
+                AlbumID(rawValue: "album.3"): Playlist(
+                    elements: [AlbumAsset.dummy(id: "asset.2")],
+                    looped: false
+                )
+            ]
+        )
+
+        let slideshow = try await SlideshowSequencer(
+            playlistGetter: playlistGetter,
+            initialAlbumID: AlbumID(rawValue: "album.1"),
+            initialAssetID: nil
+        )
+
+        let previewed = try await slideshow.previewNext(count: 3)
+        #expect(previewed.map(\.asset.id.string) == ["asset.2"])
+    }
+}

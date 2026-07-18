@@ -22,12 +22,15 @@ public enum ThumbnailSize {
     case thumbnail
     case preview
     case fullsize
+    /// The original file rendition (`size=original`); largest.
+    case original
 
     var queryParams: [String: String] {
         switch self {
         case .thumbnail: [:]
         case .preview: ["size": "preview"]
         case .fullsize: ["size": "fullsize"]
+        case .original: ["size": "original"]
         }
     }
 }

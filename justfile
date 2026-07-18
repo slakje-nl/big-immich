@@ -38,6 +38,18 @@ test-unit:
         -only-testing:BigImmichTests \
         -destination "{{destination}}" CODE_SIGNING_ALLOWED=NO
 
+# Run the unit tests with code coverage and print a per-file report. Informational
+# only — not a CI gate and nothing fails on a low number.
+coverage:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    out="$(mktemp -d)/coverage.xcresult"
+    xcodebuild test -project "{{project}}" -scheme "{{scheme}}" \
+        -only-testing:BigImmichTests \
+        -destination "{{destination}}" -enableCodeCoverage YES \
+        -resultBundlePath "$out" CODE_SIGNING_ALLOWED=NO
+    xcrun xccov view --report "$out"
+
 # Apply lint autocorrect then formatting (SwiftFormat has the final say on layout).
 format:
     swiftlint --fix --quiet

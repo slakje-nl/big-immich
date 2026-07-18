@@ -7,7 +7,7 @@
 
 import ImmichAPI
 
-struct Playlist<T> {
+nonisolated struct Playlist<T> {
     let elements: [T]
     let looped: Bool
 }
@@ -61,7 +61,7 @@ class SlideshowPlaylistGetter: SlideshowPlaylistGetterProtocol {
     func getAssetsPlaylist(albumID: AlbumID) async throws -> Playlist<
         AlbumAsset
     > {
-        let loadedAssets = try await immichClient.getAlbumAssets(albumID: albumID)
+        let loadedAssets = try await albumAssets(albumID: albumID)
 
         let looped = switch settings.slideshowOnceEndedAction {
         case .stopAndNotify:
@@ -82,5 +82,23 @@ class SlideshowPlaylistGetter: SlideshowPlaylistGetterProtocol {
         }
 
         return Playlist(elements: assets, looped: looped)
+    }
+
+    /// Album assets, served from the disk cache when present for a fast slideshow start; the
+    /// fresh list is fetched and cached in the background, so newly added assets converge on
+    /// the next slideshow. On a cache miss we fetch synchronously and cache the result.
+    private func albumAssets(albumID: AlbumID) async throws -> [AlbumAsset] {
+        if let cached = AlbumAssetsCache.shared.cached(albumID: albumID) {
+            Task { await refreshAssetsCache(albumID: albumID) }
+            return cached
+        }
+        let assets = try await immichClient.getAlbumAssets(albumID: albumID)
+        AlbumAssetsCache.shared.set(albumID: albumID, assets: assets)
+        return assets
+    }
+
+    private func refreshAssetsCache(albumID: AlbumID) async {
+        guard let assets = try? await immichClient.getAlbumAssets(albumID: albumID) else { return }
+        AlbumAssetsCache.shared.set(albumID: albumID, assets: assets)
     }
 }

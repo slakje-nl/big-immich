@@ -49,6 +49,11 @@ final class SlideshowViewModel {
 
     @ObservationIgnored private let imageLoader: AssetImageLoader
 
+    /// The single next video warmed ahead of time (connection + initial data), so it starts
+    /// sooner. Consumed when its asset becomes current; cleared on stop. Only ever one, to
+    /// avoid holding several open streams.
+    @ObservationIgnored private var prewarmedVideo: (id: AssetID, asset: AVURLAsset)?
+
     init(
         initialAlbumID: AlbumID,
         initialAlbumName: AlbumName,
@@ -86,6 +91,10 @@ final class SlideshowViewModel {
         stopSlideshowTimer()
         stopProgressBarTimer()
         stopCurrentPlayer()
+        prewarmedVideo = nil
+        // The in-memory image cache only serves this session; drop it on exit rather than
+        // key it by rendition size. Cheap to rebuild — the on-disk cache backs the next run.
+        imageLoader.clear()
     }
 
     func clearImageCache() {
@@ -241,13 +250,18 @@ final class SlideshowViewModel {
         userAssetsCount = slideshowAsset.counter.total
         userDateTime = formattedCaptureDate(asset)
         userLocation = formattedLocation(asset)
-        loadAssetMetadata(for: asset.id)
+        // The album/search response already carries EXIF, so only fetch the full
+        // asset when it's missing (e.g. a Top Shelf deep link) — saves one network
+        // round-trip per photo, which matters on a slow connection.
+        if asset.exifInfo == nil {
+            loadAssetMetadata(for: asset.id)
+        }
 
         if asset.assetType == .image {
             do {
                 currentImage = try await imageLoader.load(
                     assetID: asset.id,
-                    size: .fullsize,
+                    size: settings.slideshowImageQuality.thumbnailSize,
                     retries: 3
                 )
             } catch {
@@ -261,20 +275,26 @@ final class SlideshowViewModel {
                 startImageTimers()
             }
         } else if asset.assetType == .video {
-            let playbackURL: URL
-            do {
-                playbackURL = try await immichClient.videoPlaybackURL(
-                    assetID: asset.id
-                )
-            } catch {
-                showError(
-                    "loading video failed: failed to construct playback URL"
-                )
-                return
+            let urlAsset: AVURLAsset
+            if let prewarmed = prewarmedVideo, prewarmed.id == asset.id {
+                urlAsset = prewarmed.asset
+                prewarmedVideo = nil
+            } else {
+                do {
+                    let playbackURL = try await immichClient.videoPlaybackURL(
+                        assetID: asset.id
+                    )
+                    urlAsset = AVURLAsset(url: playbackURL)
+                } catch {
+                    showError(
+                        "loading video failed: failed to construct playback URL"
+                    )
+                    return
+                }
             }
 
             videoController.start(
-                url: playbackURL,
+                asset: urlAsset,
                 autoplay: slideshowIsRunning,
                 onEnded: { [weak self] in
                     Task { await self?.moveToNext() }
@@ -296,26 +316,49 @@ final class SlideshowViewModel {
     private func preloadAssets() async {
         guard let slideshow else { return }
 
-        if let laterAsset = try? await slideshow.previewNext() {
-            await preloadAsset(asset: laterAsset.asset)
+        let upcoming = await (try? slideshow.previewNext(count: 2)) ?? []
+        let earlier = await (try? slideshow.previewPrevious(count: 2)) ?? []
+
+        await withTaskGroup(of: Void.self) { group in
+            for slide in upcoming + earlier where slide.asset.assetType == .image {
+                group.addTask { [weak self] in
+                    await self?.preloadImage(asset: slide.asset)
+                }
+            }
         }
-        if let earlierAsset = try? await slideshow.previewPrevious() {
-            await preloadAsset(asset: earlierAsset.asset)
+
+        // Warm only the immediate next video, to avoid opening several streams at once.
+        // Skippable from Settings if prewarming ever causes trouble on a given setup.
+        if settings.slideshowPreloadVideos,
+           let next = upcoming.first, next.asset.assetType == .video
+        {
+            await prewarmVideo(asset: next.asset)
         }
     }
 
-    private func preloadAsset(asset: AlbumAsset) async {
-        guard asset.assetType == .image else { return }
-
+    private func preloadImage(asset: AlbumAsset) async {
         do {
             try await imageLoader.load(
                 assetID: asset.id,
-                size: .fullsize,
+                size: settings.slideshowImageQuality.thumbnailSize,
                 retries: 2
             )
         } catch {
             logError(error)
         }
+    }
+
+    /// Warms the next video's connection and initial data so playback starts sooner when we
+    /// reach it. Only one video is ever warm at a time, so any earlier one is dropped.
+    private func prewarmVideo(asset: AlbumAsset) async {
+        guard prewarmedVideo?.id != asset.id else { return }
+        prewarmedVideo = nil
+        guard let url = try? await immichClient.videoPlaybackURL(assetID: asset.id)
+        else { return }
+
+        let urlAsset = AVURLAsset(url: url)
+        prewarmedVideo = (asset.id, urlAsset)
+        _ = try? await urlAsset.load(.isPlayable)
     }
 
     private func startImageTimers() {
@@ -328,10 +371,14 @@ final class SlideshowViewModel {
         progressBarTimer = Timer.scheduledTimer(
             withTimeInterval: step,
             repeats: true
-        ) { [weak self] t in
-            self?.assetProgress += 1 / totalSteps
-            if let progress = self?.assetProgress, progress >= 1 {
-                t.invalidate()
+        ) { [weak self] _ in
+            // Scheduled on the main run loop, so the callback runs on the main actor.
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.assetProgress += 1 / totalSteps
+                if self.assetProgress >= 1 {
+                    self.stopProgressBarTimer()
+                }
             }
         }
 
