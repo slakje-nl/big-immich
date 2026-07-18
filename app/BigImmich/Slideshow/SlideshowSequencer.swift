@@ -109,7 +109,10 @@ actor SlideshowSequencer {
         return nil
     }
 
-    private func getNextAssetIndex() async throws -> (Int, Int)? {
+    private func nextAssetIndex(
+        afterAlbum albumIndex: Int,
+        asset assetIndex: Int
+    ) async throws -> (Int, Int)? {
         guard albumPlaylist.elements.indices.contains(albumIndex) else { return nil }
         let assets = try await assetsPlaylist(atAlbum: albumIndex)
 
@@ -125,7 +128,14 @@ actor SlideshowSequencer {
         return nil
     }
 
-    private func getPreviousAssetIndex() async throws -> (Int, Int)? {
+    private func getNextAssetIndex() async throws -> (Int, Int)? {
+        try await nextAssetIndex(afterAlbum: albumIndex, asset: assetIndex)
+    }
+
+    private func previousAssetIndex(
+        beforeAlbum albumIndex: Int,
+        asset assetIndex: Int
+    ) async throws -> (Int, Int)? {
         guard albumPlaylist.elements.indices.contains(albumIndex) else { return nil }
         let assets = try await assetsPlaylist(atAlbum: albumIndex)
 
@@ -140,6 +150,10 @@ actor SlideshowSequencer {
             return (previousAlbum, count - 1)
         }
         return nil
+    }
+
+    private func getPreviousAssetIndex() async throws -> (Int, Int)? {
+        try await previousAssetIndex(beforeAlbum: albumIndex, asset: assetIndex)
     }
 
     private func getSlideshowAsset(albumIndex: Int, assetIndex: Int) async throws -> SlideshowAsset? {
@@ -169,10 +183,54 @@ actor SlideshowSequencer {
     }
 
     func previewPrevious() async throws -> SlideshowAsset? {
-        guard let (albumIndex, assetIndex) = try await getPreviousAssetIndex() else {
-            return nil
+        try await previewPrevious(count: 1).first
+    }
+
+    /// The next `count` assets from the current position, without advancing it. Used to
+    /// warm the cache ahead of the slideshow.
+    func previewNext(count: Int) async throws -> [SlideshowAsset] {
+        var result: [SlideshowAsset] = []
+        var albumIndex = albumIndex
+        var assetIndex = assetIndex
+        for _ in 0 ..< count {
+            guard
+                let (nextAlbum, nextAsset) = try await nextAssetIndex(
+                    afterAlbum: albumIndex,
+                    asset: assetIndex
+                ),
+                let asset = try await getSlideshowAsset(
+                    albumIndex: nextAlbum,
+                    assetIndex: nextAsset
+                )
+            else { break }
+            result.append(asset)
+            albumIndex = nextAlbum
+            assetIndex = nextAsset
         }
-        return try await getSlideshowAsset(albumIndex: albumIndex, assetIndex: assetIndex)
+        return result
+    }
+
+    /// The previous `count` assets from the current position, without moving it.
+    func previewPrevious(count: Int) async throws -> [SlideshowAsset] {
+        var result: [SlideshowAsset] = []
+        var albumIndex = albumIndex
+        var assetIndex = assetIndex
+        for _ in 0 ..< count {
+            guard
+                let (prevAlbum, prevAsset) = try await previousAssetIndex(
+                    beforeAlbum: albumIndex,
+                    asset: assetIndex
+                ),
+                let asset = try await getSlideshowAsset(
+                    albumIndex: prevAlbum,
+                    assetIndex: prevAsset
+                )
+            else { break }
+            result.append(asset)
+            albumIndex = prevAlbum
+            assetIndex = prevAsset
+        }
+        return result
     }
 
     func next() async throws -> SlideshowAsset? {

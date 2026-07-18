@@ -301,11 +301,15 @@ final class SlideshowViewModel {
     private func preloadAssets() async {
         guard let slideshow else { return }
 
-        if let laterAsset = try? await slideshow.previewNext() {
-            await preloadAsset(asset: laterAsset.asset)
-        }
-        if let earlierAsset = try? await slideshow.previewPrevious() {
-            await preloadAsset(asset: earlierAsset.asset)
+        let upcoming = await (try? slideshow.previewNext(count: 2)) ?? []
+        let earlier = await (try? slideshow.previewPrevious(count: 2)) ?? []
+
+        await withTaskGroup(of: Void.self) { group in
+            for slide in upcoming + earlier {
+                group.addTask { [weak self] in
+                    await self?.preloadAsset(asset: slide.asset)
+                }
+            }
         }
     }
 
