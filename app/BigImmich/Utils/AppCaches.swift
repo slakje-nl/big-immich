@@ -11,6 +11,7 @@ extension ImageDiskCache: DiskCacheReporting {}
 extension SlideshowDurationCache: DiskCacheReporting {}
 extension AlbumDetailCache: DiskCacheReporting {}
 extension AlbumsListCache: DiskCacheReporting {}
+extension AlbumAssetsCache: DiskCacheReporting {}
 
 /// Single entry point for the app's on-disk caches, so the Settings "Cache size" field and
 /// "Clear cache" button cover everything the app stores — image bytes plus the album/duration
@@ -21,7 +22,8 @@ enum AppCaches {
             ImageDiskCache.shared,
             SlideshowDurationCache.shared,
             AlbumDetailCache.shared,
-            AlbumsListCache.shared
+            AlbumsListCache.shared,
+            AlbumAssetsCache.shared
         ]
     }
 

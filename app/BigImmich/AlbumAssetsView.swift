@@ -91,12 +91,29 @@ struct AlbumAssetsView: View {
     }
 
     private func loadAssets() async {
-        state = .loading
+        // Paint instantly from the previous visit's cache; only spin when we have nothing.
+        if let cached = AlbumAssetsCache.shared.cached(albumID: albumID) {
+            state = .loaded(cached)
+        } else {
+            state = .loading
+        }
+
         do {
-            state = try await .loaded(immichClient.getAlbumAssets(albumID: albumID))
+            let assets = try await immichClient.getAlbumAssets(albumID: albumID)
+            AlbumAssetsCache.shared.set(albumID: albumID, assets: assets)
+            // Skip the re-render (and focus/scroll reset) when the asset set is unchanged.
+            if case let .loaded(current) = state, current.map(\.id) == assets.map(\.id) {
+                return
+            }
+            state = .loaded(assets)
         } catch {
-            state = .failed(error.localizedDescription)
-            logError(error)
+            // Keep the cached grid on a refresh failure; only fail hard with nothing to show.
+            if case .loaded = state {
+                logError(error)
+            } else {
+                state = .failed(error.localizedDescription)
+                logError(error)
+            }
         }
     }
 }
