@@ -8,6 +8,7 @@ struct AlbumsView: View {
     var immichClient: ImmichClientProtocol = ImmichClient.shared
 
     @FocusState private var focusedAlbumIndex: Int?
+    @State private var focusRestored = false
     @State private var state: LoadingState<[AlbumSummary]> = .idle
     @State private var notYetSetUp = false
     @State private var thumbnailErrors: [String] = []
@@ -72,7 +73,7 @@ struct AlbumsView: View {
                             ThumbnailView(
                                 assetID: album.albumThumbnailAssetId,
                                 isVideo: false,
-                                isHighlighted: focusedAlbumIndex == index,
+                                isHighlighted: focusRestored && focusedAlbumIndex == index,
                                 onLoaded: {},
                                 onError: { error in
                                     if !(error is CancellationError) {
@@ -110,16 +111,19 @@ struct AlbumsView: View {
         albums: [AlbumSummary],
         scrollProxy: ScrollViewProxy
     ) {
-        guard let initialAlbumID,
-              let index = albums.firstIndex(where: { $0.id == initialAlbumID })
-        else {
-            focusedAlbumIndex = 0
-            return
-        }
-
+        let index = initialAlbumID
+            .flatMap { id in albums.firstIndex(where: { $0.id == id }) } ?? 0
+        // The target cell may not be materialized yet in the lazy grid, so scroll to it
+        // first and set focus a beat later. Until that restore lands we suppress the
+        // custom highlight (focusRestored) so the grid doesn't briefly light up the first
+        // cell that the focus engine parks on in the meantime. Reset the flag every time
+        // this runs — on back-navigation the @State is preserved and would otherwise stay
+        // true, letting the transient item-0 focus show through.
+        focusRestored = false
         scrollProxy.scrollTo(index, anchor: .center)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             focusedAlbumIndex = index
+            focusRestored = true
         }
     }
 

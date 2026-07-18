@@ -10,6 +10,7 @@ struct AlbumAssetsView: View {
     var immichClient: ImmichClientProtocol = ImmichClient.shared
 
     @FocusState private var focusedAssetIndex: Int?
+    @State private var focusRestored = false
     @State private var state: LoadingState<[AlbumAsset]> = .idle
     @State private var thumbnailErrors: [String] = []
 
@@ -47,7 +48,7 @@ struct AlbumAssetsView: View {
                         ThumbnailView(
                             assetID: asset.id,
                             isVideo: asset.assetType == .video,
-                            isHighlighted: focusedAssetIndex == index,
+                            isHighlighted: focusRestored && focusedAssetIndex == index,
                             onLoaded: {},
                             onError: { error in
                                 thumbnailErrors.append(
@@ -77,16 +78,19 @@ struct AlbumAssetsView: View {
         assets: [AlbumAsset],
         scrollProxy: ScrollViewProxy
     ) {
-        guard let initialAssetID,
-              let index = assets.firstIndex(where: { $0.id == initialAssetID })
-        else {
-            focusedAssetIndex = 0
-            return
-        }
-
+        let index = initialAssetID
+            .flatMap { id in assets.firstIndex(where: { $0.id == id }) } ?? 0
+        // The target cell may not be materialized yet in the lazy grid, so scroll to it
+        // first and set focus a beat later. Until that restore lands we suppress the
+        // custom highlight (focusRestored) so the grid doesn't briefly light up the first
+        // cell that the focus engine parks on in the meantime. Reset the flag every time
+        // this runs — on back-navigation the @State is preserved and would otherwise stay
+        // true, letting the transient item-0 focus show through.
+        focusRestored = false
         scrollProxy.scrollTo(index, anchor: .center)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             focusedAssetIndex = index
+            focusRestored = true
         }
     }
 
