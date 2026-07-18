@@ -158,8 +158,11 @@ struct SlideshowView: View {
                 withTimeInterval: 10,
                 repeats: false
             ) { _ in
-                withAnimation {
-                    viewModel.showAssetDetails = false
+                // Scheduled on the main run loop, so the callback runs on the main actor.
+                MainActor.assumeIsolated {
+                    withAnimation {
+                        viewModel.showAssetDetails = false
+                    }
                 }
             }
         }

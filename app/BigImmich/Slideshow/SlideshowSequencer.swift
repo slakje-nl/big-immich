@@ -7,12 +7,12 @@
 
 import ImmichAPI
 
-struct SlideshowCounter {
+nonisolated struct SlideshowCounter {
     let current: Int
     let total: Int
 }
 
-struct SlideshowAsset {
+nonisolated struct SlideshowAsset {
     let album: AlbumSummary
     let asset: AlbumAsset
     let counter: SlideshowCounter

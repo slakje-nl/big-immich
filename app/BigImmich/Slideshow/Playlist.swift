@@ -7,7 +7,7 @@
 
 import ImmichAPI
 
-struct Playlist<T> {
+nonisolated struct Playlist<T> {
     let elements: [T]
     let looped: Bool
 }

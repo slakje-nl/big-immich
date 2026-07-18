@@ -371,10 +371,14 @@ final class SlideshowViewModel {
         progressBarTimer = Timer.scheduledTimer(
             withTimeInterval: step,
             repeats: true
-        ) { [weak self] t in
-            self?.assetProgress += 1 / totalSteps
-            if let progress = self?.assetProgress, progress >= 1 {
-                t.invalidate()
+        ) { [weak self] _ in
+            // Scheduled on the main run loop, so the callback runs on the main actor.
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.assetProgress += 1 / totalSteps
+                if self.assetProgress >= 1 {
+                    self.stopProgressBarTimer()
+                }
             }
         }
 
