@@ -68,6 +68,74 @@ struct ImageDiskCacheTests {
     }
 }
 
+struct CodableDiskCacheTests {
+    private func makeCache() -> CodableDiskCache<[String]> {
+        CodableDiskCache(name: "test-\(UUID().uuidString)")
+    }
+
+    @Test func storesAndReadsBackCodable() {
+        let cache = makeCache()
+        cache.store(["a", "b"], forKey: "k")
+        #expect(cache.value(forKey: "k") == ["a", "b"])
+        cache.clear()
+    }
+
+    @Test func missingKeyReturnsNil() {
+        let cache = makeCache()
+        #expect(cache.value(forKey: "absent") == nil)
+    }
+
+    @Test func clearEmptiesTheCache() {
+        let cache = makeCache()
+        cache.store(["x"], forKey: "a")
+        #expect(cache.totalSizeBytes() > 0)
+        cache.clear()
+        #expect(cache.totalSizeBytes() == 0)
+        #expect(cache.value(forKey: "a") == nil)
+    }
+}
+
+struct SlideshowDurationCacheTests {
+    private func makeCache() -> SlideshowDurationCache {
+        SlideshowDurationCache(store: CodableDiskCache(name: "test-\(UUID().uuidString)"))
+    }
+
+    private func info(token: String) -> SlideshowDurationInfo {
+        SlideshowDurationInfo(token: token, assetCount: 5, videoCount: 2, videoDurationMilliseconds: 1000)
+    }
+
+    @Test func freshReturnsInfoOnTokenMatch() {
+        let cache = makeCache()
+        let id = AlbumID(rawValue: "a")
+        cache.set(albumID: id, info: info(token: "t1"))
+        #expect(cache.fresh(albumID: id, token: "t1")?.videoCount == 2)
+        cache.clear()
+    }
+
+    @Test func freshReturnsNilOnTokenMismatch() {
+        let cache = makeCache()
+        let id = AlbumID(rawValue: "a")
+        cache.set(albumID: id, info: info(token: "t1"))
+        #expect(cache.fresh(albumID: id, token: "t2") == nil)
+        cache.clear()
+    }
+
+    @Test func cachedReturnsRegardlessOfToken() {
+        let cache = makeCache()
+        let id = AlbumID(rawValue: "a")
+        cache.set(albumID: id, info: info(token: "t1"))
+        #expect(cache.cached(albumID: id)?.assetCount == 5)
+        cache.clear()
+    }
+
+    @Test func tokenChangesWithAssetCountOrTimestamp() {
+        let base = SlideshowDurationCache.token(assetCount: 5, lastModifiedAssetTimestamp: "2026-01-01")
+        #expect(base != SlideshowDurationCache.token(assetCount: 6, lastModifiedAssetTimestamp: "2026-01-01"))
+        #expect(base != SlideshowDurationCache.token(assetCount: 5, lastModifiedAssetTimestamp: "2026-02-02"))
+        #expect(base == SlideshowDurationCache.token(assetCount: 5, lastModifiedAssetTimestamp: "2026-01-01"))
+    }
+}
+
 struct TopShelfLinkTests {
     private func link(_ string: String) -> TopShelfAlbumLink? {
         guard let url = URL(string: string) else { return nil }

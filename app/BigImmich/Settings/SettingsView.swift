@@ -659,7 +659,7 @@ struct SettingsView: View {
     private func refreshImageCacheSize() {
         Task { @MainActor in
             let bytes = await Task.detached {
-                ImageDiskCache.shared.totalSizeBytes()
+                AppCaches.totalSizeBytes()
             }.value
             imageCacheSize = bytes == 0
                 ? "empty"
@@ -671,7 +671,7 @@ struct SettingsView: View {
     }
 
     private func clearImageCache() {
-        ImageDiskCache.shared.clear()
+        AppCaches.clear()
         refreshImageCacheSize()
     }
 

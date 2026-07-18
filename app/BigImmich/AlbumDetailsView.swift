@@ -17,6 +17,7 @@ struct AlbumDetailsView: View {
 
     @FocusState private var focusedButton: ButtonFocus?
     @State private var album: Album?
+    @State private var assetCount: Int?
     @State private var videoCount: Int = 0
     @State private var videoDurationMs: Int = 0
     @State private var thumbnailImage: Image?
@@ -138,7 +139,7 @@ struct AlbumDetailsView: View {
 
     /// Still-image count, or `nil` when the album's total isn't known yet.
     private var imageCount: Int? {
-        albumImageCount(assetCount: album?.assetCount, videoCount: videoCount)
+        albumImageCount(assetCount: assetCount, videoCount: videoCount)
     }
 
     func getItemsCount() -> String {
@@ -171,7 +172,7 @@ struct AlbumDetailsView: View {
     }
 
     private func getSlideshowDurationText() -> String {
-        guard album != nil else { return "" }
+        guard assetCount != nil else { return "" }
 
         let duration = slideshowDurationMinutes(
             imageCount: imageCount ?? 0,
@@ -187,24 +188,50 @@ struct AlbumDetailsView: View {
 
     private func loadAlbumDetail() async {
         isLoading = true
+
+        // Paint instantly from the previous visit's disk cache, if any, then refresh below.
+        // Albums change rarely, so the cached header/counts are almost always still correct.
+        if let cachedAlbum = AlbumDetailCache.shared.cached(albumID: albumID) {
+            apply(album: cachedAlbum)
+            if let cachedInfo = SlideshowDurationCache.shared.cached(albumID: albumID) {
+                apply(durationInfo: cachedInfo)
+            }
+            isLoading = false
+        }
+
         do {
             let loadedAlbum = try await immichClient.getAlbum(albumID: albumID)
-            album = loadedAlbum
+            apply(album: loadedAlbum)
+            AlbumDetailCache.shared.set(loadedAlbum)
 
             // Duration info (may skip the video fetch on a cache hit) and the thumbnail
             // are independent — fetch them concurrently, assign on this actor.
             async let durationInfo = fetchDurationInfo(for: loadedAlbum)
             async let thumbnail = fetchThumbnail(for: loadedAlbum)
 
-            let info = try await durationInfo
-            videoCount = info.videoCount
-            videoDurationMs = info.videoDurationMilliseconds
+            try await apply(durationInfo: durationInfo)
             thumbnailImage = try await thumbnail
         } catch {
-            errors.append(error.localizedDescription)
+            // Only surface the error if we had nothing cached to fall back on.
+            if assetCount == nil {
+                errors.append(error.localizedDescription)
+            }
             logError(error)
         }
         isLoading = false
+    }
+
+    private func apply(album loadedAlbum: Album) {
+        album = loadedAlbum
+        assetCount = loadedAlbum.assetCount
+    }
+
+    private func apply(durationInfo info: SlideshowDurationInfo) {
+        videoCount = info.videoCount
+        videoDurationMs = info.videoDurationMilliseconds
+        if let count = info.assetCount {
+            assetCount = count
+        }
     }
 
     /// Video count + total video duration for the album, from the cache when the album is
@@ -214,17 +241,18 @@ struct AlbumDetailsView: View {
             assetCount: album.assetCount,
             lastModifiedAssetTimestamp: album.lastModifiedAssetTimestamp
         )
-        if let cached = await SlideshowDurationCache.shared.get(albumID: albumID, token: token) {
+        if let cached = SlideshowDurationCache.shared.fresh(albumID: albumID, token: token) {
             return cached
         }
 
         let videos = try await immichClient.getAlbumVideoAssets(albumID: albumID)
         let info = SlideshowDurationInfo(
             token: token,
+            assetCount: album.assetCount,
             videoCount: videos.count,
             videoDurationMilliseconds: videos.reduce(0) { $0 + ($1.durationMilliseconds ?? 0) }
         )
-        await SlideshowDurationCache.shared.set(albumID: albumID, info: info)
+        SlideshowDurationCache.shared.set(albumID: albumID, info: info)
         return info
     }
 
