@@ -3,6 +3,24 @@ import Foundation
 import ImmichAPI
 import Testing
 
+struct ServerVersionTests {
+    @Test func comparesByComponents() {
+        #expect(ServerVersion(major: 3, minor: 0, patch: 1) < ServerVersion(major: 3, minor: 1, patch: 0))
+        #expect(ServerVersion(major: 3, minor: 0, patch: 2) > ServerVersion(major: 3, minor: 0, patch: 1))
+        #expect(!(ServerVersion(major: 3, minor: 0, patch: 1) < ServerVersion(major: 3, minor: 0, patch: 1)))
+    }
+
+    @Test func displayStringJoinsComponents() {
+        #expect(ServerVersion(major: 3, minor: 0, patch: 1).displayString == "3.0.1")
+    }
+
+    @Test func decodesFromJSON() throws {
+        let data = Data(#"{"major":3,"minor":2,"patch":5}"#.utf8)
+        let version = try JSONDecoder().decode(ServerVersion.self, from: data)
+        #expect(version == ServerVersion(major: 3, minor: 2, patch: 5))
+    }
+}
+
 struct SlideshowDurationTests {
     @Test func imagesUseTheInterval() {
         #expect(slideshowDurationMinutes(imageCount: 2, videoDurationMilliseconds: 0, imageInterval: 30) == 1)
@@ -74,6 +92,38 @@ struct CodableDiskCacheTests {
         cache.clear()
         #expect(cache.totalSizeBytes() == 0)
         #expect(cache.value(forKey: "a") == nil)
+    }
+}
+
+struct AlbumMetadataCacheTests {
+    private func store<T: Codable & Sendable>() -> CodableDiskCache<T> {
+        CodableDiskCache(name: "test-\(UUID().uuidString)")
+    }
+
+    @Test func albumsListCacheKeysByOrder() {
+        let cache = AlbumsListCache(store: store())
+        cache.set(order: .fromNewest, albums: [AlbumSummary.dummy(id: "a")])
+        #expect(cache.cached(order: .fromNewest)?.map(\.id.string) == ["a"])
+        #expect(cache.cached(order: .fromOldest) == nil)
+        cache.clear()
+    }
+
+    @Test func albumDetailCacheRoundTrips() {
+        let cache = AlbumDetailCache(store: store())
+        let album = Album.dummy(id: "album.1")
+        cache.set(album)
+        #expect(cache.cached(albumID: AlbumID(rawValue: "album.1"))?.id == album.id)
+        #expect(cache.cached(albumID: AlbumID(rawValue: "missing")) == nil)
+        cache.clear()
+    }
+
+    @Test func albumAssetsCacheRoundTrips() {
+        let cache = AlbumAssetsCache(store: store())
+        let id = AlbumID(rawValue: "album.1")
+        cache.set(albumID: id, assets: [AlbumAsset.dummy(id: "asset.1")])
+        #expect(cache.cached(albumID: id)?.map(\.id.string) == ["asset.1"])
+        #expect(cache.cached(albumID: AlbumID(rawValue: "missing")) == nil)
+        cache.clear()
     }
 }
 
