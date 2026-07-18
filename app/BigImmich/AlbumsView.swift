@@ -124,14 +124,34 @@ struct AlbumsView: View {
     }
 
     private func loadAlbums() async {
-        state = .loading
+        let order: AlbumsOrder = .fromNewest
+
+        // Paint instantly from the previous launch's cache, if any; only show the spinner
+        // when we have nothing to show yet. Then refresh in the background below.
+        if let cached = AlbumsListCache.shared.cached(order: order) {
+            state = .loaded(cached)
+        } else {
+            state = .loading
+        }
+
         do {
-            state = try await .loaded(immichClient.findAlbums(order: .fromNewest))
+            let albums = try await immichClient.findAlbums(order: order)
+            AlbumsListCache.shared.set(order: order, albums: albums)
+            // Avoid a needless state churn (and focus/scroll reset) when nothing changed.
+            if case let .loaded(current) = state, current == albums {
+                return
+            }
+            state = .loaded(albums)
         } catch ImmichAPIError.missingConfig {
             notYetSetUp = true
         } catch {
-            state = .failed(error.localizedDescription)
-            logError(error)
+            // Keep showing the cached list on a refresh failure; only fail hard with nothing.
+            if case .loaded = state {
+                logError(error)
+            } else {
+                state = .failed(error.localizedDescription)
+                logError(error)
+            }
         }
     }
 }
