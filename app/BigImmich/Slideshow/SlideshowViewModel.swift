@@ -91,6 +91,9 @@ final class SlideshowViewModel {
         stopProgressBarTimer()
         stopCurrentPlayer()
         prewarmedVideos.removeAll()
+        // The in-memory image cache only serves this session; drop it on exit rather than
+        // key it by rendition size. Cheap to rebuild — the on-disk cache backs the next run.
+        imageLoader.clear()
     }
 
     func clearImageCache() {
