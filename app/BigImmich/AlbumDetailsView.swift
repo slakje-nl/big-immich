@@ -186,10 +186,15 @@ struct AlbumDetailsView: View {
     private func loadAlbumDetail() async {
         isLoading = true
         do {
-            album = try await immichClient.getAlbum(albumID: albumID)
-            videoAssets = try await immichClient.getAlbumVideoAssets(albumID: albumID)
+            // Independent calls — fetch the album and its videos concurrently.
+            async let albumResult = immichClient.getAlbum(albumID: albumID)
+            async let videoResult = immichClient.getAlbumVideoAssets(albumID: albumID)
 
-            if let thumbnailAssetId = album?.albumThumbnailAssetId {
+            let loadedAlbum = try await albumResult
+            album = loadedAlbum
+            videoAssets = try await videoResult
+
+            if let thumbnailAssetId = loadedAlbum.albumThumbnailAssetId {
                 thumbnailImage = try await AssetImageLoader(immichClient: immichClient)
                     .load(assetID: thumbnailAssetId, size: .preview, retries: 3)
             }
