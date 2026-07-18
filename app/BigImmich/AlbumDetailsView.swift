@@ -17,9 +17,7 @@ struct AlbumDetailsView: View {
 
     @FocusState private var focusedButton: ButtonFocus?
     @State private var album: Album?
-    @State private var assetCount: Int?
-    @State private var videoCount: Int = 0
-    @State private var videoDurationMs: Int = 0
+    @State private var assets: [AlbumAsset]?
     @State private var thumbnailImage: Image?
     @State private var isLoading = true
     @State private var errors: [String] = []
@@ -137,13 +135,22 @@ struct AlbumDetailsView: View {
         .onExitCommand(perform: onExit)
     }
 
-    /// Still-image count, or `nil` when the album's total isn't known yet.
-    private var imageCount: Int? {
-        albumImageCount(assetCount: assetCount, videoCount: videoCount)
+    private var imageCount: Int {
+        assets?.count(where: { $0.assetType == .image }) ?? 0
+    }
+
+    private var videoCount: Int {
+        assets?.count(where: { $0.assetType == .video }) ?? 0
+    }
+
+    private var videoDurationMs: Int {
+        (assets ?? [])
+            .filter { $0.assetType == .video }
+            .reduce(0) { $0 + ($1.durationMilliseconds ?? 0) }
     }
 
     func getItemsCount() -> String {
-        let images = imageCount ?? 0
+        let images = imageCount
         let videos = videoCount
 
         var imagesLabel = ""
@@ -172,10 +179,10 @@ struct AlbumDetailsView: View {
     }
 
     private func getSlideshowDurationText() -> String {
-        guard assetCount != nil else { return "" }
+        guard assets != nil else { return "" }
 
         let duration = slideshowDurationMinutes(
-            imageCount: imageCount ?? 0,
+            imageCount: imageCount,
             videoDurationMilliseconds: videoDurationMs,
             imageInterval: slideshowInterval
         )
@@ -189,71 +196,45 @@ struct AlbumDetailsView: View {
     private func loadAlbumDetail() async {
         isLoading = true
 
-        // Paint instantly from the previous visit's disk cache, if any, then refresh below.
-        // Albums change rarely, so the cached header/counts are almost always still correct.
+        // Paint instantly from the previous visit's disk caches, if any, then refresh below.
+        // Albums change rarely, so the cached header and asset list are almost always still
+        // correct; a brand-new album shows the spinner until its list loads.
         if let cachedAlbum = AlbumDetailCache.shared.cached(albumID: albumID) {
-            apply(album: cachedAlbum)
-            if let cachedInfo = SlideshowDurationCache.shared.cached(albumID: albumID) {
-                apply(durationInfo: cachedInfo)
-            }
+            album = cachedAlbum
+        }
+        if let cachedAssets = AlbumAssetsCache.shared.cached(albumID: albumID) {
+            assets = cachedAssets
+        }
+        if album != nil, assets != nil {
             isLoading = false
         }
 
         do {
-            let loadedAlbum = try await immichClient.getAlbum(albumID: albumID)
-            apply(album: loadedAlbum)
+            // The album header and its asset list are independent — fetch concurrently. The
+            // item counts and duration are derived from the full asset list, which the
+            // slideshow and asset grid cache too, so this visit warms them all at once.
+            async let albumTask = immichClient.getAlbum(albumID: albumID)
+            async let assetsTask = immichClient.getAlbumAssets(albumID: albumID)
+
+            let loadedAlbum = try await albumTask
+            album = loadedAlbum
             AlbumDetailCache.shared.set(loadedAlbum)
 
-            // Duration info (may skip the video fetch on a cache hit) and the thumbnail
-            // are independent — fetch them concurrently, assign on this actor.
-            async let durationInfo = fetchDurationInfo(for: loadedAlbum)
-            async let thumbnail = fetchThumbnail(for: loadedAlbum)
+            async let thumbnailTask = fetchThumbnail(for: loadedAlbum)
 
-            try await apply(durationInfo: durationInfo)
-            thumbnailImage = try await thumbnail
+            let loadedAssets = try await assetsTask
+            assets = loadedAssets
+            AlbumAssetsCache.shared.set(albumID: albumID, assets: loadedAssets)
+
+            thumbnailImage = try await thumbnailTask
         } catch {
             // Only surface the error if we had nothing cached to fall back on.
-            if assetCount == nil {
+            if assets == nil {
                 errors.append(error.localizedDescription)
             }
             logError(error)
         }
         isLoading = false
-    }
-
-    private func apply(album loadedAlbum: Album) {
-        album = loadedAlbum
-        assetCount = loadedAlbum.assetCount
-    }
-
-    private func apply(durationInfo info: SlideshowDurationInfo) {
-        videoCount = info.videoCount
-        videoDurationMs = info.videoDurationMilliseconds
-        if let count = info.assetCount {
-            assetCount = count
-        }
-    }
-
-    /// Video count + total video duration for the album, from the cache when the album is
-    /// unchanged, otherwise by fetching just the album's videos (and caching the result).
-    private func fetchDurationInfo(for album: Album) async throws -> SlideshowDurationInfo {
-        let token = SlideshowDurationCache.token(
-            assetCount: album.assetCount,
-            lastModifiedAssetTimestamp: album.lastModifiedAssetTimestamp
-        )
-        if let cached = SlideshowDurationCache.shared.fresh(albumID: albumID, token: token) {
-            return cached
-        }
-
-        let videos = try await immichClient.getAlbumVideoAssets(albumID: albumID)
-        let info = SlideshowDurationInfo(
-            token: token,
-            assetCount: album.assetCount,
-            videoCount: videos.count,
-            videoDurationMilliseconds: videos.reduce(0) { $0 + ($1.durationMilliseconds ?? 0) }
-        )
-        SlideshowDurationCache.shared.set(albumID: albumID, info: info)
-        return info
     }
 
     private func fetchThumbnail(for album: Album) async throws -> Image? {

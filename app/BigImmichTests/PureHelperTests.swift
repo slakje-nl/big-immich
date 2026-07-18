@@ -21,24 +21,6 @@ struct SlideshowDurationTests {
     }
 }
 
-struct AlbumImageCountTests {
-    @Test func subtractsVideosFromTheTotal() {
-        #expect(albumImageCount(assetCount: 10, videoCount: 3) == 7)
-    }
-
-    @Test func neverGoesNegative() {
-        #expect(albumImageCount(assetCount: 2, videoCount: 5) == 0)
-    }
-
-    @Test func unknownTotalReturnsNil() {
-        #expect(albumImageCount(assetCount: nil, videoCount: 3) == nil)
-    }
-
-    @Test func allVideosLeaveNoImages() {
-        #expect(albumImageCount(assetCount: 4, videoCount: 4) == 0)
-    }
-}
-
 struct ImageDiskCacheTests {
     private func makeCache() -> ImageDiskCache {
         ImageDiskCache(directoryName: "test-\(UUID().uuidString)")
@@ -92,47 +74,6 @@ struct CodableDiskCacheTests {
         cache.clear()
         #expect(cache.totalSizeBytes() == 0)
         #expect(cache.value(forKey: "a") == nil)
-    }
-}
-
-struct SlideshowDurationCacheTests {
-    private func makeCache() -> SlideshowDurationCache {
-        SlideshowDurationCache(store: CodableDiskCache(name: "test-\(UUID().uuidString)"))
-    }
-
-    private func info(token: String) -> SlideshowDurationInfo {
-        SlideshowDurationInfo(token: token, assetCount: 5, videoCount: 2, videoDurationMilliseconds: 1000)
-    }
-
-    @Test func freshReturnsInfoOnTokenMatch() {
-        let cache = makeCache()
-        let id = AlbumID(rawValue: "a")
-        cache.set(albumID: id, info: info(token: "t1"))
-        #expect(cache.fresh(albumID: id, token: "t1")?.videoCount == 2)
-        cache.clear()
-    }
-
-    @Test func freshReturnsNilOnTokenMismatch() {
-        let cache = makeCache()
-        let id = AlbumID(rawValue: "a")
-        cache.set(albumID: id, info: info(token: "t1"))
-        #expect(cache.fresh(albumID: id, token: "t2") == nil)
-        cache.clear()
-    }
-
-    @Test func cachedReturnsRegardlessOfToken() {
-        let cache = makeCache()
-        let id = AlbumID(rawValue: "a")
-        cache.set(albumID: id, info: info(token: "t1"))
-        #expect(cache.cached(albumID: id)?.assetCount == 5)
-        cache.clear()
-    }
-
-    @Test func tokenChangesWithAssetCountOrTimestamp() {
-        let base = SlideshowDurationCache.token(assetCount: 5, lastModifiedAssetTimestamp: "2026-01-01")
-        #expect(base != SlideshowDurationCache.token(assetCount: 6, lastModifiedAssetTimestamp: "2026-01-01"))
-        #expect(base != SlideshowDurationCache.token(assetCount: 5, lastModifiedAssetTimestamp: "2026-02-02"))
-        #expect(base == SlideshowDurationCache.token(assetCount: 5, lastModifiedAssetTimestamp: "2026-01-01"))
     }
 }
 

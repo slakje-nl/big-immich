@@ -8,7 +8,6 @@ protocol DiskCacheReporting: Sendable {
 }
 
 extension ImageDiskCache: DiskCacheReporting {}
-extension SlideshowDurationCache: DiskCacheReporting {}
 extension AlbumDetailCache: DiskCacheReporting {}
 extension AlbumsListCache: DiskCacheReporting {}
 extension AlbumAssetsCache: DiskCacheReporting {}
@@ -20,7 +19,6 @@ enum AppCaches {
     static var all: [DiskCacheReporting] {
         [
             ImageDiskCache.shared,
-            SlideshowDurationCache.shared,
             AlbumDetailCache.shared,
             AlbumsListCache.shared,
             AlbumAssetsCache.shared

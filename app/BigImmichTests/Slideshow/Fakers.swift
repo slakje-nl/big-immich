@@ -109,10 +109,6 @@ class FakeImmichClient: ImmichClientProtocol {
         albumAssets[albumID] ?? []
     }
 
-    func getAlbumVideoAssets(albumID: AlbumID) async throws -> [AlbumAsset] {
-        (albumAssets[albumID] ?? []).filter { $0.assetType == .video }
-    }
-
     func getServerVersion() async throws -> ServerVersion {
         ServerVersion(major: 3, minor: 0, patch: 2)
     }
