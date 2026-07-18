@@ -241,7 +241,12 @@ final class SlideshowViewModel {
         userAssetsCount = slideshowAsset.counter.total
         userDateTime = formattedCaptureDate(asset)
         userLocation = formattedLocation(asset)
-        loadAssetMetadata(for: asset.id)
+        // The album/search response already carries EXIF, so only fetch the full
+        // asset when it's missing (e.g. a Top Shelf deep link) — saves one network
+        // round-trip per photo, which matters on a slow connection.
+        if asset.exifInfo == nil {
+            loadAssetMetadata(for: asset.id)
+        }
 
         if asset.assetType == .image {
             do {
