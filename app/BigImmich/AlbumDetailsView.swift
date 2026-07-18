@@ -213,7 +213,7 @@ struct AlbumDetailsView: View {
             assetCount: album.assetCount,
             lastModifiedAssetTimestamp: album.lastModifiedAssetTimestamp
         )
-        if let cached = SlideshowDurationCache.get(albumID: albumID, token: token) {
+        if let cached = await SlideshowDurationCache.shared.get(albumID: albumID, token: token) {
             return cached
         }
 
@@ -223,7 +223,7 @@ struct AlbumDetailsView: View {
             videoCount: videos.count,
             videoDurationMilliseconds: videos.reduce(0) { $0 + ($1.durationMilliseconds ?? 0) }
         )
-        SlideshowDurationCache.set(albumID: albumID, info: info)
+        await SlideshowDurationCache.shared.set(albumID: albumID, info: info)
         return info
     }
 
