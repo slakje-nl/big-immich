@@ -90,6 +90,7 @@ protocol SlideshowSettingsProtocol {
         SlideshowOnceEndedAnotherAlbumSelection { get set }
     var slideshowShowProgressBar: SlideshowShowProgressBar { get set }
     var slideshowImageQuality: SlideshowImageQuality { get set }
+    var slideshowPreloadVideos: Bool { get set }
 }
 
 final class SlideshowSettings: ObservableObject, SlideshowSettingsProtocol {
@@ -105,4 +106,5 @@ final class SlideshowSettings: ObservableObject, SlideshowSettingsProtocol {
         SlideshowOnceEndedAnotherAlbumSelection = .random
     @AppStorage("slideshowShowProgressBar") var slideshowShowProgressBar: SlideshowShowProgressBar = .always
     @AppStorage("slideshowImageQuality") var slideshowImageQuality: SlideshowImageQuality = .fullsize
+    @AppStorage("slideshowPreloadVideos") var slideshowPreloadVideos: Bool = true
 }

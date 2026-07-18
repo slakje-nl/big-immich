@@ -49,9 +49,10 @@ final class SlideshowViewModel {
 
     @ObservationIgnored private let imageLoader: AssetImageLoader
 
-    /// Videos warmed ahead of time (connection + initial data), keyed by asset id, so the
-    /// next video starts sooner. Consumed when its asset becomes current; cleared on stop.
-    @ObservationIgnored private var prewarmedVideos: [AssetID: AVURLAsset] = [:]
+    /// The single next video warmed ahead of time (connection + initial data), so it starts
+    /// sooner. Consumed when its asset becomes current; cleared on stop. Only ever one, to
+    /// avoid holding several open streams.
+    @ObservationIgnored private var prewarmedVideo: (id: AssetID, asset: AVURLAsset)?
 
     init(
         initialAlbumID: AlbumID,
@@ -90,7 +91,7 @@ final class SlideshowViewModel {
         stopSlideshowTimer()
         stopProgressBarTimer()
         stopCurrentPlayer()
-        prewarmedVideos.removeAll()
+        prewarmedVideo = nil
         // The in-memory image cache only serves this session; drop it on exit rather than
         // key it by rendition size. Cheap to rebuild — the on-disk cache backs the next run.
         imageLoader.clear()
@@ -275,8 +276,9 @@ final class SlideshowViewModel {
             }
         } else if asset.assetType == .video {
             let urlAsset: AVURLAsset
-            if let prewarmed = prewarmedVideos.removeValue(forKey: asset.id) {
-                urlAsset = prewarmed
+            if let prewarmed = prewarmedVideo, prewarmed.id == asset.id {
+                urlAsset = prewarmed.asset
+                prewarmedVideo = nil
             } else {
                 do {
                     let playbackURL = try await immichClient.videoPlaybackURL(
@@ -326,7 +328,10 @@ final class SlideshowViewModel {
         }
 
         // Warm only the immediate next video, to avoid opening several streams at once.
-        if let next = upcoming.first, next.asset.assetType == .video {
+        // Skippable from Settings if prewarming ever causes trouble on a given setup.
+        if settings.slideshowPreloadVideos,
+           let next = upcoming.first, next.asset.assetType == .video
+        {
             await prewarmVideo(asset: next.asset)
         }
     }
@@ -344,17 +349,15 @@ final class SlideshowViewModel {
     }
 
     /// Warms the next video's connection and initial data so playback starts sooner when we
-    /// reach it. Bounded so we never hold more than a couple of warm streams.
+    /// reach it. Only one video is ever warm at a time, so any earlier one is dropped.
     private func prewarmVideo(asset: AlbumAsset) async {
-        guard prewarmedVideos[asset.id] == nil else { return }
-        if prewarmedVideos.count >= 3 {
-            prewarmedVideos.removeAll()
-        }
+        guard prewarmedVideo?.id != asset.id else { return }
+        prewarmedVideo = nil
         guard let url = try? await immichClient.videoPlaybackURL(assetID: asset.id)
         else { return }
 
         let urlAsset = AVURLAsset(url: url)
-        prewarmedVideos[asset.id] = urlAsset
+        prewarmedVideo = (asset.id, urlAsset)
         _ = try? await urlAsset.load(.isPlayable)
     }
 

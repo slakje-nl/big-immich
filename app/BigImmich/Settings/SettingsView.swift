@@ -26,6 +26,7 @@ struct SettingsView: View {
 
     // performance
     @AppStorage("slideshowImageQuality") private var slideshowImageQuality: SlideshowImageQuality = .fullsize
+    @AppStorage("slideshowPreloadVideos") private var slideshowPreloadVideos: Bool = true
     @AppStorage(ImageDiskCache.thumbnailsEnabledDefaultsKey) private var cacheThumbnails: Bool = true
     @AppStorage(ImageDiskCache.fullSizeEnabledDefaultsKey) private var cacheFullSizeImages: Bool = false
     @State private var imageCacheSize: String = "…"
@@ -464,6 +465,33 @@ struct SettingsView: View {
                                 alignment: .leading
                             )
                         }
+
+                        HStack {
+                            Text("Preload videos")
+                                .frame(
+                                    width: leftSideWidth,
+                                    alignment: .leading
+                                )
+                                .bold()
+
+                            Picker(
+                                "Preload videos",
+                                selection: $slideshowPreloadVideos
+                            ) {
+                                Text("true").tag(true)
+                                Text("false").tag(false)
+                            }
+                            .pickerStyle(.inline)
+                            .frame(width: geo.size.width * 0.3)
+                        }
+
+                        Text("Warms the next video for a faster start; turn off if it causes playback issues.")
+                            .foregroundColor(.white)
+                            .frame(
+                                width: leftSideWidth + geo.size.width * 0.4,
+                                alignment: .leading
+                            )
+                            .multilineTextAlignment(.leading)
 
                         HStack {
                             Text("Cache thumbnails")
