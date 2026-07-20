@@ -333,7 +333,7 @@ struct SettingsView: View {
             statusChip(configurationError, color: configurationErrorColour)
         } else if connectionTested {
             if connectionWorking {
-                statusChip("Connection to Immich works", color: .green)
+                statusChip("Connection to Immich works!", color: .green)
                 if outdatedServer {
                     footnote("This app is designed for Immich \(minimumImmichVersion.displayString) or newer. Updating Immich is recommended.", color: .yellow)
                 }
