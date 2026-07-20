@@ -446,10 +446,12 @@ struct SlideshowView: View {
     private func optionRowValue(_ row: SlideshowViewModel.OptionRow) -> some View {
         switch row {
         case .interval:
+            // Hide the chevron once the value can't move that way, but keep it occupying its space
+            // (opacity, not removal) so the number stays put.
             HStack(spacing: 12) {
-                Text("‹").foregroundColor(.white.opacity(0.4))
+                Text("‹").foregroundColor(.white.opacity(viewModel.displayInterval <= 1 ? 0 : 0.4))
                 Text("\(viewModel.displayInterval)s").foregroundColor(.white.opacity(0.85))
-                Text("›").foregroundColor(.white.opacity(0.4))
+                Text("›").foregroundColor(.white.opacity(viewModel.displayInterval >= 60 ? 0 : 0.4))
             }
         case .toggleStats:
             Capsule()

@@ -582,19 +582,30 @@ final class SlideshowViewModel {
         return items[optionsMenuIndex]
     }
 
-    /// Left/right on the highlighted row: only the interval is a left/right value (clamped at the
-    /// ends). The nerd-stats toggle ignores left/right — it flips with the select button.
+    /// Left/right on the highlighted row: the interval steps (clamped at the ends), and the
+    /// nerd-stats row flips too. Off-centre touchpad clicks land as a directional press rather than
+    /// a select, so honouring left/right here is what makes the toggle reliable to flip.
     private func adjustCurrentOption(_ direction: MoveCommandDirection) {
-        guard case .interval = currentOptionRow() else { return }
-        let value = displayInterval + (direction == .right ? 1 : -1)
-        let clamped = min(max(value, 1), 60)
-        settings.slideshowInterval = clamped
-        displayInterval = clamped
+        switch currentOptionRow() {
+        case .interval:
+            let value = displayInterval + (direction == .right ? 1 : -1)
+            let clamped = min(max(value, 1), 60)
+            settings.slideshowInterval = clamped
+            displayInterval = clamped
+        case .toggleStats:
+            toggleVideoStats()
+        case .none:
+            break
+        }
     }
 
     /// The select (middle) button flips the nerd-stats toggle.
     func handleSelect() {
         guard showOptionsMenu, case .toggleStats = currentOptionRow() else { return }
+        toggleVideoStats()
+    }
+
+    private func toggleVideoStats() {
         showVideoStats.toggle()
         settings.slideshowShowVideoStats = showVideoStats
         if showVideoStats {
