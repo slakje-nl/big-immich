@@ -43,8 +43,8 @@ final class SlideshowJourneyUITests: XCTestCase {
 
         // 3. Type the mock-server credentials into the Settings form, exactly as
         //    a user would, and wait for the connection test to pass.
-        typeCredential(mockURL, into: app.textFields["immichURLField"])
-        typeCredential(apiKey, into: app.secureTextFields["apiKeyField"])
+        typeCredential(mockURL, fieldID: "immichURLField", secure: false, in: app)
+        typeCredential(apiKey, fieldID: "apiKeyField", secure: true, in: app)
         XCTAssertTrue(
             app.staticTexts["Connection to Immich works!"].waitForExistence(timeout: 20),
             "expected a working connection to the mock server"
@@ -94,25 +94,33 @@ final class SlideshowJourneyUITests: XCTestCase {
         add(attachment)
     }
 
-    /// Moves focus downward onto the given field (the tvOS focus engine only
-    /// exposes directional moves), presses Select to enter text-entry mode
-    /// (on tvOS a highlighted field still lacks *keyboard* focus until then),
-    /// types via the emulated hardware keyboard, and dismisses the keyboard
-    /// with Menu, which keeps the entered text.
-    private func typeCredential(_ text: String, into field: XCUIElement) {
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "text field not found")
+    /// Each credential field shows a compact "Add/Edit" button at rest and reveals a real text
+    /// field only while editing. So: focus the button (the tvOS focus engine only exposes
+    /// directional moves), Select to reveal the auto-focused field, Select again to enter
+    /// text-entry mode (a highlighted field still lacks *keyboard* focus until then), type via the
+    /// emulated hardware keyboard, and dismiss with Menu — which keeps the entered text.
+    private func typeCredential(_ text: String, fieldID: String, secure: Bool, in app: XCUIApplication) {
+        let button = app.buttons["\(fieldID)Button"]
+        XCTAssertTrue(button.waitForExistence(timeout: 10), "field button not found")
 
-        var focused = field.hasFocus
+        var focused = button.hasFocus
         for _ in 0 ..< 12 where !focused {
             XCUIRemote.shared.press(.down)
             Thread.sleep(forTimeInterval: 0.3)
-            focused = field.hasFocus
+            focused = button.hasFocus
         }
-        XCTAssertTrue(focused, "could not focus the text field")
+        XCTAssertTrue(focused, "could not focus the field button")
+
+        // Reveal the text field; it grabs focus as it appears.
+        XCUIRemote.shared.press(.select)
+        Thread.sleep(forTimeInterval: 0.8)
+
+        let field = secure ? app.secureTextFields[fieldID] : app.textFields[fieldID]
+        XCTAssertTrue(field.waitForExistence(timeout: 5), "text field not found")
 
         XCUIRemote.shared.press(.select)
         Thread.sleep(forTimeInterval: 1.0)
-        XCUIApplication().typeText(text)
+        app.typeText(text)
         Thread.sleep(forTimeInterval: 0.5)
         XCUIRemote.shared.press(.menu)
         Thread.sleep(forTimeInterval: 0.8)

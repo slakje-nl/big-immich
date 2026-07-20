@@ -91,6 +91,7 @@ protocol SlideshowSettingsProtocol {
     var slideshowShowProgressBar: SlideshowShowProgressBar { get set }
     var slideshowImageQuality: SlideshowImageQuality { get set }
     var slideshowPreloadVideos: Bool { get set }
+    var slideshowShowVideoStats: Bool { get set }
 }
 
 final class SlideshowSettings: ObservableObject, SlideshowSettingsProtocol {
@@ -107,4 +108,5 @@ final class SlideshowSettings: ObservableObject, SlideshowSettingsProtocol {
     @AppStorage("slideshowShowProgressBar") var slideshowShowProgressBar: SlideshowShowProgressBar = .always
     @AppStorage("slideshowImageQuality") var slideshowImageQuality: SlideshowImageQuality = .fullsize
     @AppStorage("slideshowPreloadVideos") var slideshowPreloadVideos: Bool = true
+    @AppStorage("slideshowShowVideoStats") var slideshowShowVideoStats: Bool = false
 }
