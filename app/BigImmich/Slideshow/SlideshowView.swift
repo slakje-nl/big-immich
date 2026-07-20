@@ -34,6 +34,49 @@ struct SlideshowView: View {
     }
 
     var body: some View {
+        // Route the select/click through a Button primary action, not `.onTapGesture`: on tvOS a
+        // touchpad click reaches a focused Button's action reliably (even with slight movement),
+        // whereas a tap gesture on a bare focusable view is missed most of the time.
+        Button {
+            viewModel.handleSelect()
+        } label: {
+            content
+        }
+        .buttonStyle(SlideshowSurfaceButtonStyle())
+        .onAppear {
+            Task {
+                await viewModel.start()
+            }
+        }
+        .onDisappear {
+            viewModel.stop()
+        }
+        .onExitCommand {
+            // The options overlay swallows the back button to close itself, not the slideshow.
+            if viewModel.showOptionsMenu {
+                viewModel.closeOptionsMenu()
+                return
+            }
+
+            viewModel.clearImageCache()
+
+            if let asset = viewModel.slideshowAsset {
+                onExit(asset.album.id, asset.album.albumName, asset.asset.id)
+            } else {
+                onExit(initialAlbumID, initialAlbumName, initialAssetID)
+            }
+        }
+        .onMoveCommand { direction in
+            Task {
+                await viewModel.handleMoveCommand(direction)
+            }
+        }
+        .onPlayPauseCommand {
+            viewModel.togglePause()
+        }
+    }
+
+    private var content: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
@@ -90,41 +133,6 @@ struct SlideshowView: View {
             if !viewModel.errors.isEmpty || !viewModel.informations.isEmpty {
                 messagesOverlay
             }
-        }
-        .focusable(true)
-        .onAppear {
-            Task {
-                await viewModel.start()
-            }
-        }
-        .onDisappear {
-            viewModel.stop()
-        }
-        .onExitCommand {
-            // The options overlay swallows the back button to close itself, not the slideshow.
-            if viewModel.showOptionsMenu {
-                viewModel.closeOptionsMenu()
-                return
-            }
-
-            viewModel.clearImageCache()
-
-            if let asset = viewModel.slideshowAsset {
-                onExit(asset.album.id, asset.album.albumName, asset.asset.id)
-            } else {
-                onExit(initialAlbumID, initialAlbumName, initialAssetID)
-            }
-        }
-        .onMoveCommand { direction in
-            Task {
-                await viewModel.handleMoveCommand(direction)
-            }
-        }
-        .onPlayPauseCommand {
-            viewModel.togglePause()
-        }
-        .onTapGesture {
-            viewModel.handleSelect()
         }
     }
 
@@ -529,5 +537,13 @@ struct SlideshowView: View {
         }
         .transition(.opacity.combined(with: .move(edge: .trailing)))
         .animation(.easeInOut, value: viewModel.errors)
+    }
+}
+
+/// The slideshow surface is a Button (for reliable select handling) but must look untouched — no
+/// focus lift, tint or scale. This style renders the label exactly as-is.
+private struct SlideshowSurfaceButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
     }
 }
