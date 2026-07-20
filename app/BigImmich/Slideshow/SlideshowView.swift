@@ -334,6 +334,10 @@ struct SlideshowView: View {
             if !stats.colorSpace.isEmpty {
                 statLine("Colour", stats.colorSpace)
             }
+            statLine("Engine", viewModel.activeVideoEngine.label)
+            if let variant = stats.variant {
+                statLine("Quality", variant)
+            }
             statLine("Bitrate", SlideshowView.bitrateLabel(stats.indicatedBitrate))
             statLine("Observed", SlideshowView.bitrateLabel(stats.observedBitrate))
             statLine("Buffer", String(format: "%.1fs", stats.bufferedAhead))
@@ -444,6 +448,7 @@ struct SlideshowView: View {
         switch row {
         case .interval: Text("Slideshow interval")
         case .toggleStats: Text("Nerd stats")
+        case .quality: Text("Forced quality")
         }
     }
 
@@ -469,6 +474,17 @@ struct SlideshowView: View {
                     Circle().fill(.white).padding(3),
                     alignment: viewModel.showVideoStats ? .trailing : .leading
                 )
+        case .quality:
+            // Flanked by ‹ › like the interval, faded at the ends of the list (left/right clamp).
+            HStack(spacing: 12) {
+                Text("‹").foregroundColor(.white.opacity(
+                    viewModel.displayVideoQuality == SlideshowVideoQuality.allCases.first ? 0 : 0.4
+                ))
+                Text(viewModel.displayVideoQuality.shortLabel).foregroundColor(.white.opacity(0.85))
+                Text("›").foregroundColor(.white.opacity(
+                    viewModel.displayVideoQuality == SlideshowVideoQuality.allCases.last ? 0 : 0.4
+                ))
+            }
         }
     }
 

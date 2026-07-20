@@ -219,6 +219,22 @@ class ImmichAPIClient {
         }
     }
 
+    /// Issues a request and discards the body (used for DELETE, which returns 204 No Content).
+    func send(
+        httpMethod: String,
+        path: String,
+        queryParams: [String: String]?,
+        headers: [String: String]?
+    ) async throws {
+        _ = try await request(
+            httpMethod: httpMethod,
+            path: path,
+            queryParams: queryParams,
+            headers: headers,
+            jsonPayload: nil
+        )
+    }
+
     func loadMedia(
         httpMethod: String,
         path: String,
@@ -523,5 +539,42 @@ public actor ImmichAPI {
         guard let playbackUrl else { throw ImmichAPIError.badUrl }
 
         return playbackUrl
+    }
+
+    /// Issues a request with header auth and no response body (e.g. DELETE). Retries once on 401.
+    public func sendRequest(httpMethod: String, path: String) async throws {
+        try await withAuthRetry { client in
+            try await client.send(
+                httpMethod: httpMethod,
+                path: path,
+                queryParams: nil,
+                headers: findAuthHeaders()
+            )
+        }
+    }
+
+    /// Auth headers for media requests (`x-api-key` or the session-token header).
+    ///
+    /// HLS needs these because AVFoundation fetches the variant playlists and segments itself,
+    /// and Immich advertises them as *relative* URIs — so query-param auth on the master URL is
+    /// dropped on those sub-requests. Header auth (attached to the whole `AVURLAsset`) is the
+    /// only form that reaches every request.
+    public func mediaAuthHeaders() async throws -> [String: String] {
+        try await findAuthHeaders()
+    }
+
+    /// Builds a media URL with **no auth in the query** (auth travels in headers instead).
+    /// Used for the HLS master playlist, whose relative sub-URIs can't carry query auth.
+    public func mediaURL(path: String, queryParams: [String: String]?) throws -> URL {
+        guard let config = getConfig() else {
+            throw ImmichAPIError.missingConfig
+        }
+        guard let url = ImmichAPIClient(
+            baseURL: config.baseURL,
+            executor: executor
+        ).getUrl(path: path, queryParams: queryParams) else {
+            throw ImmichAPIError.badUrl
+        }
+        return url
     }
 }

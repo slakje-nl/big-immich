@@ -104,6 +104,9 @@ struct SettingsView: View {
 
     // performance
     @AppStorage("slideshowImageQuality") private var slideshowImageQuality: SlideshowImageQuality = .fullsize
+    @AppStorage("slideshowVideoEngine") private var slideshowVideoEngine: SlideshowVideoEngine = .classic
+    // See SlideshowSettings for why the default is a pinned 1080p rather than Auto.
+    @AppStorage("slideshowVideoQuality") private var slideshowVideoQuality: SlideshowVideoQuality = .fhd1080
     @AppStorage("slideshowPreloadVideos") private var slideshowPreloadVideos: Bool = true
     @AppStorage(ImageDiskCache.thumbnailsEnabledDefaultsKey) private var cacheThumbnails: Bool = true
     @AppStorage(ImageDiskCache.fullSizeEnabledDefaultsKey) private var cacheFullSizeImages: Bool = false
@@ -140,6 +143,13 @@ struct SettingsView: View {
         Binding(
             get: { slideshowShowProgressBar == .always },
             set: { slideshowShowProgressBar = $0 ? .always : .never }
+        )
+    }
+
+    private var hlsEnabled: Binding<Bool> {
+        Binding(
+            get: { slideshowVideoEngine == .hls },
+            set: { slideshowVideoEngine = $0 ? .hls : .classic }
         )
     }
 
@@ -346,38 +356,75 @@ struct SettingsView: View {
     // MARK: - Slideshow
 
     private var slideshowDetail: some View {
-        card {
-            pickerRow("Slide interval", value: $slideshowInterval, options: slideIntervalOptions, first: true)
-            rowDivider
-            pickerRow(
-                "Direction",
-                value: $slideshowDirection,
-                options: [
-                    ("oldest → newest", .oldestToNewest),
-                    ("newest → oldest", .newestToOldest),
-                    ("randomized", .randomized)
-                ]
-            )
-            rowDivider
-            pickerRow(
-                "When an album ends",
-                value: $slideshowOnceEndedAction,
-                options: [
-                    ("stop and show a message", .stopAndNotify),
-                    ("start again", .startAgain),
-                    ("load another album", .loadAnotherAlbum)
-                ]
-            )
-            if slideshowOnceEndedAction == .loadAnotherAlbum {
+        VStack(alignment: .leading, spacing: 20) {
+            sectionHeader("General")
+            card {
+                pickerRow(
+                    "Direction",
+                    value: $slideshowDirection,
+                    options: [
+                        ("oldest → newest", .oldestToNewest),
+                        ("newest → oldest", .newestToOldest),
+                        ("randomized", .randomized)
+                    ],
+                    first: true
+                )
                 rowDivider
                 pickerRow(
-                    "Next album",
-                    value: $slideshowOnceEndedAnotherAlbumSelection,
-                    options: [("older", .older), ("newer", .newer), ("random", .random)]
+                    "When an album ends",
+                    value: $slideshowOnceEndedAction,
+                    options: [
+                        ("stop and show a message", .stopAndNotify),
+                        ("start again", .startAgain),
+                        ("load another album", .loadAnotherAlbum)
+                    ]
                 )
+                if slideshowOnceEndedAction == .loadAnotherAlbum {
+                    rowDivider
+                    pickerRow(
+                        "Next album",
+                        value: $slideshowOnceEndedAnotherAlbumSelection,
+                        options: [("older", .older), ("newer", .newer), ("random", .random)]
+                    )
+                }
+                rowDivider
+                toggleRow("Show progress bar", isOn: showProgressBar)
             }
-            rowDivider
-            toggleRow("Show progress bar", isOn: showProgressBar)
+
+            sectionHeader("Picture")
+            card {
+                pickerRow("Slide interval", value: $slideshowInterval, options: slideIntervalOptions, first: true)
+            }
+
+            sectionHeader("Video")
+            card {
+                toggleRow(
+                    "HLS video player (experimental)",
+                    subtitle: "Adaptive streaming that re-encodes on the fly. Experimental in Immich — "
+                        + "it needs real-time transcoding enabled on your server, and falls back to the "
+                        + "classic player automatically if it isn't available.",
+                    isOn: hlsEnabled,
+                    first: true
+                )
+                if slideshowVideoEngine == .hls {
+                    rowDivider
+                    pickerRow(
+                        "Forced quality",
+                        subtitle: "Auto adapts to bandwidth but cold-starts low and ramps up. Slideshow "
+                            + "clips are short, so pinning a stable, high-enough resolution is recommended "
+                            + "— it starts at full quality instead of ramping (capped to what the server offers).",
+                        value: $slideshowVideoQuality,
+                        options: [
+                            ("Auto (adaptive)", .auto),
+                            ("2160p (4K)", .uhd2160),
+                            ("1440p", .qhd1440),
+                            ("1080p", .fhd1080),
+                            ("720p", .hd720),
+                            ("480p", .sd480)
+                        ]
+                    )
+                }
+            }
         }
     }
 
@@ -487,6 +534,7 @@ struct SettingsView: View {
 
     private var performanceDetail: some View {
         VStack(alignment: .leading, spacing: 20) {
+            sectionHeader("Loading")
             card {
                 pickerRow(
                     "Photo quality",
@@ -553,9 +601,10 @@ struct SettingsView: View {
             } else {
                 VStack(alignment: .leading, spacing: 10) {
                     ForEach(Array(appLog.entries.suffix(20).reversed())) { entry in
-                        DebugLogRow(entry: entry, maxWidth: 900)
+                        DebugLogRow(entry: entry)
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
@@ -857,7 +906,6 @@ private struct EditableFieldRow: View {
 
 private struct DebugLogRow: View {
     let entry: LogEntry
-    let maxWidth: CGFloat
 
     @FocusState private var focused: Bool
 
@@ -865,7 +913,10 @@ private struct DebugLogRow: View {
         Text("[\(entry.date.formatted(date: .omitted, time: .standard))] \(entry.message)")
             .font(.system(.caption, design: .monospaced))
             .foregroundColor(.red)
-            .frame(maxWidth: maxWidth, alignment: .leading)
+            // Fill the column width so the row spans under the "Clear logs" button — both so it
+            // reads full-width and so an up-press from the top row can reach that button (tvOS
+            // focus is geometric; a narrow left-aligned row has nothing focusable directly above).
+            .frame(maxWidth: .infinity, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
