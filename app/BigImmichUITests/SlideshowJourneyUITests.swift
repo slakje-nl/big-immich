@@ -43,8 +43,8 @@ final class SlideshowJourneyUITests: XCTestCase {
 
         // 3. Type the mock-server credentials into the Settings form, exactly as
         //    a user would, and wait for the connection test to pass.
-        typeCredential(mockURL, into: app.textFields["immichURLField"])
-        typeCredential(apiKey, into: app.secureTextFields["apiKeyField"])
+        typeCredential(mockURL, fieldID: "immichURLField", secure: false, in: app)
+        typeCredential(apiKey, fieldID: "apiKeyField", secure: true, in: app)
         XCTAssertTrue(
             app.staticTexts["Connection to Immich works!"].waitForExistence(timeout: 20),
             "expected a working connection to the mock server"
@@ -94,25 +94,29 @@ final class SlideshowJourneyUITests: XCTestCase {
         add(attachment)
     }
 
-    /// Moves focus downward onto the given field (the tvOS focus engine only
-    /// exposes directional moves), presses Select to enter text-entry mode
-    /// (on tvOS a highlighted field still lacks *keyboard* focus until then),
-    /// types via the emulated hardware keyboard, and dismisses the keyboard
-    /// with Menu, which keeps the entered text.
-    private func typeCredential(_ text: String, into field: XCUIElement) {
+    /// Moves focus downward onto the field (the tvOS focus engine only exposes directional moves),
+    /// presses Select to enter text-entry mode (a highlighted field still lacks *keyboard* focus
+    /// until then), types via the emulated hardware keyboard, and dismisses the keyboard with Menu,
+    /// which keeps the entered text.
+    private func typeCredential(_ text: String, fieldID: String, secure: Bool, in app: XCUIApplication) {
+        let field = secure ? app.secureTextFields[fieldID] : app.textFields[fieldID]
         XCTAssertTrue(field.waitForExistence(timeout: 10), "text field not found")
 
-        var focused = field.hasFocus
-        for _ in 0 ..< 12 where !focused {
-            XCUIRemote.shared.press(.down)
-            Thread.sleep(forTimeInterval: 0.3)
-            focused = field.hasFocus
+        // The redesigned settings puts a category sidebar on the left and the fields in a detail
+        // pane. Move Right off the sidebar into the pane (harmless if already there); entry lands on
+        // whichever control is nearest, so scan down and then up to settle on the target field.
+        if !field.hasFocus {
+            XCUIRemote.shared.press(.right)
+            Thread.sleep(forTimeInterval: 0.4)
         }
-        XCTAssertTrue(focused, "could not focus the text field")
+        if !focus(field, pressing: .down) {
+            _ = focus(field, pressing: .up)
+        }
+        XCTAssertTrue(field.hasFocus, "could not focus the text field")
 
         XCUIRemote.shared.press(.select)
         Thread.sleep(forTimeInterval: 1.0)
-        XCUIApplication().typeText(text)
+        app.typeText(text)
         Thread.sleep(forTimeInterval: 0.5)
         XCUIRemote.shared.press(.menu)
         Thread.sleep(forTimeInterval: 0.8)
@@ -132,11 +136,13 @@ final class SlideshowJourneyUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.5)
     }
 
-    /// Albums is the left-most segment.
+    /// Settings is now a full-page screen, so leave it with the Menu button — once from the detail
+    /// pane back to the sidebar, once more to exit to Albums.
     private func openAlbumsTab() {
-        press(.up, times: 4)
-        press(.left, times: 3)
-        Thread.sleep(forTimeInterval: 0.5)
+        XCUIRemote.shared.press(.menu)
+        Thread.sleep(forTimeInterval: 0.6)
+        XCUIRemote.shared.press(.menu)
+        Thread.sleep(forTimeInterval: 0.8)
     }
 
     private func openFirstAlbum() {

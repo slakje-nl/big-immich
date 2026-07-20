@@ -22,6 +22,10 @@ struct ContentView: View {
                     }
                 )
                 .zIndex(50)
+            } else if router.selectedTab == .settings {
+                // Settings is its own full-page destination — no top menu. It handles its own
+                // back button (two-stage: detail → sidebar, sidebar → exit).
+                SettingsView(onExit: router.exitSettings)
             } else {
                 VStack {
                     Picker("Menu", selection: $router.selectedTab) {
@@ -98,8 +102,8 @@ struct ContentView: View {
                 )
             }
         case .settings:
-            SettingsView()
-                .onExitCommand(perform: router.exitSettings)
+            // Rendered full-page above, outside the tab chrome.
+            EmptyView()
         }
     }
 }

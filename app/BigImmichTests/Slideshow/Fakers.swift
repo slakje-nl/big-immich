@@ -70,6 +70,7 @@ struct FakeSettings: SlideshowSettingsProtocol {
     var slideshowShowProgressBar: SlideshowShowProgressBar = .always
     var slideshowImageQuality: SlideshowImageQuality = .fullsize
     var slideshowPreloadVideos: Bool = true
+    var slideshowShowVideoStats: Bool = false
 
     init(
         slideshowOnceEndedAction: SlideshowOnceEndedAction,

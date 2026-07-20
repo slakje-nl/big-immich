@@ -33,17 +33,14 @@ struct BigImmichApp: App {
     init() {
         Self.applyUITestConfiguration()
 
-        if sentryEnabled {
-            let customSentryDSN = sentryDSN.trimmingCharacters(
-                in: .whitespacesAndNewlines
-            )
-            let usedSentryDSN =
-                customSentryDSN != ""
-                    ? customSentryDSN
-                    : "https://3361208ffd59305f7e5c9d0228940679@o118777.ingest.us.sentry.io/4510570198269952"
-
+        let customSentryDSN = sentryDSN.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        // Error reporting only runs when the user enables it and supplies their own DSN — there
+        // is no built-in fallback DSN.
+        if sentryEnabled, !customSentryDSN.isEmpty {
             SentrySDK.start { options in
-                options.dsn = usedSentryDSN
+                options.dsn = customSentryDSN
 
                 options.enableAutoSessionTracking = false
                 options.tracesSampleRate = 0.0

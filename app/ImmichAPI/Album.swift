@@ -72,12 +72,14 @@ public struct AlbumAsset: Codable, Identifiable {
     public let id: AssetID
     public let type: String
     public let durationMilliseconds: Int?
+    public let originalFileName: String?
     public let exifInfo: ExifInfo?
 
     enum CodingKeys: String, CodingKey {
         case id
         case type
         case exifInfo
+        case originalFileName
         case durationMilliseconds = "duration"
     }
 
@@ -85,11 +87,13 @@ public struct AlbumAsset: Codable, Identifiable {
         id: AssetID,
         type: String,
         durationMilliseconds: Int?,
+        originalFileName: String? = nil,
         exifInfo: ExifInfo? = nil
     ) {
         self.id = id
         self.type = type
         self.durationMilliseconds = durationMilliseconds
+        self.originalFileName = originalFileName
         self.exifInfo = exifInfo
     }
 
@@ -107,11 +111,25 @@ public struct ExifInfo: Codable {
     public let city: String?
     public let state: String?
     public let country: String?
+    public let exifImageWidth: Int?
+    public let exifImageHeight: Int?
+    public let fileSizeInByte: Int?
 
-    public init(dateTimeOriginal: String?, city: String?, state: String?, country: String?) {
+    public init(
+        dateTimeOriginal: String?,
+        city: String?,
+        state: String?,
+        country: String?,
+        exifImageWidth: Int? = nil,
+        exifImageHeight: Int? = nil,
+        fileSizeInByte: Int? = nil
+    ) {
         self.dateTimeOriginal = dateTimeOriginal
         self.city = city
         self.state = state
         self.country = country
+        self.exifImageWidth = exifImageWidth
+        self.exifImageHeight = exifImageHeight
+        self.fileSizeInByte = fileSizeInByte
     }
 }
