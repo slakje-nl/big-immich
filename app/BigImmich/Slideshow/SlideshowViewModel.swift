@@ -43,6 +43,14 @@ final class SlideshowViewModel {
     /// Observable mirror of the slideshow interval shown live in the options overlay. `settings`
     /// is `@ObservationIgnored`, so the overlay reads this to re-render when the value changes.
     var displayInterval = 5
+    /// Observable mirrors of the video-engine / quality settings, for the same reason as
+    /// `displayInterval`: the options overlay reads these to re-render live.
+    var displayVideoEngine: SlideshowVideoEngine = .classic
+    var displayVideoQuality: SlideshowVideoQuality = .fhd1080
+    /// The engine actually in use after runtime resolution — equals `displayVideoEngine` unless
+    /// HLS was requested but the server couldn't serve it, in which case it falls back to
+    /// `.classic`. Shown in the nerd-stats overlay.
+    var activeVideoEngine: SlideshowVideoEngine = .classic
     /// A short-lived "peek" of the video progress bar while playing (the down button). Ignored
     /// while paused, where the bar is shown permanently.
     var scrubberPeek = false
@@ -79,6 +87,18 @@ final class SlideshowViewModel {
     /// avoid holding several open streams.
     @ObservationIgnored private var prewarmedVideo: (id: AssetID, asset: AVURLAsset)?
 
+    /// The active HLS session (asset it belongs to + server session id), so it can be released
+    /// on the server when we move off the video or exit. `nil` for the classic engine.
+    @ObservationIgnored private var currentHLS: (assetID: AssetID, sessionID: String)?
+
+    /// The resolved HLS stream for the current video, kept so the quality menu can switch
+    /// renditions without a new server round-trip (it reuses the same session's variant URLs).
+    @ObservationIgnored private var currentHLSStream: HLSStream?
+
+    /// Set once we've told the user that HLS was requested but fell back to Classic (e.g. the
+    /// server has real-time transcoding disabled), so the notice shows once, not per video.
+    @ObservationIgnored private var hlsFallbackNotified = false
+
     init(
         initialAlbumID: AlbumID,
         initialAlbumName: AlbumName,
@@ -101,10 +121,9 @@ final class SlideshowViewModel {
             guard let self else { return }
             videoState = state
             // `.buffering`/`.loading` are patient states — we wait for the buffer, never skip.
-            // Only a real failure advances the slideshow.
+            // Only a real failure acts: an HLS failure retries on Classic, otherwise we advance.
             if case let .failed(message) = state {
-                showError(message)
-                Task { await self.moveToNext() }
+                Task { await self.handleVideoFailure(message) }
             }
         }
         videoController.onStatsChange = { [weak self] stats in
@@ -122,6 +141,9 @@ final class SlideshowViewModel {
     private func syncOverlayMirrors() {
         showVideoStats = settings.slideshowShowVideoStats
         displayInterval = settings.slideshowInterval
+        displayVideoEngine = settings.slideshowVideoEngine
+        displayVideoQuality = settings.slideshowVideoQuality
+        activeVideoEngine = settings.slideshowVideoEngine
     }
 
     func stop() {
@@ -453,26 +475,19 @@ final class SlideshowViewModel {
                 startImageTimers()
             }
         } else if asset.assetType == .video {
-            let urlAsset: AVURLAsset
+            let source: VideoSource
             if let prewarmed = prewarmedVideo, prewarmed.id == asset.id {
+                // A prewarmed video is always the classic progressive stream (HLS isn't prewarmed).
                 prewarmedVideo = nil
-                urlAsset = prewarmed.asset
-            } else if let url = try? await immichClient.videoPlaybackURL(assetID: asset.id) {
-                urlAsset = AVURLAsset(url: url)
+                source = VideoSource(asset: prewarmed.asset, engine: .classic, variantLabel: "Classic")
+            } else if let resolved = await makeVideoSource(for: asset) {
+                source = resolved
             } else {
                 showError("loading video failed: failed to construct playback URL")
                 return
             }
 
-            videoController.start(
-                asset: urlAsset,
-                autoplay: slideshowIsRunning,
-                forwardBufferDuration: 30,
-                onEnded: { [weak self] in
-                    Task { await self?.moveToNext() }
-                }
-            )
-            currentPlayer = videoController.player
+            applyVideoSource(source, assetID: asset.id, startAt: 0)
             // A video that loads while the slideshow is paused (e.g. navigated to from a paused
             // asset) shows its progress bar automatically via `showVideoScrubber`.
         }
@@ -503,7 +518,10 @@ final class SlideshowViewModel {
 
         // Warm only the immediate next video, to avoid opening several streams at once.
         // Skippable from Settings if prewarming ever causes trouble on a given setup.
+        // HLS is not prewarmed: warming its master would spin up a second server-side
+        // transcoding session for a video we may never reach.
         if settings.slideshowPreloadVideos,
+           settings.slideshowVideoEngine == .classic,
            let next = upcoming.first, next.asset.assetType == .video
         {
             await prewarmVideo(asset: next.asset)
@@ -527,18 +545,26 @@ final class SlideshowViewModel {
     enum OptionRow: Identifiable, Equatable {
         case interval
         case toggleStats
+        case quality
 
         var id: String {
             switch self {
             case .interval: "interval"
             case .toggleStats: "stats"
+            case .quality: "quality"
             }
         }
     }
 
     var optionsMenuItems: [OptionRow] {
         if currentPlayer != nil {
-            return [.toggleStats]
+            // Video: toggle nerd stats, plus a forced-quality row — but only on the adaptive (HLS)
+            // engine, which is what quality applies to. The engine itself is chosen in Settings.
+            var items: [OptionRow] = [.toggleStats]
+            if displayVideoEngine == .hls {
+                items.insert(.quality, at: 0)
+            }
+            return items
         }
         if currentImage != nil {
             return [.interval, .toggleStats]
@@ -586,23 +612,34 @@ final class SlideshowViewModel {
     /// nerd-stats row flips too. Off-centre touchpad clicks land as a directional press rather than
     /// a select, so honouring left/right here is what makes the toggle reliable to flip.
     private func adjustCurrentOption(_ direction: MoveCommandDirection) {
+        let forward = direction == .right
         switch currentOptionRow() {
         case .interval:
-            let value = displayInterval + (direction == .right ? 1 : -1)
+            let value = displayInterval + (forward ? 1 : -1)
             let clamped = min(max(value, 1), 60)
             settings.slideshowInterval = clamped
             displayInterval = clamped
         case .toggleStats:
             toggleVideoStats()
+        case .quality:
+            cycleQuality(forward: forward, wrap: false)
         case .none:
             break
         }
     }
 
-    /// The select (middle) button flips the nerd-stats toggle.
+    /// The select (middle) button acts on the highlighted row: flips the nerd-stats toggle, or
+    /// steps quality one rung (wrapping past the end). Interval is left/right only.
     func handleSelect() {
-        guard showOptionsMenu, case .toggleStats = currentOptionRow() else { return }
-        toggleVideoStats()
+        guard showOptionsMenu else { return }
+        switch currentOptionRow() {
+        case .toggleStats:
+            toggleVideoStats()
+        case .quality:
+            cycleQuality(forward: true, wrap: true)
+        case .interval, .none:
+            break
+        }
     }
 
     private func toggleVideoStats() {
@@ -611,6 +648,223 @@ final class SlideshowViewModel {
         if showVideoStats {
             loadDetailedAssetIfNeeded()
         }
+    }
+
+    // MARK: - Video engine (Classic / adaptive HLS)
+
+    /// A ready-to-play video: the AVFoundation asset plus how it was resolved (engine, quality
+    /// label, HLS session for cleanup, and any bitrate cap).
+    private struct VideoSource {
+        let asset: AVURLAsset
+        let engine: SlideshowVideoEngine
+        let variantLabel: String
+        var sessionID: String?
+        var maxBitrate: Double = 0
+    }
+
+    /// AVFoundation applies these header fields to every request for the asset — including the
+    /// HLS variant playlists and segments, which is why HLS must authenticate by header (Immich
+    /// advertises those sub-resources as relative URIs, so query-param auth is dropped on them).
+    private static let httpHeaderFieldsOption = "AVURLAssetHTTPHeaderFieldsKey"
+
+    /// Resolves how to play `asset`: HLS when the engine is set to it and the server supports it,
+    /// otherwise the classic progressive stream. A failed HLS resolution (e.g. the server has
+    /// real-time transcoding disabled) transparently falls back to classic.
+    private func makeVideoSource(for asset: AlbumAsset) async -> VideoSource? {
+        if settings.slideshowVideoEngine == .hls,
+           let hls = await makeHLSSource(for: asset)
+        {
+            return hls
+        }
+        guard let url = try? await immichClient.videoPlaybackURL(assetID: asset.id) else {
+            return nil
+        }
+        return VideoSource(asset: AVURLAsset(url: url), engine: .classic, variantLabel: "Classic")
+    }
+
+    private func makeHLSSource(for asset: AlbumAsset) async -> VideoSource? {
+        let stream: HLSStream
+        do {
+            stream = try await immichClient.hlsStream(assetID: asset.id)
+        } catch {
+            // Surface the reason in the on-device debug logs so a fallback can be analysed.
+            AppLog.shared.log(
+                "HLS unavailable for asset \(asset.id.string), falling back to Classic: "
+                    + "\(error)\(Self.hlsFallbackHint(for: error))",
+                level: .error,
+                source: "Video"
+            )
+            return nil
+        }
+        currentHLSStream = stream
+        let options = [Self.httpHeaderFieldsOption: stream.authHeaders]
+
+        // Pinned quality → play one variant playlist directly, so ABR never drops below it.
+        // Auto → hand over the master playlist and let AVFoundation adapt.
+        if let height = settings.slideshowVideoQuality.maxHeight,
+           let variant = stream.variant(forMaxHeight: height)
+        {
+            return VideoSource(
+                asset: AVURLAsset(url: variant.playlistURL, options: options),
+                engine: .hls,
+                variantLabel: "\(variant.heightPixels)p",
+                sessionID: stream.sessionID
+            )
+        }
+        return VideoSource(
+            asset: AVURLAsset(url: stream.masterURL, options: options),
+            engine: .hls,
+            variantLabel: "Auto",
+            sessionID: stream.sessionID
+        )
+    }
+
+    /// An actionable hint for common HLS failures, appended to the debug log.
+    private static func hlsFallbackHint(for error: Error) -> String {
+        switch error {
+        case ImmichAPIError.httpErrorCode(statusCode: 404):
+            " — the server has no stream metadata for this video yet. Run Immich's"
+                + " Administration → Jobs → Extract Metadata (All) to backfill keyframes/packets."
+        case ImmichAPIError.httpErrorCode(statusCode: 400):
+            " — real-time transcoding is disabled on the server (Admin → Settings → Video)."
+        default:
+            ""
+        }
+    }
+
+    /// Publishes a resolved `VideoSource`: records the engine/session, notes any HLS→Classic
+    /// fallback, and starts playback (optionally resuming at `startAt`).
+    private func applyVideoSource(_ source: VideoSource, assetID: AssetID, startAt: Double) {
+        activeVideoEngine = source.engine
+        currentHLS = source.sessionID.map { (assetID, $0) }
+        notifyHLSFallbackIfNeeded(source: source)
+        videoController.start(
+            asset: source.asset,
+            autoplay: slideshowIsRunning,
+            forwardBufferDuration: 30,
+            maxBitrate: source.maxBitrate,
+            startAtSeconds: startAt,
+            variantLabel: source.variantLabel,
+            onEnded: { [weak self] in
+                Task { await self?.moveToNext() }
+            }
+        )
+        currentPlayer = videoController.player
+    }
+
+    /// Once per slideshow session, tells the user when HLS was requested but fell back to
+    /// Classic; the underlying reason is already in the debug logs (see `makeHLSSource`).
+    private func notifyHLSFallbackIfNeeded(source: VideoSource) {
+        guard settings.slideshowVideoEngine == .hls, source.engine == .classic else { return }
+        guard !hlsFallbackNotified else { return }
+        hlsFallbackNotified = true
+        showInformation("Adaptive (HLS) unavailable — using Classic. See Settings → Debug logs.")
+    }
+
+    /// Handles a fatal playback error. When an HLS stream fails mid-playback — e.g. the server
+    /// 404s a variant it advertised, which its alpha real-time transcoder still does — we retry
+    /// the *same* asset once on the classic engine (surfacing the usual blue notice via
+    /// `applyVideoSource`) rather than skipping it. A classic failure, or a second failure after
+    /// falling back, advances to the next asset.
+    private func handleVideoFailure(_ message: String) async {
+        guard activeVideoEngine == .hls,
+              let asset = slideshowAsset?.asset, asset.assetType == .video
+        else {
+            showError(message)
+            await moveToNext()
+            return
+        }
+
+        AppLog.shared.log(
+            "HLS playback failed for asset \(asset.id.string) (\(message)); retrying on Classic.",
+            level: .error,
+            source: "Video"
+        )
+        let resumeAt = videoController.currentSeconds
+        endCurrentHLSSession()
+        guard let url = try? await immichClient.videoPlaybackURL(assetID: asset.id) else {
+            showError(message)
+            await moveToNext()
+            return
+        }
+        applyVideoSource(
+            VideoSource(asset: AVURLAsset(url: url), engine: .classic, variantLabel: "Classic"),
+            assetID: asset.id,
+            startAt: resumeAt
+        )
+    }
+
+    /// Releases the current HLS transcoding session on the server (best-effort), so it stops
+    /// transcoding as soon as we leave the video.
+    private func endCurrentHLSSession() {
+        currentHLSStream = nil
+        guard let current = currentHLS else { return }
+        currentHLS = nil
+        let client = immichClient
+        Task { await client.endHLSSession(assetID: current.assetID, sessionID: current.sessionID) }
+    }
+
+    /// The quality values the Quality row cycles through — the full fixed set (Auto, then tallest
+    /// to shortest), matching the Settings picker. A pinned height the server doesn't advertise
+    /// resolves to the nearest available rung at play time (see `HLSStream.variant(forMaxHeight:)`).
+    var qualityChoices: [SlideshowVideoQuality] {
+        SlideshowVideoQuality.allCases
+    }
+
+    /// Steps the pinned quality through `qualityChoices` and applies it in place when a live HLS
+    /// stream is playing (otherwise it just persists for the next HLS video).
+    private func cycleQuality(forward: Bool, wrap: Bool) {
+        let choices = qualityChoices
+        guard !choices.isEmpty else { return }
+        let current = choices.firstIndex(of: displayVideoQuality) ?? 0
+        let next: Int = if wrap {
+            forward
+                ? (current + 1) % choices.count
+                : (current - 1 + choices.count) % choices.count
+        } else {
+            forward ? min(current + 1, choices.count - 1) : max(current - 1, 0)
+        }
+        let chosen = choices[next]
+        guard chosen != displayVideoQuality else { return }
+        settings.slideshowVideoQuality = chosen
+        displayVideoQuality = chosen
+        if currentHLSStream != nil {
+            reloadCurrentVideoQuality(chosen)
+        }
+    }
+
+    /// Switches the playing video to `quality` in place, reusing the current HLS session's variant
+    /// URLs and resuming from the current position — no extra server round-trip.
+    private func reloadCurrentVideoQuality(_ quality: SlideshowVideoQuality) {
+        guard let stream = currentHLSStream,
+              let asset = slideshowAsset?.asset, asset.assetType == .video
+        else { return }
+
+        let resumeAt = videoController.currentSeconds
+        let options = [Self.httpHeaderFieldsOption: stream.authHeaders]
+
+        let url: URL
+        let label: String
+        if let height = quality.maxHeight, let variant = stream.variant(forMaxHeight: height) {
+            url = variant.playlistURL
+            label = "\(variant.heightPixels)p"
+        } else {
+            url = stream.masterURL
+            label = "Auto"
+        }
+
+        videoController.start(
+            asset: AVURLAsset(url: url, options: options),
+            autoplay: slideshowIsRunning,
+            forwardBufferDuration: 30,
+            startAtSeconds: resumeAt,
+            variantLabel: label,
+            onEnded: { [weak self] in
+                Task { await self?.moveToNext() }
+            }
+        )
+        currentPlayer = videoController.player
+        activeVideoEngine = .hls
     }
 
     /// Warms the next video's connection and initial data so playback starts sooner when we
@@ -670,6 +924,7 @@ final class SlideshowViewModel {
     private func stopCurrentPlayer() {
         videoController.stop()
         currentPlayer = nil
+        endCurrentHLSSession()
     }
 
     private func moveToNext() async {

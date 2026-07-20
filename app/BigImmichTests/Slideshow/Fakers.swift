@@ -70,6 +70,8 @@ struct FakeSettings: SlideshowSettingsProtocol {
     var slideshowShowProgressBar: SlideshowShowProgressBar = .always
     var slideshowImageQuality: SlideshowImageQuality = .fullsize
     var slideshowPreloadVideos: Bool = true
+    var slideshowVideoEngine: SlideshowVideoEngine = .classic
+    var slideshowVideoQuality: SlideshowVideoQuality = .auto
     var slideshowShowVideoStats: Bool = false
 
     init(
@@ -133,4 +135,11 @@ class FakeImmichClient: ImmichClientProtocol {
     func videoPlaybackURL(assetID: AssetID) async throws -> URL {
         URL(string: "https://example.test/\(assetID.string)/video")!
     }
+
+    func hlsStream(assetID: AssetID) async throws -> HLSStream {
+        let master = URL(string: "https://example.test/api/assets/\(assetID.string)/video/stream/main.m3u8")!
+        return HLSStream(sessionID: "test-session", masterURL: master, authHeaders: [:], variants: [])
+    }
+
+    func endHLSSession(assetID _: AssetID, sessionID _: String) async {}
 }

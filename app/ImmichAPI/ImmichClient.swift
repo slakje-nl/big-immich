@@ -44,6 +44,8 @@ public protocol ImmichClientProtocol {
     func loadThumbnail(assetID: AssetID, size: ThumbnailSize, retries: Int) async throws -> Data
     func thumbnailURL(assetID: AssetID, size: ThumbnailSize) async throws -> URL
     func videoPlaybackURL(assetID: AssetID) async throws -> URL
+    func hlsStream(assetID: AssetID) async throws -> HLSStream
+    func endHLSSession(assetID: AssetID, sessionID: String) async
 }
 
 func joinAlbums(order: AlbumsOrder, albumLists: [[AlbumSummary]]) -> [AlbumSummary] {
@@ -125,6 +127,39 @@ public class ImmichClient: ImmichClientProtocol {
             path: "/api/assets/\(assetID.string)/video/playback",
             queryParams: nil
         )
+    }
+
+    /// Resolves an HLS streaming session for `assetID`: fetches the master playlist (which
+    /// requires the server to have real-time transcoding enabled — otherwise this throws and the
+    /// caller falls back to `videoPlaybackURL`), parses its variants, and returns everything the
+    /// player needs, including the header auth that HLS sub-requests require.
+    public func hlsStream(assetID: AssetID) async throws -> HLSStream {
+        let path = "/api/assets/\(assetID.string)/video/stream/main.m3u8"
+        let data = try await ImmichAPI.shared.loadMedia(path: path, queryParams: nil)
+        let playlist = String(decoding: data, as: UTF8.self)
+        let masterURL = try await ImmichAPI.shared.mediaURL(path: path, queryParams: nil)
+        let headers = try await ImmichAPI.shared.mediaAuthHeaders()
+
+        let variants = HLSPlaylistParser.parseVariants(playlist: playlist, masterURL: masterURL)
+        guard let firstVariant = variants.first,
+              let sessionID = HLSPlaylistParser.sessionID(fromVariantURI: firstVariant.playlistURL.path)
+        else {
+            throw ImmichAPIError.badResponse
+        }
+
+        return HLSStream(
+            sessionID: sessionID,
+            masterURL: masterURL,
+            authHeaders: headers,
+            variants: variants
+        )
+    }
+
+    /// Releases the server-side transcoding session. Best-effort — failures are ignored since the
+    /// server also times sessions out on its own.
+    public func endHLSSession(assetID: AssetID, sessionID: String) async {
+        let path = "/api/assets/\(assetID.string)/video/stream/\(sessionID)"
+        try? await ImmichAPI.shared.sendRequest(httpMethod: "DELETE", path: path)
     }
 
     public func getServerVersion() async throws -> ServerVersion {
