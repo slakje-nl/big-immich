@@ -66,6 +66,10 @@ final class SlideshowViewModel {
 
     @ObservationIgnored let immichClient: ImmichClientProtocol
 
+    /// Writes the system idle-timer switch; injectable so tests can observe it without
+    /// `UIApplication`. See `setKeepsScreenAwake(_:)`.
+    @ObservationIgnored private let setIdleTimerDisabled: @MainActor (Bool) -> Void
+
     @ObservationIgnored private var slideshow: SlideshowSequencer?
     @ObservationIgnored private var previousAlbumID: AlbumID?
 
@@ -103,12 +107,16 @@ final class SlideshowViewModel {
         initialAlbumID: AlbumID,
         initialAlbumName: AlbumName,
         initialAssetID: AssetID?,
-        immichClient: ImmichClientProtocol = ImmichClient.shared
+        immichClient: ImmichClientProtocol = ImmichClient.shared,
+        setIdleTimerDisabled: @escaping @MainActor (Bool) -> Void = {
+            UIApplication.shared.isIdleTimerDisabled = $0
+        }
     ) {
         self.initialAlbumID = initialAlbumID
         self.initialAlbumName = initialAlbumName
         self.initialAssetID = initialAssetID
         self.immichClient = immichClient
+        self.setIdleTimerDisabled = setIdleTimerDisabled
         imageLoader = AssetImageLoader(
             immichClient: immichClient,
             cacheCountLimit: 10
@@ -133,6 +141,7 @@ final class SlideshowViewModel {
 
     func start() async {
         isStopped = false
+        setKeepsScreenAwake(true)
         syncOverlayMirrors()
         await initSlideshow()
     }
@@ -148,6 +157,7 @@ final class SlideshowViewModel {
 
     func stop() {
         isStopped = true
+        setKeepsScreenAwake(false)
         stopSlideshowTimer()
         stopProgressBarTimer()
         stopCurrentPlayer()
@@ -156,6 +166,14 @@ final class SlideshowViewModel {
         // The in-memory image cache only serves this session; drop it on exit rather than
         // key it by rendition size. Cheap to rebuild — the on-disk cache backs the next run.
         imageLoader.clear()
+    }
+
+    /// The one place the idle timer is toggled. `AVPlayer` keeps the screen alive while a video
+    /// plays, but during photo slides tvOS sees an idle device and starts the screensaver, then
+    /// sleeps. So the timer is disabled for the whole slideshow (paused included — a paused photo
+    /// should stay visible) and restored on exit, so the rest of the app sleeps as usual.
+    private func setKeepsScreenAwake(_ awake: Bool) {
+        setIdleTimerDisabled(awake)
     }
 
     func clearImageCache() {
