@@ -13,6 +13,7 @@ struct SlideshowView: View {
     /// A mid-stream rebuffer only surfaces the "Buffering…" overlay once it has lasted past a short
     /// grace window, so brief stalls don't flash it on and off.
     @State private var showBufferingOverlay = false
+    @Environment(\.scenePhase) private var scenePhase
 
     init(
         initialAlbumID: AlbumID,
@@ -57,13 +58,14 @@ struct SlideshowView: View {
                 viewModel.closeOptionsMenu()
                 return
             }
-
-            viewModel.clearImageCache()
-
-            if let asset = viewModel.slideshowAsset {
-                onExit(asset.album.id, asset.album.albumName, asset.asset.id)
-            } else {
-                onExit(initialAlbumID, initialAlbumName, initialAssetID)
+            exitSlideshow()
+        }
+        .onChange(of: scenePhase) {
+            // Leaving the app (Home button, TV off) ends the slideshow as if the back button had
+            // been pressed, so returning lands on the album list at the slide that was showing —
+            // rather than a stale slideshow whose video the system paused while we were away.
+            if scenePhase == .background {
+                exitSlideshow()
             }
         }
         .onMoveCommand { direction in
@@ -73,6 +75,17 @@ struct SlideshowView: View {
         }
         .onPlayPauseCommand {
             viewModel.togglePause()
+        }
+    }
+
+    /// Leaves the slideshow, handing the slide that was showing back to the caller.
+    private func exitSlideshow() {
+        viewModel.clearImageCache()
+
+        if let asset = viewModel.slideshowAsset {
+            onExit(asset.album.id, asset.album.albumName, asset.asset.id)
+        } else {
+            onExit(initialAlbumID, initialAlbumName, initialAssetID)
         }
     }
 
