@@ -1,11 +1,14 @@
 @testable import BigImmich
+import Foundation
 import ImmichAPI
 import Testing
 
 @MainActor
 struct SlideshowViewModelTests {
     private func makeViewModel(recording calls: @escaping @MainActor (Bool) -> Void) -> SlideshowViewModel {
-        let albumID = AlbumID(rawValue: "album.1")
+        // Unique per run: the view model goes through the shared on-disk asset cache, so a fixed
+        // id would leak this test's assets into other tests that use the same album id.
+        let albumID = AlbumID(rawValue: "view-model-test-\(UUID().uuidString)")
         let client = FakeImmichClient(
             albumSummaries: [AlbumSummary.dummy(id: albumID.string)],
             albumAssets: [albumID: [AlbumAsset.dummy(id: "asset.1")]]

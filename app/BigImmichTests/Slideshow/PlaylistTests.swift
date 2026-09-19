@@ -10,6 +10,13 @@ import ImmichAPI
 import Testing
 import XCTest
 
+/// A private, empty asset cache per test. The getter reads album assets through the cache first,
+/// and every test here reuses the same album ids, so sharing `AlbumAssetsCache.shared` across
+/// tests (which run in parallel, in random order) would let one test's assets leak into another.
+private func freshAssetsCache() -> AlbumAssetsCache {
+    AlbumAssetsCache(store: CodableDiskCache(name: "test-\(UUID().uuidString)"))
+}
+
 @MainActor
 struct PlaylistGetterAlbumsTests {
     @Test func getSingleAlbumStopAtTheEnd() async throws {
@@ -36,7 +43,8 @@ struct PlaylistGetterAlbumsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient
+            immichClient: fakeClient,
+            assetsCache: freshAssetsCache()
         )
 
         let albums = try await playlistGetter.getAlbumsPlaylist(
@@ -72,7 +80,8 @@ struct PlaylistGetterAlbumsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient
+            immichClient: fakeClient,
+            assetsCache: freshAssetsCache()
         )
 
         let albums = try await playlistGetter.getAlbumsPlaylist(
@@ -110,7 +119,8 @@ struct PlaylistGetterAlbumsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient
+            immichClient: fakeClient,
+            assetsCache: freshAssetsCache()
         )
 
         let albums = try await playlistGetter.getAlbumsPlaylist(
@@ -150,7 +160,8 @@ struct PlaylistGetterAlbumsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient
+            immichClient: fakeClient,
+            assetsCache: freshAssetsCache()
         )
 
         let albums = try await playlistGetter.getAlbumsPlaylist(
@@ -182,7 +193,8 @@ struct PlaylistGetterAlbumsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient
+            immichClient: fakeClient,
+            assetsCache: freshAssetsCache()
         )
 
         let albums = try await playlistGetter.getAlbumsPlaylist(
@@ -224,7 +236,8 @@ struct PlaylistGetterAssetsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient
+            immichClient: fakeClient,
+            assetsCache: freshAssetsCache()
         )
 
         let assets = try await playlistGetter.getAssetsPlaylist(
@@ -262,7 +275,8 @@ struct PlaylistGetterAssetsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient
+            immichClient: fakeClient,
+            assetsCache: freshAssetsCache()
         )
 
         let assets = try await playlistGetter.getAssetsPlaylist(
@@ -300,7 +314,8 @@ struct PlaylistGetterAssetsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient
+            immichClient: fakeClient,
+            assetsCache: freshAssetsCache()
         )
 
         let assets = try await playlistGetter.getAssetsPlaylist(
@@ -334,7 +349,8 @@ struct PlaylistGetterAssetsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient
+            immichClient: fakeClient,
+            assetsCache: freshAssetsCache()
         )
 
         let assets = try await playlistGetter.getAssetsPlaylist(
@@ -364,7 +380,8 @@ struct PlaylistGetterAssetsTests {
 
         let playlistGetter = SlideshowPlaylistGetter(
             settings: settings,
-            immichClient: fakeClient
+            immichClient: fakeClient,
+            assetsCache: freshAssetsCache()
         )
 
         let assets = try await playlistGetter.getAssetsPlaylist(
