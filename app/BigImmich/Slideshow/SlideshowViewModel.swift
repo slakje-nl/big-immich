@@ -501,7 +501,9 @@ final class SlideshowViewModel {
             } else if let resolved = await makeVideoSource(for: asset) {
                 source = resolved
             } else {
+                // Skip it like a photo that fails to load, rather than stalling the slideshow.
                 showError("loading video failed: failed to construct playback URL")
+                await moveToNext()
                 return
             }
 
