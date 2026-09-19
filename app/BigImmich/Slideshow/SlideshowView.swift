@@ -13,6 +13,9 @@ struct SlideshowView: View {
     /// A mid-stream rebuffer only surfaces the "Buffering…" overlay once it has lasted past a short
     /// grace window, so brief stalls don't flash it on and off.
     @State private var showBufferingOverlay = false
+    /// The first slide's "Loading…" spinner only appears once loading has lasted past a short
+    /// grace window, so a fast network never flashes it.
+    @State private var showLoadingSpinner = false
     @Environment(\.scenePhase) private var scenePhase
 
     init(
@@ -95,9 +98,11 @@ struct SlideshowView: View {
 
             Group {
                 if viewModel.isLoading {
-                    ProgressView("Loading...")
-                        .scaleEffect(1.5)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    if showLoadingSpinner {
+                        ProgressView("Loading...")
+                            .scaleEffect(1.5)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
                 } else if let player = viewModel.currentPlayer {
                     PlayerLayerView(player: player)
                         .ignoresSafeArea()
@@ -146,6 +151,13 @@ struct SlideshowView: View {
             if !viewModel.errors.isEmpty || !viewModel.informations.isEmpty {
                 messagesOverlay
             }
+        }
+        .task(id: viewModel.isLoading) {
+            showLoadingSpinner = false
+            guard viewModel.isLoading else { return }
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            showLoadingSpinner = true
         }
     }
 

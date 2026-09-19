@@ -25,6 +25,8 @@ final class SlideshowViewModel {
     var videoState: VideoState = .loading
     var videoStats = VideoStats()
 
+    /// True from `start()` until the first slide is on screen (or loading gave up), so a slow
+    /// network shows a spinner instead of a black screen.
     var isLoading = false
     var errors: [String] = []
     var informations: [String] = []
@@ -143,7 +145,9 @@ final class SlideshowViewModel {
         isStopped = false
         setKeepsScreenAwake(true)
         syncOverlayMirrors()
+        isLoading = true
         await initSlideshow()
+        isLoading = false
     }
 
     /// Refreshes the observable mirrors from the persisted settings (see their declaration).
@@ -157,6 +161,7 @@ final class SlideshowViewModel {
 
     func stop() {
         isStopped = true
+        isLoading = false
         setKeepsScreenAwake(false)
         stopSlideshowTimer()
         stopProgressBarTimer()
@@ -489,6 +494,8 @@ final class SlideshowViewModel {
                 return
             }
 
+            isLoading = false
+
             if slideshowIsRunning {
                 startImageTimers()
             }
@@ -508,6 +515,7 @@ final class SlideshowViewModel {
             }
 
             applyVideoSource(source, assetID: asset.id, startAt: 0)
+            isLoading = false
             // A video that loads while the slideshow is paused (e.g. navigated to from a paused
             // asset) shows its progress bar automatically via `showVideoScrubber`.
         }
